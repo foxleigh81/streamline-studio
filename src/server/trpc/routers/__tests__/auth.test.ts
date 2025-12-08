@@ -459,5 +459,240 @@ describe('Auth Router', () => {
       expect(wrongPasswordError.message).not.toContain('incorrect');
       expect(wrongPasswordError.message).not.toContain('wrong');
     });
+
+    it('ensures no sensitive data in logs during password validation', async () => {
+      const { validatePassword } = await import('@/lib/auth/password');
+
+      // Mock console methods to check if password is logged
+      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {
+        // no-op
+      });
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {
+          // no-op
+        });
+
+      const testPassword = 'secret-password-123';
+      validatePassword(testPassword);
+
+      // Verify password is not logged
+      expect(consoleLogSpy).not.toHaveBeenCalledWith(
+        expect.stringContaining(testPassword)
+      );
+      expect(consoleErrorSpy).not.toHaveBeenCalledWith(
+        expect.stringContaining(testPassword)
+      );
+
+      consoleLogSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('Common Password Detection', () => {
+    it('rejects password from common list (case insensitive)', async () => {
+      const { validatePassword } = await import('@/lib/auth/password');
+
+      const commonVariants = [
+        'password123',
+        'Password123',
+        'PASSWORD123',
+        'PaSsWoRd123',
+      ];
+
+      for (const password of commonVariants) {
+        const result = validatePassword(password);
+        expect(result.valid).toBe(false);
+        expect(
+          result.errors.some((e) => e.toLowerCase().includes('common'))
+        ).toBe(true);
+      }
+    });
+
+    it('accepts uncommon passwords', async () => {
+      const { validatePassword } = await import('@/lib/auth/password');
+
+      const uncommonPasswords = [
+        'myUniquePa$$w0rd2024!',
+        'correcthorsebatterystaple',
+        'x7Ky9#mN2pQ@vL5w',
+      ];
+
+      for (const password of uncommonPasswords) {
+        const result = validatePassword(password);
+        // May still fail if too short, but NOT because it's common
+        if (!result.valid) {
+          expect(
+            result.errors.some((e) => e.toLowerCase().includes('common'))
+          ).toBe(false);
+        }
+      }
+    });
+  });
+
+  describe('Password Length Validation', () => {
+    it('rejects passwords under 8 characters', async () => {
+      const { validatePassword } = await import('@/lib/auth/password');
+
+      const shortPasswords = ['', 'a', 'abc', 'pass', 'test123'];
+
+      for (const password of shortPasswords) {
+        const result = validatePassword(password);
+        expect(result.valid).toBe(false);
+        expect(
+          result.errors.some((e) =>
+            e.toLowerCase().includes('at least 8 characters')
+          )
+        ).toBe(true);
+      }
+    });
+
+    it('rejects passwords over 128 characters', async () => {
+      const { validatePassword } = await import('@/lib/auth/password');
+
+      const longPassword = 'a'.repeat(129);
+      const result = validatePassword(longPassword);
+
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) => e.toLowerCase().includes('less than 128'))
+      ).toBe(true);
+    });
+
+    it('accepts passwords between 8 and 128 characters', async () => {
+      const { validatePassword } = await import('@/lib/auth/password');
+
+      const validLengths = [
+        'a'.repeat(8) + 'unique',
+        'a'.repeat(50) + 'unique',
+        'a'.repeat(127) + 'x',
+      ];
+
+      for (const password of validLengths) {
+        const result = validatePassword(password);
+        // Should not fail on length (may fail on common password check)
+        const hasLengthError = result.errors.some(
+          (e) =>
+            e.toLowerCase().includes('at least') ||
+            e.toLowerCase().includes('less than')
+        );
+        expect(hasLengthError).toBe(false);
+      }
+    });
+  });
+
+  describe('Session Token Security', () => {
+    it('generates cryptographically random tokens', async () => {
+      const { generateSessionToken } = await import('@/lib/auth/session');
+
+      const tokens = new Set<string>();
+      const iterations = 1000;
+
+      for (let i = 0; i < iterations; i++) {
+        tokens.add(generateSessionToken());
+      }
+
+      // All tokens should be unique (collision probability is negligible)
+      expect(tokens.size).toBe(iterations);
+    });
+
+    it('session tokens are of sufficient length', async () => {
+      const { generateSessionToken } = await import('@/lib/auth/session');
+
+      const token = generateSessionToken();
+
+      // Base32 encoding of 32 bytes (256 bits) should be ~52 characters
+      expect(token.length).toBeGreaterThanOrEqual(40);
+    });
+  });
+
+  describe('Rate Limit Key Generation', () => {
+    it('creates consistent login rate limit keys', async () => {
+      const { createLoginRateLimitKey } = await import('@/lib/auth/rate-limit');
+
+      const key1 = createLoginRateLimitKey('192.168.1.1', 'user@example.com');
+      const key2 = createLoginRateLimitKey('192.168.1.1', 'user@example.com');
+      const key3 = createLoginRateLimitKey('192.168.1.2', 'user@example.com');
+      const key4 = createLoginRateLimitKey('192.168.1.1', 'other@example.com');
+
+      // Same IP and email should produce same key
+      expect(key1).toBe(key2);
+
+      // Different IP or email should produce different keys
+      expect(key1).not.toBe(key3);
+      expect(key1).not.toBe(key4);
+    });
+
+    it('normalizes email in rate limit keys', async () => {
+      const { createLoginRateLimitKey } = await import('@/lib/auth/rate-limit');
+
+      const key1 = createLoginRateLimitKey('192.168.1.1', 'User@Example.COM');
+      const key2 = createLoginRateLimitKey('192.168.1.1', 'user@example.com');
+
+      // Email case should not matter
+      expect(key1).toBe(key2);
+    });
+
+    it('creates consistent registration rate limit keys', async () => {
+      const { createRegistrationRateLimitKey } =
+        await import('@/lib/auth/rate-limit');
+
+      const key1 = createRegistrationRateLimitKey('192.168.1.1');
+      const key2 = createRegistrationRateLimitKey('192.168.1.1');
+      const key3 = createRegistrationRateLimitKey('192.168.1.2');
+
+      expect(key1).toBe(key2);
+      expect(key1).not.toBe(key3);
+    });
+  });
+
+  describe('IP Address Extraction', () => {
+    it('handles multiple IPs in X-Forwarded-For header', async () => {
+      const { getClientIp } = await import('@/lib/auth/rate-limit');
+
+      // Simulate proxy chain
+      const headers = new Headers();
+      headers.set('X-Forwarded-For', '203.0.113.1, 198.51.100.1, 192.0.2.1');
+
+      vi.stubEnv('TRUSTED_PROXY', 'true');
+      const ip = getClientIp(headers);
+
+      // Should extract the first (original client) IP
+      expect(ip).toBe('203.0.113.1');
+    });
+
+    it('handles single IP in X-Forwarded-For header', async () => {
+      const { getClientIp } = await import('@/lib/auth/rate-limit');
+
+      const headers = new Headers();
+      headers.set('X-Forwarded-For', '203.0.113.1');
+
+      vi.stubEnv('TRUSTED_PROXY', 'true');
+      const ip = getClientIp(headers);
+
+      expect(ip).toBe('203.0.113.1');
+    });
+
+    it('handles X-Real-IP header as fallback', async () => {
+      const { getClientIp } = await import('@/lib/auth/rate-limit');
+
+      const headers = new Headers();
+      headers.set('X-Real-IP', '203.0.113.1');
+
+      vi.stubEnv('TRUSTED_PROXY', 'true');
+      const ip = getClientIp(headers);
+
+      expect(ip).toBe('203.0.113.1');
+    });
+
+    it('returns unknown when no IP headers present', async () => {
+      const { getClientIp } = await import('@/lib/auth/rate-limit');
+
+      const headers = new Headers();
+
+      const ip = getClientIp(headers);
+
+      expect(ip).toBe('unknown');
+    });
   });
 });
