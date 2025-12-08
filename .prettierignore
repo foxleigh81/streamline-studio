@@ -1,0 +1,25 @@
+# Dependencies
+node_modules
+
+# Build outputs
+.next
+out
+dist
+storybook-static
+coverage
+
+# Package manager
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# IDE
+.idea
+.vscode
+
+# Cache
+.tsbuildinfo
+*.tsbuildinfo
+
+# Generated
+next-env.d.ts

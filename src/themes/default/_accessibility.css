@@ -1,0 +1,284 @@
+/**
+ * Streamline Studio - Accessibility Utilities
+ *
+ * WCAG 2.1 AA compliant utilities for accessible interfaces.
+ * These are global utilities available throughout the application.
+ *
+ * Includes:
+ * - Screen reader utilities
+ * - Focus management
+ * - Reduced motion support
+ * - High contrast mode support
+ *
+ * @layer utilities - Utility layer for global helpers
+ */
+
+@layer utilities {
+  /* ================================================
+     SCREEN READER UTILITIES
+     ================================================ */
+
+  /**
+   * Visually hidden but accessible to screen readers.
+   * Use for labels, descriptions, and content that provides
+   * context for assistive technology users.
+   */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /**
+   * Reverses .sr-only - makes element visible again.
+   * Useful for focus-visible states on skip links.
+   */
+  .not-sr-only {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+
+  /**
+   * Screen reader only, but becomes visible on focus.
+   * Ideal for skip links.
+   */
+  .sr-only-focusable {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+
+    &:focus,
+    &:focus-visible {
+      position: fixed;
+      top: var(--spacing-4);
+      left: var(--spacing-4);
+      z-index: var(--z-tooltip);
+      width: auto;
+      height: auto;
+      padding: var(--spacing-3) var(--spacing-4);
+      margin: 0;
+      overflow: visible;
+      clip: auto;
+      white-space: normal;
+      background: var(--color-primary);
+      color: var(--color-primary-foreground);
+      border-radius: var(--radius-md);
+      font-weight: var(--font-weight-medium);
+      text-decoration: none;
+    }
+  }
+
+  /* ================================================
+     FOCUS UTILITIES
+     ================================================ */
+
+  /**
+   * Standard focus ring - applies YouTube red focus indicator.
+   * Use on interactive elements that need visible focus.
+   */
+  .focus-ring {
+    &:focus {
+      outline: none;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-ring);
+      outline-offset: 2px;
+    }
+  }
+
+  /**
+   * Inset focus ring - for elements where offset doesn't work well.
+   */
+  .focus-ring-inset {
+    &:focus {
+      outline: none;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-ring);
+      outline-offset: -2px;
+    }
+  }
+
+  /**
+   * Focus within - applies to parent when child is focused.
+   * Useful for form groups and card containers.
+   */
+  .focus-within-ring {
+    &:focus-within {
+      outline: 2px solid var(--color-ring);
+      outline-offset: 2px;
+    }
+  }
+
+  /**
+   * Remove default focus outline.
+   * ONLY use when providing alternative focus indication.
+   */
+  .focus-none {
+    &:focus {
+      outline: none;
+    }
+  }
+
+  /* ================================================
+     TOUCH TARGET UTILITIES
+     ================================================ */
+
+  /**
+   * Ensures minimum touch target size of 44x44px (WCAG AAA).
+   * Apply to small interactive elements like icon buttons.
+   */
+  .touch-target {
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      min-width: 44px;
+      min-height: 44px;
+    }
+  }
+
+  /**
+   * Minimum touch target size of 24x24px (WCAG AA minimum).
+   */
+  .touch-target-sm {
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      min-width: 24px;
+      min-height: 24px;
+    }
+  }
+
+  /* ================================================
+     ARIA LIVE REGIONS
+     ================================================ */
+
+  /**
+   * Polite live region - announces when user is idle.
+   * Use for status updates, save confirmations.
+   */
+  .aria-live-polite {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /**
+   * Assertive live region - interrupts current announcement.
+   * Use for errors and urgent notifications only.
+   */
+  .aria-live-assertive {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+}
+
+/* ================================================
+   REDUCED MOTION
+   Respects user's preference for reduced motion.
+   Applied globally - animations/transitions disabled.
+   ================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ================================================
+   HIGH CONTRAST MODE
+   Additional support for Windows High Contrast Mode.
+   ================================================ */
+@media (forced-colors: active) {
+  /* Ensure focus indicators are visible */
+  .focus-ring:focus-visible,
+  .focus-ring-inset:focus-visible {
+    outline: 3px solid CanvasText;
+    outline-offset: 2px;
+  }
+
+  /* Ensure borders are visible */
+  button,
+  input,
+  select,
+  textarea {
+    border: 1px solid CanvasText;
+  }
+
+  /* Ensure links are distinguishable */
+  a {
+    text-decoration: underline;
+  }
+}
+
+/* ================================================
+   PRINT STYLES
+   Accessibility considerations for print.
+   ================================================ */
+@media print {
+  /* Ensure links show their URLs */
+  a[href^='http']::after {
+    content: ' (' attr(href) ')';
+    font-size: var(--font-size-sm);
+    color: var(--color-foreground-muted);
+  }
+
+  /* Hide purely decorative/interactive elements */
+  .no-print,
+  [aria-hidden='true'] {
+    display: none !important;
+  }
+
+  /* Ensure sufficient contrast */
+  * {
+    color: black !important;
+    background: white !important;
+  }
+}

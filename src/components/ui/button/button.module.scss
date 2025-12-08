@@ -1,0 +1,143 @@
+/**
+ * Button Component Styles
+ *
+ * Uses CSS custom properties from the theme system.
+ * Follows ADR-002 styling patterns.
+ *
+ * @see /docs/adrs/002-styling-solution.md
+ */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+  border: none;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-in-out),
+    color var(--duration-fast) var(--ease-in-out),
+    box-shadow var(--duration-fast) var(--ease-in-out),
+    opacity var(--duration-fast) var(--ease-in-out);
+
+  // Focus state (ADR-002 accessibility)
+  &:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+
+  // Disabled state
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// =============================================================================
+// SIZE VARIANTS
+// =============================================================================
+
+.sizeSm {
+  height: 2rem;
+  padding-inline: var(--spacing-3);
+  font-size: var(--font-size-xs);
+}
+
+.sizeMd {
+  height: 2.5rem;
+  padding-inline: var(--spacing-4);
+}
+
+.sizeLg {
+  height: 2.75rem;
+  padding-inline: var(--spacing-6);
+  font-size: var(--font-size-base);
+}
+
+// =============================================================================
+// STYLE VARIANTS
+// =============================================================================
+
+.variantPrimary {
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+
+  &:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+  }
+}
+
+.variantSecondary {
+  background: var(--color-secondary);
+  color: var(--color-secondary-foreground);
+
+  &:hover:not(:disabled) {
+    background: var(--color-secondary-hover);
+  }
+}
+
+.variantDestructive {
+  background: var(--color-destructive);
+  color: var(--color-destructive-foreground);
+
+  &:hover:not(:disabled) {
+    background: var(--color-destructive-hover);
+  }
+}
+
+.variantOutline {
+  background: transparent;
+  color: var(--color-foreground);
+  border: 1px solid var(--color-border);
+
+  &:hover:not(:disabled) {
+    background: var(--color-accent);
+    color: var(--color-accent-foreground);
+  }
+}
+
+.variantGhost {
+  background: transparent;
+  color: var(--color-foreground);
+
+  &:hover:not(:disabled) {
+    background: var(--color-accent);
+    color: var(--color-accent-foreground);
+  }
+}
+
+// =============================================================================
+// MODIFIERS
+// =============================================================================
+
+.fullWidth {
+  width: 100%;
+}
+
+.loading {
+  position: relative;
+}
+
+.hiddenText {
+  visibility: hidden;
+}
+
+.spinner {
+  position: absolute;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

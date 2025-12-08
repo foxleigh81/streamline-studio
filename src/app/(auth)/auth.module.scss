@@ -1,0 +1,96 @@
+/**
+ * Auth Layout Styles
+ *
+ * Uses CSS custom properties from the theme system.
+ * Follows ADR-002 styling patterns.
+ *
+ * @see /docs/adrs/002-styling-solution.md
+ */
+
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--spacing-4);
+  background: var(--color-background);
+}
+
+.card {
+  width: 100%;
+  max-width: 400px;
+  padding: var(--spacing-8);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.header {
+  margin-bottom: var(--spacing-8);
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-foreground);
+}
+
+.subtitle {
+  margin: var(--spacing-1) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted-foreground);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.submitButton {
+  margin-top: var(--spacing-2);
+}
+
+.links {
+  margin-top: var(--spacing-6);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted-foreground);
+
+  a {
+    color: var(--color-primary);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-ring);
+      outline-offset: 2px;
+      border-radius: var(--radius-sm);
+    }
+  }
+}
+
+.alert {
+  padding: var(--spacing-3);
+  margin-bottom: var(--spacing-4);
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-md);
+}
+
+.alertError {
+  color: var(--color-destructive);
+  background: var(--color-destructive-alpha, rgba(239, 68, 68, 0.1));
+  border: 1px solid var(--color-destructive);
+}
+
+.alertSuccess {
+  color: var(--color-success, #22c55e);
+  background: var(--color-success-alpha, rgba(34, 197, 94, 0.1));
+  border: 1px solid var(--color-success, #22c55e);
+}

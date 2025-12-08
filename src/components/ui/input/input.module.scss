@@ -1,0 +1,69 @@
+/**
+ * Input Component Styles
+ *
+ * Uses CSS custom properties from the theme system.
+ * Follows ADR-002 styling patterns.
+ *
+ * @see /docs/adrs/002-styling-solution.md
+ */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-foreground);
+}
+
+.input {
+  width: 100%;
+  height: 2.5rem;
+  padding-inline: var(--spacing-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-foreground);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition:
+    border-color var(--duration-fast) var(--ease-in-out),
+    box-shadow var(--duration-fast) var(--ease-in-out);
+
+  &::placeholder {
+    color: var(--color-muted-foreground);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-ring);
+    box-shadow: 0 0 0 2px var(--color-ring-alpha, rgba(59, 130, 246, 0.2));
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--color-muted);
+  }
+}
+
+.inputError {
+  border-color: var(--color-destructive);
+
+  &:focus {
+    border-color: var(--color-destructive);
+    box-shadow: 0 0 0 2px var(--color-destructive-alpha, rgba(239, 68, 68, 0.2));
+  }
+}
+
+.error {
+  font-size: var(--font-size-xs);
+  color: var(--color-destructive);
+}
+
+.helperText {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted-foreground);
+}

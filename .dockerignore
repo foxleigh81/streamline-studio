@@ -1,0 +1,49 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Build outputs
+.next
+out
+dist
+storybook-static
+coverage
+
+# Testing
+e2e
+playwright-report
+test-results
+*.spec.ts
+*.test.ts
+*.test.tsx
+
+# Development
+.env
+.env.local
+.env.*.local
+.vscode
+.idea
+*.log
+
+# Git
+.git
+.gitignore
+
+# Documentation (not needed in production)
+docs
+*.md
+!README.md
+
+# Misc
+.DS_Store
+*.swp
+*.swo
+Thumbs.db
+
+# CI/CD
+.github
+.gitlab-ci.yml
+
+# Storybook (not needed in production)
+.storybook

@@ -1,0 +1,86 @@
+# =============================================================================
+# Streamline Studio Docker Compose
+# =============================================================================
+# Complete stack for self-hosting Streamline Studio
+#
+# ADR-011 Requirements:
+# - Single docker-compose up to start everything
+# - No default credentials (POSTGRES_PASSWORD must be set)
+# - Named volumes for persistence
+# - Health checks on all services
+#
+# Usage:
+#   1. Copy .env.example to .env
+#   2. Generate secrets: openssl rand -base64 32
+#   3. Run: docker-compose up -d
+#
+# @see /docs/adrs/011-self-hosting-strategy.md
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Application
+  # ---------------------------------------------------------------------------
+  app:
+    build: .
+    image: streamline-studio:latest
+    container_name: streamline-app
+    ports:
+      - '3000:3000'
+    environment:
+      # CRITICAL: Never use default credentials
+      - DATABASE_URL=postgresql://streamline:${POSTGRES_PASSWORD}@db:5432/streamline
+      - SESSION_SECRET=${SESSION_SECRET:?SESSION_SECRET must be set}
+      - MODE=${MODE:-single-tenant}
+      - DATA_DIR=/data
+      - TRUSTED_PROXY=${TRUSTED_PROXY:-false}
+      - NODE_ENV=production
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - appdata:/data
+    restart: unless-stopped
+    # Security: Limit capabilities
+    security_opt:
+      - no-new-privileges:true
+    # Security: Read-only root filesystem where possible
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  # ---------------------------------------------------------------------------
+  # Database
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: streamline-db
+    environment:
+      # CRITICAL: Never use default credentials
+      - POSTGRES_USER=streamline
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      - POSTGRES_DB=streamline
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U streamline -d streamline']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    # Expose port for local development (run db:push, db:studio, etc.)
+    # In production behind a firewall, this is fine. Otherwise, comment out.
+    ports:
+      - '5432:5432'
+
+# -----------------------------------------------------------------------------
+# Volumes
+# -----------------------------------------------------------------------------
+volumes:
+  # PostgreSQL data persistence
+  pgdata:
+    name: streamline-pgdata
+
+  # Application data (setup flag, etc.)
+  appdata:
+    name: streamline-appdata

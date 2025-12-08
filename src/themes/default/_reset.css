@@ -1,0 +1,252 @@
+/**
+ * Streamline Studio - CSS Reset
+ *
+ * Modern CSS reset based on best practices.
+ * Provides consistent baseline across browsers.
+ *
+ * Based on:
+ * - Josh Comeau's Modern CSS Reset
+ * - Andy Bell's CSS Reset
+ * - Tailwind Preflight (concepts)
+ *
+ * @layer reset - Lowest specificity layer
+ */
+
+@layer reset {
+  /* ================================================
+     BOX SIZING
+     ================================================ */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  /* ================================================
+     MARGIN RESET
+     ================================================ */
+  * {
+    margin: 0;
+  }
+
+  /* ================================================
+     DOCUMENT DEFAULTS
+     ================================================ */
+  html {
+    /* Prevent font size inflation on mobile */
+    -moz-text-size-adjust: none;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+
+    /* Smooth scrolling for anchor links (respects reduced motion) */
+    scroll-behavior: smooth;
+
+    /* Prevent horizontal scroll */
+    overflow-x: hidden;
+  }
+
+  /* ================================================
+     BODY DEFAULTS
+     ================================================ */
+  body {
+    /* Full viewport height */
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height for mobile */
+
+    /* Typography defaults from tokens */
+    font-family: var(--font-sans);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+    font-weight: var(--font-weight-normal);
+
+    /* Colours from theme */
+    color: var(--color-foreground);
+    background-color: var(--color-background);
+
+    /* Better text rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ================================================
+     TYPOGRAPHY
+     ================================================ */
+
+  /* Headings - inherit font properties by default */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-size: inherit;
+    font-weight: inherit;
+    overflow-wrap: break-word;
+  }
+
+  /* Paragraph text wrapping */
+  p {
+    overflow-wrap: break-word;
+  }
+
+  /* Balance headings for better readability */
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+
+  /* Prevent orphans in body text */
+  p,
+  li,
+  figcaption {
+    text-wrap: pretty;
+  }
+
+  /* ================================================
+     LISTS
+     ================================================ */
+  ul,
+  ol {
+    list-style: none;
+    padding: 0;
+  }
+
+  /* ================================================
+     LINKS
+     ================================================ */
+  a {
+    color: inherit;
+    text-decoration: inherit;
+  }
+
+  /* ================================================
+     MEDIA ELEMENTS
+     ================================================ */
+  img,
+  picture,
+  video,
+  canvas,
+  svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* ================================================
+     FORM ELEMENTS
+     ================================================ */
+
+  /* Inherit fonts for form elements */
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+
+  /* Remove default button styles */
+  button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  /* Text areas - prevent horizontal resize, allow vertical */
+  textarea {
+    resize: vertical;
+  }
+
+  /* Remove inner padding and border in Firefox */
+  ::-moz-focus-inner {
+    border-style: none;
+    padding: 0;
+  }
+
+  /* Remove the additional ':invalid' styles in Firefox */
+  :-moz-ui-invalid {
+    box-shadow: none;
+  }
+
+  /* ================================================
+     TABLES
+     ================================================ */
+  table {
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+
+  /* ================================================
+     INTERACTIVE ELEMENTS
+     ================================================ */
+
+  /* Remove default summary marker */
+  summary {
+    display: list-item;
+    cursor: pointer;
+  }
+
+  /* Dialog element reset */
+  dialog {
+    padding: 0;
+    border: none;
+  }
+
+  /* ================================================
+     ACCESSIBILITY
+     ================================================ */
+
+  /* Hide elements with [hidden] attribute */
+  [hidden] {
+    display: none !important;
+  }
+
+  /* Ensure disabled elements show as disabled */
+  [disabled] {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  /* ================================================
+     SELECTION
+     ================================================ */
+  ::selection {
+    background-color: var(--color-primary);
+    color: var(--color-primary-foreground);
+  }
+
+  /* ================================================
+     SCROLLBAR STYLING
+     ================================================ */
+
+  /* Webkit browsers */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-border);
+    border-radius: var(--radius-full);
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-border-strong);
+  }
+
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
+}

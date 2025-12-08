@@ -1,0 +1,59 @@
+/**
+ * Streamline Studio - Default Theme
+ *
+ * Main entry point for the default theme.
+ * Import this file in your application's global styles.
+ *
+ * Theme based on YouTube Studio's colour scheme:
+ * - Primary: YouTube Red (#FF0000)
+ * - Neutral Light: White (#FFFFFF)
+ * - Neutral Dark: Dark Grey (#282828)
+ *
+ * Layer Order (specificity from lowest to highest):
+ * 1. reset     - CSS reset, lowest specificity
+ * 2. tokens    - Design tokens (CSS custom properties)
+ * 3. animations - Keyframe definitions
+ * 4. utilities - Global utility classes (accessibility, animation helpers)
+ *
+ * Dark Mode:
+ * - Explicit: Set data-theme="dark" on <html>
+ * - System: Respects prefers-color-scheme when no explicit theme
+ * - Force light: Set data-theme="light" to override system preference
+ *
+ * Usage in Next.js (app/layout.tsx):
+ * ```tsx
+ * import '@/themes/default/index.css';
+ *
+ * export default function RootLayout({ children }) {
+ *   return (
+ *     <html lang="en">
+ *       <body>{children}</body>
+ *     </html>
+ *   );
+ * }
+ * ```
+ *
+ * To switch themes programmatically:
+ * ```ts
+ * // Set dark mode
+ * document.documentElement.setAttribute('data-theme', 'dark');
+ *
+ * // Set light mode
+ * document.documentElement.setAttribute('data-theme', 'light');
+ *
+ * // Use system preference
+ * document.documentElement.removeAttribute('data-theme');
+ * ```
+ *
+ * @see /docs/theming.md for full documentation
+ */
+
+/* Define layer order for cascade management */
+@layer reset, tokens, animations, utilities;
+
+/* Import theme partials in layer order */
+@import './_reset.css';
+@import './_tokens.css';
+@import './_dark-mode.css';
+@import './_animations.css';
+@import './_accessibility.css';

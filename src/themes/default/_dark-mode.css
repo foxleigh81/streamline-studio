@@ -1,0 +1,183 @@
+/**
+ * Streamline Studio - Dark Mode Overrides
+ *
+ * Dark mode swaps white/dark grey as specified:
+ * - Light backgrounds become dark grey
+ * - Dark text becomes light
+ * - Primary red remains prominent (adjusted for dark backgrounds)
+ *
+ * Activation methods:
+ * 1. Explicit: <html data-theme="dark">
+ * 2. System: prefers-color-scheme: dark (when no explicit theme set)
+ *
+ * @layer tokens - Overrides base token layer
+ */
+
+@layer tokens {
+  /* ================================================
+     EXPLICIT DARK MODE
+     Applied when data-theme="dark" is set on root
+     ================================================ */
+  :root[data-theme='dark'] {
+    /* Background surfaces - swap from white to dark grey */
+    --color-background: var(--palette-grey-900);
+    --color-surface: var(--palette-grey-800);
+    --color-surface-raised: var(--palette-grey-700);
+    --color-surface-sunken: var(--palette-grey-900);
+
+    /* Foreground / Text - swap from dark to light */
+    --color-foreground: var(--palette-grey-50);
+    --color-foreground-muted: var(--palette-grey-400);
+    --color-foreground-subtle: var(--palette-grey-500);
+
+    /* Primary (YouTube Red) - slightly adjusted for dark bg visibility */
+    --color-primary: var(--palette-red-500);
+    --color-primary-hover: var(--palette-red-400);
+    --color-primary-active: var(--palette-red-300);
+    --color-primary-foreground: var(--palette-white);
+
+    /* Secondary - dark surface variant */
+    --color-secondary: var(--palette-grey-700);
+    --color-secondary-hover: var(--palette-grey-600);
+    --color-secondary-active: var(--palette-grey-500);
+    --color-secondary-foreground: var(--palette-grey-50);
+
+    /* Accent (Subtle primary on dark) */
+    --color-accent: hsl(0 100% 50% / 0.15);
+    --color-accent-hover: hsl(0 100% 50% / 0.25);
+    --color-accent-foreground: var(--palette-red-300);
+
+    /* Muted */
+    --color-muted: var(--palette-grey-700);
+    --color-muted-foreground: var(--palette-grey-400);
+
+    /* Destructive / Error - adjusted for dark */
+    --color-destructive: hsl(0 84% 55%);
+    --color-destructive-hover: hsl(0 84% 65%);
+    --color-destructive-foreground: var(--palette-white);
+
+    /* Success - adjusted for dark */
+    --color-success: hsl(142 76% 42%);
+    --color-success-hover: hsl(142 76% 50%);
+    --color-success-foreground: var(--palette-white);
+
+    /* Warning - adjusted for dark */
+    --color-warning: hsl(38 92% 55%);
+    --color-warning-hover: hsl(38 92% 65%);
+    --color-warning-foreground: var(--palette-black);
+
+    /* Info - adjusted for dark */
+    --color-info: hsl(199 89% 55%);
+    --color-info-hover: hsl(199 89% 65%);
+    --color-info-foreground: var(--palette-white);
+
+    /* Borders & Inputs - lighter for dark mode visibility */
+    --color-border: var(--palette-grey-600);
+    --color-border-strong: var(--palette-grey-500);
+    --color-input: var(--palette-grey-700);
+    --color-input-focus: var(--palette-red-400);
+
+    /* Focus ring */
+    --color-ring: var(--palette-red-400);
+    --color-ring-offset: var(--palette-grey-900);
+
+    /* Overlay - lighter on dark */
+    --color-overlay: hsl(0 0% 0% / 0.7);
+    --color-overlay-light: hsl(0 0% 0% / 0.5);
+
+    /* Shadows - more prominent on dark backgrounds */
+    --shadow-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.3);
+    --shadow-sm:
+      0 1px 3px 0 hsl(0 0% 0% / 0.4), 0 1px 2px -1px hsl(0 0% 0% / 0.3);
+    --shadow-md:
+      0 4px 6px -1px hsl(0 0% 0% / 0.4), 0 2px 4px -2px hsl(0 0% 0% / 0.3);
+    --shadow-lg:
+      0 10px 15px -3px hsl(0 0% 0% / 0.4), 0 4px 6px -4px hsl(0 0% 0% / 0.3);
+    --shadow-xl:
+      0 20px 25px -5px hsl(0 0% 0% / 0.5), 0 8px 10px -6px hsl(0 0% 0% / 0.4);
+    --shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.6);
+  }
+
+  /* ================================================
+     SYSTEM PREFERENCE DARK MODE
+     Applied when system prefers dark AND no explicit theme
+     ================================================ */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      /* Background surfaces */
+      --color-background: var(--palette-grey-900);
+      --color-surface: var(--palette-grey-800);
+      --color-surface-raised: var(--palette-grey-700);
+      --color-surface-sunken: var(--palette-grey-900);
+
+      /* Foreground / Text */
+      --color-foreground: var(--palette-grey-50);
+      --color-foreground-muted: var(--palette-grey-400);
+      --color-foreground-subtle: var(--palette-grey-500);
+
+      /* Primary */
+      --color-primary: var(--palette-red-500);
+      --color-primary-hover: var(--palette-red-400);
+      --color-primary-active: var(--palette-red-300);
+      --color-primary-foreground: var(--palette-white);
+
+      /* Secondary */
+      --color-secondary: var(--palette-grey-700);
+      --color-secondary-hover: var(--palette-grey-600);
+      --color-secondary-active: var(--palette-grey-500);
+      --color-secondary-foreground: var(--palette-grey-50);
+
+      /* Accent */
+      --color-accent: hsl(0 100% 50% / 0.15);
+      --color-accent-hover: hsl(0 100% 50% / 0.25);
+      --color-accent-foreground: var(--palette-red-300);
+
+      /* Muted */
+      --color-muted: var(--palette-grey-700);
+      --color-muted-foreground: var(--palette-grey-400);
+
+      /* Status colours */
+      --color-destructive: hsl(0 84% 55%);
+      --color-destructive-hover: hsl(0 84% 65%);
+      --color-destructive-foreground: var(--palette-white);
+
+      --color-success: hsl(142 76% 42%);
+      --color-success-hover: hsl(142 76% 50%);
+      --color-success-foreground: var(--palette-white);
+
+      --color-warning: hsl(38 92% 55%);
+      --color-warning-hover: hsl(38 92% 65%);
+      --color-warning-foreground: var(--palette-black);
+
+      --color-info: hsl(199 89% 55%);
+      --color-info-hover: hsl(199 89% 65%);
+      --color-info-foreground: var(--palette-white);
+
+      /* Borders & Inputs */
+      --color-border: var(--palette-grey-600);
+      --color-border-strong: var(--palette-grey-500);
+      --color-input: var(--palette-grey-700);
+      --color-input-focus: var(--palette-red-400);
+
+      /* Focus ring */
+      --color-ring: var(--palette-red-400);
+      --color-ring-offset: var(--palette-grey-900);
+
+      /* Overlay */
+      --color-overlay: hsl(0 0% 0% / 0.7);
+      --color-overlay-light: hsl(0 0% 0% / 0.5);
+
+      /* Shadows */
+      --shadow-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.3);
+      --shadow-sm:
+        0 1px 3px 0 hsl(0 0% 0% / 0.4), 0 1px 2px -1px hsl(0 0% 0% / 0.3);
+      --shadow-md:
+        0 4px 6px -1px hsl(0 0% 0% / 0.4), 0 2px 4px -2px hsl(0 0% 0% / 0.3);
+      --shadow-lg:
+        0 10px 15px -3px hsl(0 0% 0% / 0.4), 0 4px 6px -4px hsl(0 0% 0% / 0.3);
+      --shadow-xl:
+        0 20px 25px -5px hsl(0 0% 0% / 0.5), 0 8px 10px -6px hsl(0 0% 0% / 0.4);
+      --shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.6);
+    }
+  }
+}
