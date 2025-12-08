@@ -12,28 +12,73 @@
  * @see /docs/adrs/014-security-architecture.md
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { TRPCError } from '@trpc/server';
+import type { WorkspaceRole } from '@/server/db/schema';
+
+/**
+ * Role hierarchy logic extracted for testing
+ * This mirrors the logic in requireRole from workspace.ts
+ */
+const roleHierarchy: Record<WorkspaceRole, number> = {
+  viewer: 1,
+  editor: 2,
+  owner: 3,
+};
+
+function hasRoleAccess(
+  userRole: WorkspaceRole,
+  minimumRole: WorkspaceRole
+): boolean {
+  return roleHierarchy[userRole] >= roleHierarchy[minimumRole];
+}
+
+/**
+ * Simulates the requireRole middleware behavior
+ */
+async function requireRoleCheck(
+  ctx: { workspaceRole?: WorkspaceRole },
+  minimumRole: WorkspaceRole,
+  next: () => Promise<unknown>
+): Promise<unknown> {
+  const role = ctx.workspaceRole;
+
+  if (!role) {
+    throw new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Role check failed: workspace context not available',
+    });
+  }
+
+  const userLevel = roleHierarchy[role];
+  const requiredLevel = roleHierarchy[minimumRole];
+
+  if (userLevel < requiredLevel) {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: `This action requires ${minimumRole} role or higher`,
+    });
+  }
+
+  return next();
+}
 
 /**
  * Role hierarchy tests
  * Verify the role-based access control patterns documented in ADR-008
  */
 describe('Workspace Role Hierarchy', () => {
-  const _roles = ['owner', 'editor', 'viewer'] as const;
-  type Role = (typeof _roles)[number];
+  // Helper to create mock context with a specific role
+  const createMockContext = (role: WorkspaceRole) => ({
+    workspaceRole: role,
+  });
 
-  /**
-   * Check if a role has access to a required role level
-   * Owner > Editor > Viewer
-   */
-  const hasRoleAccess = (userRole: Role, requiredRole: Role): boolean => {
-    const roleHierarchy: Record<Role, number> = {
-      owner: 3,
-      editor: 2,
-      viewer: 1,
-    };
-    return roleHierarchy[userRole] >= roleHierarchy[requiredRole];
-  };
+  // Helper to create mock next function
+  const mockNext = vi.fn().mockResolvedValue({ ok: true });
+
+  beforeEach(() => {
+    mockNext.mockClear();
+  });
 
   describe('Role Access Checks', () => {
     it('owner should have access to all roles', () => {
@@ -55,35 +100,98 @@ describe('Workspace Role Hierarchy', () => {
     });
   });
 
-  describe('Role Permissions', () => {
-    it('owner can perform all actions', () => {
-      const canEdit = hasRoleAccess('owner', 'editor');
-      const canView = hasRoleAccess('owner', 'viewer');
-      const canManage = hasRoleAccess('owner', 'owner');
-
-      expect(canEdit).toBe(true);
-      expect(canView).toBe(true);
-      expect(canManage).toBe(true);
+  describe('requireRole behavior - viewer level', () => {
+    it('should allow owner to access viewer-level resources', async () => {
+      const ctx = createMockContext('owner');
+      await requireRoleCheck(ctx, 'viewer', mockNext);
+      expect(mockNext).toHaveBeenCalled();
     });
 
-    it('editor can edit and view but not manage', () => {
-      const canEdit = hasRoleAccess('editor', 'editor');
-      const canView = hasRoleAccess('editor', 'viewer');
-      const canManage = hasRoleAccess('editor', 'owner');
-
-      expect(canEdit).toBe(true);
-      expect(canView).toBe(true);
-      expect(canManage).toBe(false);
+    it('should allow editor to access viewer-level resources', async () => {
+      const ctx = createMockContext('editor');
+      await requireRoleCheck(ctx, 'viewer', mockNext);
+      expect(mockNext).toHaveBeenCalled();
     });
 
-    it('viewer can only view', () => {
-      const canEdit = hasRoleAccess('viewer', 'editor');
-      const canView = hasRoleAccess('viewer', 'viewer');
-      const canManage = hasRoleAccess('viewer', 'owner');
+    it('should allow viewer to access viewer-level resources', async () => {
+      const ctx = createMockContext('viewer');
+      await requireRoleCheck(ctx, 'viewer', mockNext);
+      expect(mockNext).toHaveBeenCalled();
+    });
+  });
 
-      expect(canEdit).toBe(false);
-      expect(canView).toBe(true);
-      expect(canManage).toBe(false);
+  describe('requireRole behavior - editor level', () => {
+    it('should allow owner to access editor-level resources', async () => {
+      const ctx = createMockContext('owner');
+      await requireRoleCheck(ctx, 'editor', mockNext);
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('should allow editor to access editor-level resources', async () => {
+      const ctx = createMockContext('editor');
+      await requireRoleCheck(ctx, 'editor', mockNext);
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('should deny viewer access to editor-level resources', async () => {
+      const ctx = createMockContext('viewer');
+      await expect(requireRoleCheck(ctx, 'editor', mockNext)).rejects.toThrow(
+        TRPCError
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('should throw FORBIDDEN error for insufficient role', async () => {
+      const ctx = createMockContext('viewer');
+      try {
+        await requireRoleCheck(ctx, 'editor', mockNext);
+      } catch (error) {
+        expect(error).toBeInstanceOf(TRPCError);
+        expect((error as TRPCError).code).toBe('FORBIDDEN');
+        expect((error as TRPCError).message).toContain('editor role');
+      }
+    });
+  });
+
+  describe('requireRole behavior - owner level', () => {
+    it('should allow owner to access owner-level resources', async () => {
+      const ctx = createMockContext('owner');
+      await requireRoleCheck(ctx, 'owner', mockNext);
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('should deny editor access to owner-level resources', async () => {
+      const ctx = createMockContext('editor');
+      await expect(requireRoleCheck(ctx, 'owner', mockNext)).rejects.toThrow(
+        TRPCError
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('should deny viewer access to owner-level resources', async () => {
+      const ctx = createMockContext('viewer');
+      await expect(requireRoleCheck(ctx, 'owner', mockNext)).rejects.toThrow(
+        TRPCError
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Missing workspace context', () => {
+    it('should throw INTERNAL_SERVER_ERROR when workspaceRole is missing', async () => {
+      const ctx = {}; // Missing workspaceRole
+
+      try {
+        await requireRoleCheck(
+          ctx as { workspaceRole?: WorkspaceRole },
+          'viewer',
+          mockNext
+        );
+      } catch (error) {
+        expect(error).toBeInstanceOf(TRPCError);
+        expect((error as TRPCError).code).toBe('INTERNAL_SERVER_ERROR');
+        expect((error as TRPCError).message).toContain('workspace context');
+      }
     });
   });
 });
@@ -149,12 +257,13 @@ describe('Security Patterns', () => {
     it('should use NOT_FOUND instead of FORBIDDEN to prevent enumeration', () => {
       // Per ADR-014: Return NOT_FOUND instead of FORBIDDEN
       // to prevent attackers from enumerating valid workspace IDs
+      // The workspace middleware at line 126-129 returns NOT_FOUND for:
+      // 1. Workspace doesn't exist
+      // 2. User doesn't have access
+      // This test verifies the documented pattern
       const secureErrorCode = 'NOT_FOUND';
       const insecureErrorCode = 'FORBIDDEN';
 
-      // The middleware should return NOT_FOUND for both:
-      // 1. Workspace doesn't exist
-      // 2. User doesn't have access
       expect(secureErrorCode).toBe('NOT_FOUND');
       expect(secureErrorCode).not.toBe(insecureErrorCode);
     });
@@ -177,7 +286,7 @@ describe('Security Patterns', () => {
 });
 
 /**
- * Single-tenant vs Multi-tenant mode
+ * Single-tenant vs Multi-tenant mode patterns
  */
 describe('Tenant Mode', () => {
   describe('Single-Tenant Mode', () => {

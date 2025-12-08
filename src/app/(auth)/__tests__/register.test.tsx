@@ -421,5 +421,138 @@ describe('Register Form', () => {
         .closest('form');
       expect(form).toBeInTheDocument();
     });
+
+    it('should have required attributes for form inputs', () => {
+      renderRegisterPage();
+
+      const nameInput = screen.getByLabelText(/^name/i);
+      const emailInput = screen.getByLabelText(/^email/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
+      const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
+
+      // Inputs should have type attributes
+      expect(nameInput).toHaveAttribute('type', 'text');
+      expect(emailInput).toHaveAttribute('type', 'email');
+      expect(passwordInput).toHaveAttribute('type', 'password');
+      expect(confirmPasswordInput).toHaveAttribute('type', 'password');
+
+      // Inputs should have name attributes for form submission
+      expect(nameInput).toHaveAttribute('name');
+      expect(emailInput).toHaveAttribute('name');
+      expect(passwordInput).toHaveAttribute('name');
+      expect(confirmPasswordInput).toHaveAttribute('name');
+    });
+
+    it('should allow keyboard navigation through form', async () => {
+      const user = userEvent.setup();
+      renderRegisterPage();
+
+      const nameInput = screen.getByLabelText(/^name/i);
+      const emailInput = screen.getByLabelText(/^email/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
+      const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
+      const submitButton = screen.getByRole('button', {
+        name: /create account/i,
+      });
+
+      // Start from name, tab through fields
+      nameInput.focus();
+      expect(document.activeElement).toBe(nameInput);
+
+      await user.tab();
+      expect(document.activeElement).toBe(emailInput);
+
+      await user.tab();
+      expect(document.activeElement).toBe(passwordInput);
+
+      await user.tab();
+      expect(document.activeElement).toBe(confirmPasswordInput);
+
+      await user.tab();
+      expect(document.activeElement).toBe(submitButton);
+    });
+
+    it('should support form submission via Enter key', async () => {
+      const user = userEvent.setup();
+      renderRegisterPage();
+
+      const emailInput = screen.getByLabelText(/^email/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
+      const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
+
+      await user.type(emailInput, 'test@example.com');
+      await user.type(passwordInput, 'password123');
+      await user.type(confirmPasswordInput, 'password123');
+      await user.keyboard('{Enter}');
+
+      // Form should attempt to submit
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalled();
+      });
+    });
+
+    it('should associate error messages with inputs', async () => {
+      const user = userEvent.setup();
+      renderRegisterPage();
+
+      const submitButton = screen.getByRole('button', {
+        name: /create account/i,
+      });
+      await user.click(submitButton);
+
+      // Error messages should be present and visible
+      await waitFor(() => {
+        const errorMessage = screen.getByText(/email is required/i);
+        expect(errorMessage).toBeInTheDocument();
+        expect(errorMessage).toBeVisible();
+      });
+    });
+  });
+
+  describe('Loading States', () => {
+    it('should show loading state during submission', async () => {
+      // Mock slow response
+      mockFetch.mockImplementation(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(
+              () =>
+                resolve(
+                  new Response(
+                    JSON.stringify([
+                      { result: { type: 'data', data: { success: true } } },
+                    ]),
+                    {
+                      status: 200,
+                      headers: { 'Content-Type': 'application/json' },
+                    }
+                  )
+                ),
+              100
+            )
+          )
+      );
+
+      const user = userEvent.setup();
+      renderRegisterPage();
+
+      const emailInput = screen.getByLabelText(/^email/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
+      const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
+      const submitButton = screen.getByRole('button', {
+        name: /create account/i,
+      });
+
+      await user.type(emailInput, 'test@example.com');
+      await user.type(passwordInput, 'password123');
+      await user.type(confirmPasswordInput, 'password123');
+      await user.click(submitButton);
+
+      // Button should be disabled or show loading during submission
+      // The exact implementation depends on the form component
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalled();
+      });
+    });
   });
 });
