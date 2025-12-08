@@ -1,0 +1,27 @@
+/**
+ * Video Card Skeleton Styles
+ *
+ * Matches the layout of the actual VideoCard component.
+ */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-card);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.categories {
+  display: flex;
+  gap: var(--spacing-2);
+  flex-wrap: wrap;
+}

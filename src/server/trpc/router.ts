@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { router, publicProcedure } from './trpc';
 import { authRouter } from './routers/auth';
+import { videoRouter } from './routers/video';
+import { categoryRouter } from './routers/category';
+import { documentRouter } from './routers/document';
 
 /**
  * tRPC Root Router
@@ -45,14 +48,26 @@ export const appRouter = router({
    */
   auth: authRouter,
 
-  // TODO: Phase 2.1 - Add videoRouter for video CRUD
-  // video: videoRouter,
+  /**
+   * Video router
+   * Handles video CRUD operations with workspace scoping
+   * @see Phase 2.1
+   */
+  video: videoRouter,
 
-  // TODO: Phase 2.2 - Add categoryRouter for categories
-  // category: categoryRouter,
+  /**
+   * Category router
+   * Handles category management with workspace scoping
+   * @see Phase 2.2
+   */
+  category: categoryRouter,
 
-  // TODO: Phase 2.3 - Add documentRouter for document editing
-  // document: documentRouter,
+  /**
+   * Document router
+   * Handles document retrieval and updates
+   * @see Phase 2.3
+   */
+  document: documentRouter,
 
   // TODO: Phase 1.4 - Add workspaceRouter for workspace management
   // workspace: workspaceRouter,

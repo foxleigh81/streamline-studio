@@ -1,0 +1,282 @@
+/**
+ * Video tRPC Router
+ *
+ * Handles all video CRUD operations with workspace scoping.
+ * Supports pagination, filtering, and sorting.
+ *
+ * @see /docs/adrs/007-api-and-auth.md
+ * @see /docs/adrs/008-multi-tenancy-strategy.md
+ */
+
+import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
+import { router, workspaceProcedure, editorProcedure } from '../trpc';
+import type { VideoStatus, DocumentType } from '@/server/db/schema';
+
+/**
+ * Video status enum values for validation
+ */
+const videoStatusValues: VideoStatus[] = [
+  'idea',
+  'scripting',
+  'filming',
+  'editing',
+  'review',
+  'scheduled',
+  'published',
+  'archived',
+];
+
+/**
+ * Document type enum values for validation
+ */
+const documentTypeValues: DocumentType[] = [
+  'script',
+  'description',
+  'notes',
+  'thumbnail_ideas',
+];
+
+/**
+ * Video list input schema with pagination, filtering, and sorting
+ */
+const videoListInput = z.object({
+  cursor: z.string().uuid().optional(),
+  limit: z.number().min(1).max(100).default(50),
+  status: z
+    .enum(videoStatusValues as [VideoStatus, ...VideoStatus[]])
+    .optional(),
+  categoryId: z.string().uuid().optional(),
+  orderBy: z
+    .enum(['createdAt', 'updatedAt', 'dueDate', 'title'])
+    .default('createdAt'),
+  orderDir: z.enum(['asc', 'desc']).default('desc'),
+});
+
+/**
+ * Video create input schema
+ */
+const videoCreateInput = z.object({
+  title: z.string().min(1).max(255),
+  description: z.string().optional(),
+  status: z
+    .enum(videoStatusValues as [VideoStatus, ...VideoStatus[]])
+    .default('idea'),
+  dueDate: z.string().optional(), // ISO date string
+  publishDate: z.string().optional(), // ISO date string
+  categoryIds: z.array(z.string().uuid()).default([]),
+});
+
+/**
+ * Video update input schema
+ */
+const videoUpdateInput = z.object({
+  id: z.string().uuid(),
+  title: z.string().min(1).max(255).optional(),
+  description: z.string().optional(),
+  status: z
+    .enum(videoStatusValues as [VideoStatus, ...VideoStatus[]])
+    .optional(),
+  dueDate: z.string().nullable().optional(), // ISO date string or null to clear
+  publishDate: z.string().nullable().optional(), // ISO date string or null to clear
+  youtubeVideoId: z.string().nullable().optional(),
+  thumbnailUrl: z.string().url().nullable().optional(),
+  categoryIds: z.array(z.string().uuid()).optional(),
+});
+
+/**
+ * Video router
+ */
+export const videoRouter = router({
+  /**
+   * List videos with pagination, filtering, and sorting
+   */
+  list: workspaceProcedure
+    .input(videoListInput)
+    .query(async ({ ctx, input }) => {
+      const { repository } = ctx;
+      const { cursor, limit, status, categoryId, orderBy, orderDir } = input;
+
+      // If filtering by category, we need to join with video_categories
+      // For now, implement basic filtering without category
+      // TODO: Add category filtering in repository layer
+      if (categoryId) {
+        throw new TRPCError({
+          code: 'NOT_IMPLEMENTED',
+          message: 'Category filtering not yet implemented',
+        });
+      }
+
+      const videos = await repository.getVideos({
+        cursor,
+        limit: limit + 1, // Fetch one extra to determine if there's a next page
+        status,
+        orderBy,
+        orderDir,
+      });
+
+      let nextCursor: string | undefined;
+      if (videos.length > limit) {
+        const nextItem = videos.pop();
+        nextCursor = nextItem?.id;
+      }
+
+      return {
+        videos,
+        nextCursor,
+      };
+    }),
+
+  /**
+   * Get a single video by ID
+   */
+  get: workspaceProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const video = await ctx.repository.getVideo(input.id);
+
+      if (!video) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Video not found',
+        });
+      }
+
+      // Also get category IDs
+      const categoryIds = await ctx.repository.getVideoCategoryIds(input.id);
+
+      return {
+        ...video,
+        categoryIds,
+      };
+    }),
+
+  /**
+   * Create a new video
+   * Automatically creates all four document types (script, description, notes, thumbnail_ideas)
+   */
+  create: editorProcedure
+    .input(videoCreateInput)
+    .mutation(async ({ ctx, input }) => {
+      const { repository, user } = ctx;
+      const { categoryIds, ...videoData } = input;
+
+      // Create the video
+      const video = await repository.createVideo({
+        ...videoData,
+        dueDate: videoData.dueDate ?? null,
+        publishDate: videoData.publishDate ?? null,
+        createdBy: user.id,
+      });
+
+      // Set categories if provided
+      if (categoryIds.length > 0) {
+        await repository.setVideoCategories(video.id, categoryIds);
+      }
+
+      // Auto-create all four document types
+      const documentTypes: DocumentType[] = documentTypeValues;
+      for (const type of documentTypes) {
+        await repository.createDocument({
+          videoId: video.id,
+          type,
+          content: '',
+          version: 1,
+          updatedBy: user.id,
+        });
+      }
+
+      // Log audit trail
+      await repository.createAuditLog({
+        userId: user.id,
+        action: 'video.created',
+        entityType: 'video',
+        entityId: video.id,
+        metadata: {
+          title: video.title,
+          status: video.status,
+        },
+      });
+
+      return video;
+    }),
+
+  /**
+   * Update a video
+   */
+  update: editorProcedure
+    .input(videoUpdateInput)
+    .mutation(async ({ ctx, input }) => {
+      const { repository, user } = ctx;
+      const { id, categoryIds, ...updateData } = input;
+
+      // Update the video
+      const video = await repository.updateVideo(id, updateData);
+
+      if (!video) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Video not found',
+        });
+      }
+
+      // Update categories if provided
+      if (categoryIds !== undefined) {
+        await repository.setVideoCategories(id, categoryIds);
+      }
+
+      // Log audit trail
+      await repository.createAuditLog({
+        userId: user.id,
+        action: 'video.updated',
+        entityType: 'video',
+        entityId: id,
+        metadata: updateData,
+      });
+
+      return video;
+    }),
+
+  /**
+   * Delete a video
+   * Cascades to documents and category associations
+   */
+  delete: editorProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const { repository, user } = ctx;
+
+      // Get video details before deletion for audit log
+      const video = await repository.getVideo(input.id);
+      if (!video) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Video not found',
+        });
+      }
+
+      // Delete the video (cascades to documents and category associations)
+      const deleted = await repository.deleteVideo(input.id);
+
+      if (!deleted) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to delete video',
+        });
+      }
+
+      // Log audit trail
+      await repository.createAuditLog({
+        userId: user.id,
+        action: 'video.deleted',
+        entityType: 'video',
+        entityId: input.id,
+        metadata: {
+          title: video.title,
+          status: video.status,
+        },
+      });
+
+      return { success: true };
+    }),
+});

@@ -1,0 +1,38 @@
+/**
+ * Skip Link Component Styles
+ *
+ * Hidden by default, visible only when focused (keyboard navigation).
+ * Positioned at the top of the page with high z-index.
+ */
+
+.skipLink {
+  position: fixed;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: var(--spacing-3) var(--spacing-4);
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition:
+    top var(--duration-fast) var(--ease-in-out),
+    transform var(--duration-fast) var(--ease-in-out);
+
+  // Visible when focused (keyboard navigation)
+  &:focus {
+    top: var(--spacing-4);
+  }
+
+  // Ensure minimum touch target size
+  min-width: 9rem;
+  min-height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}

@@ -42,3 +42,10 @@ export {
   clearAllRateLimits,
   type RateLimitConfig,
 } from './rate-limit';
+
+export {
+  validateRequest,
+  validateWorkspaceAccess,
+  type WorkspaceAccessResult,
+  type UserValidationResult,
+} from './workspace';

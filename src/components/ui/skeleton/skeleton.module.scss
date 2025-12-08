@@ -1,0 +1,39 @@
+/**
+ * Skeleton Component Styles
+ *
+ * Loading placeholder with shimmer animation.
+ */
+
+.skeleton {
+  display: inline-block;
+  background: linear-gradient(
+    90deg,
+    var(--color-muted) 25%,
+    var(--color-accent) 50%,
+    var(--color-muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.text {
+  border-radius: var(--radius-sm);
+  height: 1rem;
+}
+
+.rectangular {
+  border-radius: var(--radius-md);
+}
+
+.circular {
+  border-radius: 50%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

@@ -36,6 +36,13 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@codemirror/commands": "^6.10.0",
+    "@codemirror/lang-markdown": "^6.5.0",
+    "@codemirror/language": "^6.11.3",
+    "@codemirror/language-data": "^6.5.2",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.39.0",
+    "@hookform/resolvers": "^5.2.2",
     "@lucia-auth/adapter-drizzle": "^1.1.0",
     "@node-rs/argon2": "^2.0.2",
     "@oslojs/crypto": "^1.0.1",
@@ -48,13 +55,17 @@
     "@trpc/client": "^11.0.0-rc.660",
     "@trpc/react-query": "^11.0.0-rc.660",
     "@trpc/server": "^11.0.0-rc.660",
+    "dompurify": "^3.3.1",
     "drizzle-orm": "^0.37.0",
     "lucia": "^3.2.2",
+    "marked": "^17.0.1",
     "next": "^15.1.3",
     "pg": "^8.13.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-hook-form": "^7.68.0",
     "superjson": "^2.2.2",
+    "use-debounce": "^10.0.6",
     "zod": "^3.24.1"
   },
   "devDependencies": {
@@ -73,6 +84,8 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
     "@testing-library/user-event": "^14.5.2",
+    "@types/dompurify": "^3.0.5",
+    "@types/marked": "^5.0.2",
     "@types/node": "^22.10.2",
     "@types/pg": "^8.11.10",
     "@types/react": "^19.0.2",
@@ -82,11 +95,13 @@
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/coverage-v8": "^2.1.8",
     "@vitest/ui": "^2.1.8",
+    "concurrently": "^8.2.2",
     "drizzle-kit": "^0.30.1",
     "eslint": "^9.17.0",
     "eslint-config-next": "^15.1.3",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-storybook": "^0.11.1",
+    "http-server": "^14.1.1",
     "husky": "^9.1.7",
     "jsdom": "^25.0.1",
     "lint-staged": "^15.2.11",
@@ -98,9 +113,7 @@
     "typescript": "^5.7.2",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^2.1.8",
-    "concurrently": "^8.2.2",
-    "wait-on": "^7.2.0",
-    "http-server": "^14.1.1"
+    "wait-on": "^7.2.0"
   },
   "lint-staged": {
     "*.{ts,tsx}": [

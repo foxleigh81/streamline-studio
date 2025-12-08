@@ -1,0 +1,88 @@
+/**
+ * Save Indicator Component Styles
+ *
+ * Styles for the document save status indicator.
+ * Uses CSS custom properties from the theme system.
+ */
+
+.indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-muted-foreground);
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-weight: var(--font-weight-medium);
+  transition: color var(--duration-fast) var(--ease-in-out);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+  font-size: var(--font-size-base);
+}
+
+.text {
+  line-height: 1;
+}
+
+.timestamp {
+  color: var(--color-muted-foreground);
+  font-size: var(--font-size-xs);
+}
+
+// =============================================================================
+// STATUS VARIANTS
+// =============================================================================
+
+.saved {
+  color: var(--color-success);
+
+  .icon {
+    color: var(--color-success);
+  }
+}
+
+.saving {
+  color: var(--color-info);
+}
+
+.failed {
+  color: var(--color-error);
+
+  .icon {
+    color: var(--color-error);
+  }
+}
+
+.idle {
+  opacity: 0;
+}
+
+// =============================================================================
+// SPINNER
+// =============================================================================
+
+.spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
