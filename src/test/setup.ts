@@ -30,6 +30,25 @@ vi.mock('next/navigation', () => ({
   useParams: () => ({}),
 }));
 
+// Mock next/link - use synchronous mock to avoid timing issues
+vi.mock('next/link', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const React = require('react');
+  const MockLink = React.forwardRef(function Link(
+    props: {
+      children: React.ReactNode;
+      href: string;
+      [key: string]: unknown;
+    },
+    ref: React.Ref<HTMLAnchorElement>
+  ) {
+    const { children, href, ...rest } = props;
+    return React.createElement('a', { ...rest, href, ref }, children);
+  });
+  MockLink.displayName = 'MockLink';
+  return { default: MockLink, __esModule: true };
+});
+
 // Mock ResizeObserver
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),

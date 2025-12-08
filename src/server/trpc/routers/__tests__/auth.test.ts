@@ -8,12 +8,21 @@
  * @see /docs/adrs/014-security-architecture.md
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  beforeAll,
+  vi,
+} from 'vitest';
 import {
   getTestDatabase,
   resetTestDatabase,
   createTestUser,
   createTestUserWithWorkspace,
+  isDatabaseAvailable,
 } from '@/test/helpers/database';
 // eslint-disable-next-line no-restricted-imports -- Required for test database queries
 import { eq } from 'drizzle-orm';
@@ -28,12 +37,24 @@ vi.mock('@/lib/env', () => ({
   },
 }));
 
+// Check database availability before running tests
+let dbAvailable = false;
+
+beforeAll(async () => {
+  dbAvailable = await isDatabaseAvailable();
+});
+
 describe('Auth Router', () => {
-  beforeEach(async () => {
+  beforeEach(async (ctx) => {
+    if (!dbAvailable) {
+      ctx.skip();
+      return;
+    }
     await resetTestDatabase();
   });
 
   afterEach(async () => {
+    if (!dbAvailable) return;
     await resetTestDatabase();
   });
 

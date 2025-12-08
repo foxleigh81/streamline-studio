@@ -8,14 +8,22 @@
  * @see /docs/adrs/009-versioning-and-audit.md
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, beforeAll } from 'vitest';
 import {
   getTestDatabase,
   resetTestDatabase,
   createTestWorkspace,
   createTestVideo,
+  isDatabaseAvailable,
 } from '@/test/helpers/database';
 import { WorkspaceRepository } from '../workspace-repository';
+
+// Check database availability before running tests
+let dbAvailable = false;
+
+beforeAll(async () => {
+  dbAvailable = await isDatabaseAvailable();
+});
 
 describe('WorkspaceRepository - Document Operations', () => {
   let workspace1Id: string;
@@ -25,7 +33,11 @@ describe('WorkspaceRepository - Document Operations', () => {
   let repo1: WorkspaceRepository;
   let repo2: WorkspaceRepository;
 
-  beforeEach(async () => {
+  beforeEach(async (ctx) => {
+    if (!dbAvailable) {
+      ctx.skip();
+      return;
+    }
     await resetTestDatabase();
     const db = await getTestDatabase();
 
@@ -48,6 +60,7 @@ describe('WorkspaceRepository - Document Operations', () => {
   });
 
   afterEach(async () => {
+    if (!dbAvailable) return;
     await resetTestDatabase();
   });
 

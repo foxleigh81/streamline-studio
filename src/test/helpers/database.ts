@@ -21,12 +21,64 @@ const TEST_DATABASE_URL =
 
 let pool: Pool | null = null;
 let testDb: ReturnType<typeof drizzle<typeof schema>> | null = null;
+let databaseAvailable: boolean | null = null;
+
+/**
+ * Check if the test database is available
+ * Caches the result to avoid repeated connection attempts
+ */
+export async function isDatabaseAvailable(): Promise<boolean> {
+  if (databaseAvailable !== null) {
+    return databaseAvailable;
+  }
+
+  try {
+    const testPool = new Pool({
+      connectionString: TEST_DATABASE_URL,
+      max: 1,
+      connectionTimeoutMillis: 3000, // 3 second timeout
+    });
+
+    const client = await testPool.connect();
+    await client.query('SELECT 1');
+    client.release();
+    await testPool.end();
+
+    databaseAvailable = true;
+  } catch {
+    databaseAvailable = false;
+    console.warn(
+      '\n⚠️  Test database not available. Database tests will be skipped.\n' +
+        '   To run database tests, start PostgreSQL and ensure the test database exists.\n' +
+        `   Connection URL: ${TEST_DATABASE_URL}\n`
+    );
+  }
+
+  return databaseAvailable;
+}
+
+/**
+ * Helper to skip tests when database is not available
+ * Use in describe blocks: describe.skipIf(await skipIfNoDatabase())
+ */
+export async function skipIfNoDatabase(): Promise<boolean> {
+  return !(await isDatabaseAvailable());
+}
 
 /**
  * Get or create a test database connection
+ * Throws if database is not available - use isDatabaseAvailable() first
  */
 export async function getTestDatabase() {
   if (!testDb) {
+    // Check availability first
+    const available = await isDatabaseAvailable();
+    if (!available) {
+      throw new Error(
+        'Test database is not available. Use isDatabaseAvailable() to check before calling getTestDatabase().'
+      );
+    }
+
     pool = new Pool({
       connectionString: TEST_DATABASE_URL,
       max: 10,
