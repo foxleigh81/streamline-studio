@@ -76,7 +76,6 @@ function parseMarkdown(markdown: string): string {
       'title',
       'class',
       'id',
-      'style',
       'target',
       'rel',
     ],

@@ -17,6 +17,8 @@ export interface SaveIndicatorProps {
   lastSaved?: string | Date | null;
   /** Optional CSS class name */
   className?: string;
+  /** Optional retry callback for failed state */
+  onRetry?: () => void;
 }
 
 /**
@@ -73,20 +75,29 @@ export function SaveIndicator({
   status,
   lastSaved,
   className,
+  onRetry,
 }: SaveIndicatorProps) {
   const statusText = {
     saved: 'Saved',
     saving: 'Saving...',
-    failed: 'Failed to save',
-    idle: '',
+    failed: 'Failed to save - click to retry',
+    idle: 'Draft',
   };
 
   const statusIcon = {
     saved: '✓',
     saving: '',
     failed: '✕',
-    idle: '',
+    idle: '○',
   };
+
+  const handleClick = () => {
+    if (status === 'failed' && onRetry) {
+      onRetry();
+    }
+  };
+
+  const isClickable = status === 'failed' && onRetry;
 
   return (
     <div
@@ -95,11 +106,23 @@ export function SaveIndicator({
       aria-live="polite"
       aria-atomic="true"
     >
-      <div className={`${styles.status} ${styles[status]}`}>
+      <div
+        className={`${styles.status} ${styles[status]} ${isClickable ? styles.clickable : ''}`}
+        onClick={handleClick}
+        onKeyDown={(e) => {
+          if (isClickable && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            handleClick();
+          }
+        }}
+        role={isClickable ? 'button' : undefined}
+        tabIndex={isClickable ? 0 : undefined}
+        aria-label={isClickable ? statusText[status] : undefined}
+      >
         {status === 'saving' && (
           <span className={styles.spinner} aria-hidden="true" />
         )}
-        {status !== 'saving' && statusIcon[status] && (
+        {status !== 'saving' && (
           <span className={styles.icon} aria-hidden="true">
             {statusIcon[status]}
           </span>

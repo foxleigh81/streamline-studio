@@ -5,17 +5,34 @@ import { useDebouncedCallback } from 'use-debounce';
 import type { SaveStatus } from '../save-indicator/save-indicator';
 
 /**
+ * Maximum length for content preview in conflict error details
+ */
+const CONTENT_PREVIEW_LENGTH = 200;
+
+/**
  * Configuration for the auto-save hook.
  */
 export interface AutoSaveConfig {
   /** Debounce delay in milliseconds (default: 2000) */
-  debounceMs?: number;
+  debounceMs?: number | undefined;
   /** Save function that returns a Promise */
   onSave: (content: string, version: number) => Promise<{ version: number }>;
   /** Callback for version conflicts */
-  onConflict?: () => void;
+  onConflict?: (() => void) | undefined;
   /** Initial document version */
   initialVersion: number;
+}
+
+/**
+ * Conflict error details
+ */
+export interface ConflictError {
+  /** Current version on the server */
+  currentVersion: number;
+  /** Version the user was editing */
+  expectedVersion: number;
+  /** Preview of server content */
+  currentContent?: string | undefined;
 }
 
 /**
@@ -34,6 +51,12 @@ export interface AutoSaveResult {
   forceSave: (content: string) => Promise<void>;
   /** Whether a save is currently pending */
   isPending: boolean;
+  /** Conflict error details (if any) */
+  conflictError: ConflictError | null;
+  /** Clear conflict error */
+  clearConflict: () => void;
+  /** Update version after conflict resolution */
+  setVersion: (newVersion: number) => void;
 }
 
 /**
@@ -74,6 +97,9 @@ export function useDocumentAutoSave({
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [version, setVersion] = useState(initialVersion);
   const [isPending, setIsPending] = useState(false);
+  const [conflictError, setConflictError] = useState<ConflictError | null>(
+    null
+  );
 
   const contentRef = useRef<string>('');
 
@@ -99,6 +125,31 @@ export function useDocumentAutoSave({
           'code' in error &&
           error.code === 'CONFLICT'
         ) {
+          // Extract conflict details from error cause
+          const cause =
+            'cause' in error && typeof error.cause === 'object' && error.cause
+              ? error.cause
+              : {};
+
+          const conflictDetails: ConflictError = {
+            currentVersion:
+              'currentVersion' in cause &&
+              typeof cause.currentVersion === 'number'
+                ? cause.currentVersion
+                : version + 1,
+            expectedVersion:
+              'expectedVersion' in cause &&
+              typeof cause.expectedVersion === 'number'
+                ? cause.expectedVersion
+                : version,
+            currentContent:
+              'currentContent' in cause &&
+              typeof cause.currentContent === 'string'
+                ? cause.currentContent.substring(0, CONTENT_PREVIEW_LENGTH)
+                : undefined,
+          };
+
+          setConflictError(conflictDetails);
           onConflict?.();
         }
 
@@ -109,6 +160,14 @@ export function useDocumentAutoSave({
     },
     [onSave, onConflict, version]
   );
+
+  /**
+   * Clear conflict error.
+   */
+  const clearConflict = useCallback(() => {
+    setConflictError(null);
+    setStatus('idle');
+  }, []);
 
   /**
    * Debounced save function.
@@ -147,5 +206,8 @@ export function useDocumentAutoSave({
     handleContentChange,
     forceSave,
     isPending,
+    conflictError,
+    clearConflict,
+    setVersion,
   };
 }

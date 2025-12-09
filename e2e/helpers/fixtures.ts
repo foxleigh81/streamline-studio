@@ -58,7 +58,7 @@ export const test = base.extend<{
    * Fixture that provides an authenticated API request context
    */
 
-  authenticatedRequest: async ({ page }, use) => {
+  authenticatedRequest: async ({ page, request }, use) => {
     // Create a unique email for this test
     const uniqueEmail = `e2e-api-${Date.now()}@example.com`;
 

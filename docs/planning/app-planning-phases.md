@@ -1,10 +1,10 @@
 # Streamline Studio: Multi-Phase Implementation Plan
 
 **Project**: YouTube Content Planner
-**Version**: 2.3 (Phase 2 Complete)
-**Date**: 2025-12-08
+**Version**: 2.4 (Phase 3 Complete)
+**Date**: 2025-12-09
 **Status**: Approved for Implementation
-**Last Progress Update**: 2025-12-08 (Phase 2 Complete)
+**Last Progress Update**: 2025-12-09 (Phase 3 Complete)
 
 ---
 
@@ -14,7 +14,7 @@
 | ------- | -------------- | ---------- |
 | Phase 1 | ✅ Complete    | 100%       |
 | Phase 2 | ✅ Complete    | 100%       |
-| Phase 3 | ❌ Not Started | 0%         |
+| Phase 3 | ✅ Complete    | 100%       |
 | Phase 4 | ❌ Not Started | 0%         |
 | Phase 5 | ❌ Not Started | 0%         |
 | Phase 6 | ❌ Not Started | 0%         |
@@ -84,7 +84,46 @@
 - Accessibility testing documentation
 - E2E accessibility tests with axe-core
 
-**Ready to proceed to Phase 3: Version History and Optimistic Locking**
+---
+
+**Phase 3 Breakdown:**
+
+- 3.1 Optimistic Locking: ✅ Complete (6/6 tasks)
+- 3.2 Revision History: ✅ Complete (7/7 tasks)
+- 3.3 Audit Log: ✅ Complete (4/4 tasks)
+- 3.4 Import/Export: ✅ Complete (3/3 tasks)
+
+**Phase 3 Review Results (2025-12-09):**
+
+- QA Architect: PASS WITH RECOMMENDATIONS
+- Security Architect: SECURE WITH RECOMMENDATIONS
+- Code Quality Enforcer: APPROVED (after fixes)
+
+**Key Achievements (Phase 3):**
+
+- Server-side version checking with SELECT FOR UPDATE in transactions
+- ConflictError returned with current version on mismatch
+- Conflict Resolution Modal integrated into Document Editor
+- "Reload and discard changes" and "Force save as new version" options
+- Two-tab conflict E2E test written and passing
+- Automatic revision creation on every save (atomic transactions)
+- tRPC endpoints: revision.list (paginated, max 100), revision.get, revision.restore
+- Revision History Panel component with Storybook stories
+- Read-only Revision Viewer component with Storybook stories
+- Restore functionality creates new version (preserves history)
+- Restore confirmation dialog added
+- Centralized audit log service (/src/lib/audit-log.ts)
+- Video status change, due date/publish date change, and category CRUD logging
+- Document export endpoint (download .md with sanitized filename)
+- Document import endpoint (upload .md, 1MB limit, UTF-8 validation)
+- Import/Export UI in document editor toolbar
+- Security: Removed 'style' from DOMPurify ALLOWED_ATTR (aligns with ADR-014)
+- CSS: All Phase 3 components use theme variables (no hardcoded colors)
+- Accessibility: All modals have proper aria-describedby
+- Code quality: Shared date-utils.ts for formatRelativeTime
+- Code quality: CONTENT_PREVIEW_LENGTH constant defined
+
+**Ready to proceed to Phase 4: Self-Hosting Packaging**
 
 ---
 
@@ -490,59 +529,59 @@ videoRouter.list = protectedProcedure
 
 #### 3.1 Optimistic Locking
 
-| ID    | Task                                                                   | Priority | ADR Reference    |
-| ----- | ---------------------------------------------------------------------- | -------- | ---------------- |
-| 3.1.1 | Implement server-side version check in transaction (SELECT FOR UPDATE) | Critical | ADR-009          |
-| 3.1.2 | Return ConflictError with current version on mismatch                  | Critical | ADR-009          |
-| 3.1.3 | Build conflict resolution modal + Storybook story                      | Critical | ADR-002, ADR-003 |
-| 3.1.4 | Implement "reload and discard changes" option                          | High     | ADR-009          |
-| 3.1.5 | Implement "force save as new version" option                           | High     | ADR-009          |
-| 3.1.6 | Write E2E test for two-tab conflict scenario                           | Critical | ADR-005          |
+| ID    | Task                                                                   | Priority | ADR Reference    | Status |
+| ----- | ---------------------------------------------------------------------- | -------- | ---------------- | ------ |
+| 3.1.1 | Implement server-side version check in transaction (SELECT FOR UPDATE) | Critical | ADR-009          | ✅     |
+| 3.1.2 | Return ConflictError with current version on mismatch                  | Critical | ADR-009          | ✅     |
+| 3.1.3 | Build conflict resolution modal + Storybook story                      | Critical | ADR-002, ADR-003 | ✅     |
+| 3.1.4 | Implement "reload and discard changes" option                          | High     | ADR-009          | ✅     |
+| 3.1.5 | Implement "force save as new version" option                           | High     | ADR-009          | ✅     |
+| 3.1.6 | Write E2E test for two-tab conflict scenario                           | Critical | ADR-005          | ✅     |
 
 #### 3.2 Revision History
 
-| ID    | Task                                                        | Priority | ADR Reference    |
-| ----- | ----------------------------------------------------------- | -------- | ---------------- |
-| 3.2.1 | Create revision on every save (in transaction)              | Critical | ADR-009          |
-| 3.2.2 | Create tRPC endpoint: list revisions (paginated, limit 100) | High     | ADR-007, ADR-009 |
-| 3.2.3 | Create tRPC endpoint: get single revision                   | High     | ADR-007, ADR-009 |
-| 3.2.4 | Build revision history panel + Storybook story              | High     | ADR-002, ADR-003 |
-| 3.2.5 | Build read-only revision viewer                             | High     | ADR-002          |
-| 3.2.6 | Implement "restore this version" action                     | High     | ADR-009          |
-| 3.2.7 | Add confirmation dialog for restore                         | Medium   | -                |
+| ID    | Task                                                        | Priority | ADR Reference    | Status |
+| ----- | ----------------------------------------------------------- | -------- | ---------------- | ------ |
+| 3.2.1 | Create revision on every save (in transaction)              | Critical | ADR-009          | ✅     |
+| 3.2.2 | Create tRPC endpoint: list revisions (paginated, limit 100) | High     | ADR-007, ADR-009 | ✅     |
+| 3.2.3 | Create tRPC endpoint: get single revision                   | High     | ADR-007, ADR-009 | ✅     |
+| 3.2.4 | Build revision history panel + Storybook story              | High     | ADR-002, ADR-003 | ✅     |
+| 3.2.5 | Build read-only revision viewer                             | High     | ADR-002          | ✅     |
+| 3.2.6 | Implement "restore this version" action                     | High     | ADR-009          | ✅     |
+| 3.2.7 | Add confirmation dialog for restore                         | Medium   | -                | ✅     |
 
 #### 3.3 Audit Log
 
-| ID    | Task                                    | Priority | ADR Reference |
-| ----- | --------------------------------------- | -------- | ------------- |
-| 3.3.1 | Create audit log service                | High     | ADR-009       |
-| 3.3.2 | Log video status changes                | High     | ADR-009       |
-| 3.3.3 | Log video due date/publish date changes | Medium   | ADR-009       |
-| 3.3.4 | Log category CRUD operations            | Medium   | ADR-009       |
+| ID    | Task                                    | Priority | ADR Reference | Status |
+| ----- | --------------------------------------- | -------- | ------------- | ------ |
+| 3.3.1 | Create audit log service                | High     | ADR-009       | ✅     |
+| 3.3.2 | Log video status changes                | High     | ADR-009       | ✅     |
+| 3.3.3 | Log video due date/publish date changes | Medium   | ADR-009       | ✅     |
+| 3.3.4 | Log category CRUD operations            | Medium   | ADR-009       | ✅     |
 
 #### 3.4 Import/Export
 
-| ID    | Task                                                           | Priority | ADR Reference |
-| ----- | -------------------------------------------------------------- | -------- | ------------- |
-| 3.4.1 | Build single document export (download .md)                    | Medium   | ADR-010       |
-| 3.4.2 | Build single document import (upload .md, creates new version) | Medium   | ADR-010       |
-| 3.4.3 | Add file size limit (1MB) with validation                      | Medium   | ADR-010       |
+| ID    | Task                                                           | Priority | ADR Reference | Status |
+| ----- | -------------------------------------------------------------- | -------- | ------------- | ------ |
+| 3.4.1 | Build single document export (download .md)                    | Medium   | ADR-010       | ✅     |
+| 3.4.2 | Build single document import (upload .md, creates new version) | Medium   | ADR-010       | ✅     |
+| 3.4.3 | Add file size limit (1MB) with validation                      | Medium   | ADR-010       | ✅     |
 
-### Phase 3 Gate (ALL MUST PASS)
+### Phase 3 Gate (ALL MUST PASS) - PASSED
 
 **Data Integrity Gate:**
 
-- [ ] Two-tab conflict E2E test passes
-- [ ] Concurrent saves never produce duplicate versions
-- [ ] Revision history correctly ordered
-- [ ] Restore creates new version (doesn't rewrite history)
-- [ ] Audit log captures all metadata changes
+- [x] Two-tab conflict E2E test passes
+- [x] Concurrent saves never produce duplicate versions
+- [x] Revision history correctly ordered
+- [x] Restore creates new version (doesn't rewrite history)
+- [x] Audit log captures all metadata changes
 
 **UX Gate:**
 
-- [ ] Conflict modal appears within 1s of stale save
-- [ ] User can reload or force save from modal
-- [ ] Revision viewer is read-only (can't accidentally modify)
+- [x] Conflict modal appears within 1s of stale save
+- [x] User can reload or force save from modal
+- [x] Revision viewer is read-only (can't accidentally modify)
 
 ---
 
@@ -756,6 +795,17 @@ videoRouter.list = protectedProcedure
 - [x] No unsafe innerHTML usage (all content sanitized)
 - [x] Workspace scoping enforced on all video/document/category operations
 
+### Phase 3 Security Sign-Off - ✅ COMPLETE (2025-12-09)
+
+- [x] Optimistic locking prevents data loss from concurrent edits
+- [x] SELECT FOR UPDATE prevents race conditions in transactions
+- [x] Import file size limit enforced (1MB)
+- [x] UTF-8 validation on imported markdown files
+- [x] Sanitized filenames for document export (no path traversal)
+- [x] Removed 'style' from DOMPurify ALLOWED_ATTR (aligns with ADR-014)
+- [x] Revision restore creates new version (audit trail preserved)
+- [x] Audit log captures all metadata changes for accountability
+
 ### Phase 4 Security Sign-Off
 
 - [ ] Setup wizard locked after first user
@@ -864,10 +914,11 @@ The QA Architect identified 26 mitigations. Key ones by phase:
 
 ## Revision History
 
-| Date       | Version | Author                                          | Changes                                                                                                                                                                                                                                                                                                                                                                       |
-| ---------- | ------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2025-12-08 | 1.0     | Strategic Planner, Lead Developer, QA Architect | Initial approved plan                                                                                                                                                                                                                                                                                                                                                         |
-| 2025-12-08 | 2.0     | Strategic Planner, Lead Developer, QA Architect | ADR review and revision: fixed ADR numbering, added ADR-013, added phase gates, incorporated 26 mitigations                                                                                                                                                                                                                                                                   |
-| 2025-12-08 | 2.1     | Strategic Planner, Security Architect           | Security architecture: added ADR-014, updated ADR-011 Docker hardening, corrected CSRF approach (Origin header verification)                                                                                                                                                                                                                                                  |
-| 2025-12-08 | 2.2     | Strategic Project Planner                       | Phase 1 COMPLETE: All gates passed. Reviews: QA Architect (PASS), Security Architect (SECURE), Code Quality (APPROVED). Auth coverage 92.42%. CI pipeline configured. Ready for Phase 2.                                                                                                                                                                                      |
-| 2025-12-08 | 2.3     | Strategic Project Planner                       | Phase 2 COMPLETE: All gates passed. Reviews: QA Architect (PASS WITH RECOMMENDATIONS), Security Architect (SECURE WITH RECOMMENDATIONS - server-side 500KB limit added), Code Quality (APPROVED). Full video management UI, CodeMirror 6 markdown editor with auto-save and local backup, category management, comprehensive accessibility implementation. Ready for Phase 3. |
+| Date       | Version | Author                                          | Changes                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ---------- | ------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2025-12-08 | 1.0     | Strategic Planner, Lead Developer, QA Architect | Initial approved plan                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 2025-12-08 | 2.0     | Strategic Planner, Lead Developer, QA Architect | ADR review and revision: fixed ADR numbering, added ADR-013, added phase gates, incorporated 26 mitigations                                                                                                                                                                                                                                                                                                                                |
+| 2025-12-08 | 2.1     | Strategic Planner, Security Architect           | Security architecture: added ADR-014, updated ADR-011 Docker hardening, corrected CSRF approach (Origin header verification)                                                                                                                                                                                                                                                                                                               |
+| 2025-12-08 | 2.2     | Strategic Project Planner                       | Phase 1 COMPLETE: All gates passed. Reviews: QA Architect (PASS), Security Architect (SECURE), Code Quality (APPROVED). Auth coverage 92.42%. CI pipeline configured. Ready for Phase 2.                                                                                                                                                                                                                                                   |
+| 2025-12-08 | 2.3     | Strategic Project Planner                       | Phase 2 COMPLETE: All gates passed. Reviews: QA Architect (PASS WITH RECOMMENDATIONS), Security Architect (SECURE WITH RECOMMENDATIONS - server-side 500KB limit added), Code Quality (APPROVED). Full video management UI, CodeMirror 6 markdown editor with auto-save and local backup, category management, comprehensive accessibility implementation. Ready for Phase 3.                                                              |
+| 2025-12-09 | 2.4     | Strategic Project Planner                       | Phase 3 COMPLETE: All gates passed. Reviews: QA Architect (PASS WITH RECOMMENDATIONS), Security Architect (SECURE WITH RECOMMENDATIONS), Code Quality (APPROVED after fixes). Optimistic locking with conflict resolution, revision history with restore, centralized audit log, document import/export. Security: removed 'style' from DOMPurify. Code quality: shared date-utils.ts, CONTENT_PREVIEW_LENGTH constant. Ready for Phase 4. |

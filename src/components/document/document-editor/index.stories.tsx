@@ -109,6 +109,7 @@ export const Default: Story = {
     initialContent: sampleScript,
     initialVersion: 1,
     onSave: mockSave,
+    onReloadDocument: async () => ({ content: sampleScript, version: 1 }),
     documentType: 'Script',
   },
   play: async ({ canvasElement }) => {
@@ -137,6 +138,7 @@ export const Empty: Story = {
     initialContent: '',
     initialVersion: 1,
     onSave: mockSave,
+    onReloadDocument: async () => ({ content: '', version: 1 }),
     documentType: 'Description',
   },
 };
@@ -150,6 +152,10 @@ export const ReadOnly: Story = {
     initialContent: '# Read-Only Document\n\nThis document cannot be edited.',
     initialVersion: 1,
     onSave: mockSave,
+    onReloadDocument: async () => ({
+      content: '# Read-Only Document\n\nThis document cannot be edited.',
+      version: 1,
+    }),
     documentType: 'Notes',
     readOnly: true,
   },
@@ -183,6 +189,7 @@ In this video, you'll discover:
 #markdown #tutorial #webdevelopment`,
     initialVersion: 1,
     onSave: mockSave,
+    onReloadDocument: async () => ({ content: '', version: 1 }),
     documentType: 'Description',
   },
 };
@@ -217,6 +224,7 @@ export const ThumbnailIdeas: Story = {
 Reason: Most informative, provides value even before clicking`,
     initialVersion: 1,
     onSave: mockSave,
+    onReloadDocument: async () => ({ content: '', version: 1 }),
     documentType: 'Thumbnail Ideas',
   },
 };
@@ -230,6 +238,10 @@ export const EditingAndAutoSave: Story = {
     initialContent: '# Test Document\n\nStart typing...',
     initialVersion: 1,
     onSave: mockSave,
+    onReloadDocument: async () => ({
+      content: '# Test Document\n\nStart typing...',
+      version: 1,
+    }),
     documentType: 'Script',
   },
   play: async ({ canvasElement }) => {
@@ -260,6 +272,10 @@ export const ViewModeSwitching: Story = {
       '# Sample Content\n\nThis is **bold** and this is *italic*.',
     initialVersion: 1,
     onSave: mockSave,
+    onReloadDocument: async () => ({
+      content: '# Sample Content\n\nThis is **bold** and this is *italic*.',
+      version: 1,
+    }),
     documentType: 'Script',
   },
   play: async ({ canvasElement }) => {

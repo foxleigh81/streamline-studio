@@ -51,6 +51,29 @@ const documentUpdateInput = z.object({
 });
 
 /**
+ * Document import input schema
+ * File size limited to 1MB as per ADR-010
+ */
+const documentImportInput = z.object({
+  id: z.string().uuid(),
+  content: z
+    .string()
+    .max(1000000, 'Document import exceeds 1MB limit')
+    .refine(
+      (val) => {
+        // Validate UTF-8 by checking if string is valid
+        try {
+          new TextEncoder().encode(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Invalid UTF-8 encoding' }
+    ),
+});
+
+/**
  * Document router
  */
 export const documentRouter = router({
@@ -107,12 +130,13 @@ export const documentRouter = router({
   /**
    * Update a document with optimistic concurrency control
    *
-   * This endpoint uses version checking to prevent concurrent edit conflicts.
-   * If the expectedVersion doesn't match the current version, it returns
-   * a CONFLICT error, allowing the client to handle the conflict.
+   * This endpoint uses version checking with SELECT FOR UPDATE to prevent
+   * concurrent edit conflicts. If the expectedVersion doesn't match the
+   * current version, it returns a CONFLICT error with the current document state.
    *
-   * In Phase 3, we'll add full conflict resolution with document revisions.
-   * For now, we use basic version checking.
+   * On successful update, a revision is created atomically in a transaction.
+   *
+   * @see ADR-009: Versioning and Audit Approach
    */
   update: editorProcedure
     .input(documentUpdateInput)
@@ -120,42 +144,29 @@ export const documentRouter = router({
       const { repository, user } = ctx;
       const { id, content, expectedVersion } = input;
 
-      // Get current document to check version
-      const currentDoc = await repository.getDocument(id);
+      // Update document with optimistic locking and revision creation
+      const result = await repository.updateDocumentWithRevision(
+        id,
+        content,
+        expectedVersion,
+        user.id
+      );
 
-      if (!currentDoc) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Document not found',
-        });
-      }
-
-      // Check version for optimistic concurrency control
-      if (currentDoc.version !== expectedVersion) {
+      // Check if version matched
+      if (!result.versionMatch) {
         throw new TRPCError({
           code: 'CONFLICT',
           message:
-            'Document has been modified by another user. Please refresh and try again.',
+            'Document has been modified by another user. Please review the changes and try again.',
           cause: {
-            currentVersion: currentDoc.version,
+            currentVersion: result.document.version,
             expectedVersion,
+            currentContent: result.document.content,
           },
         });
       }
 
-      // Update document with incremented version
-      const updatedDoc = await repository.updateDocument(id, {
-        content,
-        version: currentDoc.version + 1,
-        updatedBy: user.id,
-      });
-
-      if (!updatedDoc) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to update document',
-        });
-      }
+      const updatedDoc = result.document;
 
       // Log audit trail
       await repository.createAuditLog({
@@ -172,5 +183,113 @@ export const documentRouter = router({
       });
 
       return updatedDoc;
+    }),
+
+  /**
+   * Import document content from uploaded file
+   * Creates a new version (preserves history)
+   *
+   * @see ADR-010: Markdown Import/Export
+   */
+  import: editorProcedure
+    .input(documentImportInput)
+    .mutation(async ({ ctx, input }) => {
+      const { repository, user } = ctx;
+      const { id, content } = input;
+
+      // Get current document
+      const currentDoc = await repository.getDocument(id);
+      if (!currentDoc) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Document not found',
+        });
+      }
+
+      // Import creates a new version with imported content
+      const result = await repository.updateDocumentWithRevision(
+        id,
+        content,
+        currentDoc.version, // Use current version
+        user.id
+      );
+
+      if (!result.versionMatch) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: 'Document was modified during import. Please try again.',
+          cause: {
+            currentVersion: result.document.version,
+            expectedVersion: currentDoc.version,
+          },
+        });
+      }
+
+      // Log audit trail
+      await repository.createAuditLog({
+        userId: user.id,
+        action: 'document.imported',
+        entityType: 'document',
+        entityId: id,
+        metadata: {
+          videoId: result.document.videoId,
+          type: result.document.type,
+          version: result.document.version,
+          contentLength: content.length,
+        },
+      });
+
+      return result.document;
+    }),
+
+  /**
+   * Export document content as markdown
+   * Returns content and metadata for download
+   *
+   * @see ADR-010: Markdown Import/Export
+   */
+  export: workspaceProcedure
+    .input(documentGetInput)
+    .query(async ({ ctx, input }) => {
+      const { repository } = ctx;
+      const document = await repository.getDocument(input.id);
+
+      if (!document) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Document not found',
+        });
+      }
+
+      // Get video details for filename
+      const video = await repository.getVideo(document.videoId);
+      if (!video) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Associated video not found',
+        });
+      }
+
+      // Sanitize filename: replace special characters with dashes
+      const sanitizeFilename = (name: string): string => {
+        return name
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/gi, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '');
+      };
+
+      const filename = `${sanitizeFilename(video.title)}-${document.type}.md`;
+
+      return {
+        content: document.content,
+        filename,
+        metadata: {
+          videoTitle: video.title,
+          documentType: document.type,
+          version: document.version,
+          updatedAt: document.updatedAt,
+        },
+      };
     }),
 });

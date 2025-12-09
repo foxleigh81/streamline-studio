@@ -4,6 +4,7 @@ import { authRouter } from './routers/auth';
 import { videoRouter } from './routers/video';
 import { categoryRouter } from './routers/category';
 import { documentRouter } from './routers/document';
+import { revisionRouter } from './routers/revision';
 
 /**
  * tRPC Root Router
@@ -68,6 +69,13 @@ export const appRouter = router({
    * @see Phase 2.3
    */
   document: documentRouter,
+
+  /**
+   * Revision router
+   * Handles document revision history operations
+   * @see Phase 3.2
+   */
+  revision: revisionRouter,
 
   // TODO: Phase 1.4 - Add workspaceRouter for workspace management
   // workspace: workspaceRouter,

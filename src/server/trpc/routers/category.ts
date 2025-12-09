@@ -10,6 +10,11 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { router, workspaceProcedure, editorProcedure } from '../trpc';
+import {
+  logCategoryCreated,
+  logCategoryUpdated,
+  logCategoryDeleted,
+} from '@/lib/audit-log';
 
 /**
  * Preset color palette for categories
@@ -115,17 +120,14 @@ export const categoryRouter = router({
 
       const category = await repository.createCategory(input);
 
-      // Log audit trail
-      await repository.createAuditLog({
-        userId: user.id,
-        action: 'category.created',
-        entityType: 'category',
-        entityId: category.id,
-        metadata: {
-          name: category.name,
-          color: category.color,
-        },
-      });
+      // Log audit trail with specific service
+      await logCategoryCreated(
+        repository,
+        category.id,
+        user.id,
+        category.name,
+        category.color
+      );
 
       return category;
     }),
@@ -139,6 +141,15 @@ export const categoryRouter = router({
       const { repository, user } = ctx;
       const { id, ...updateData } = input;
 
+      // Get current category for audit logging
+      const currentCategory = await repository.getCategory(id);
+      if (!currentCategory) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Category not found',
+        });
+      }
+
       const category = await repository.updateCategory(id, updateData);
 
       if (!category) {
@@ -148,14 +159,16 @@ export const categoryRouter = router({
         });
       }
 
-      // Log audit trail
-      await repository.createAuditLog({
-        userId: user.id,
-        action: 'category.updated',
-        entityType: 'category',
-        entityId: id,
-        metadata: updateData,
-      });
+      // Log audit trail with specific service
+      await logCategoryUpdated(
+        repository,
+        id,
+        user.id,
+        currentCategory.name,
+        updateData.name,
+        currentCategory.color,
+        updateData.color
+      );
 
       return category;
     }),
@@ -192,17 +205,8 @@ export const categoryRouter = router({
         });
       }
 
-      // Log audit trail
-      await repository.createAuditLog({
-        userId: user.id,
-        action: 'category.deleted',
-        entityType: 'category',
-        entityId: input.id,
-        metadata: {
-          name: category.name,
-          color: category.color,
-        },
-      });
+      // Log audit trail with specific service
+      await logCategoryDeleted(repository, input.id, user.id, category.name);
 
       return { success: true };
     }),

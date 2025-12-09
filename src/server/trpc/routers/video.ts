@@ -12,6 +12,11 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { router, workspaceProcedure, editorProcedure } from '../trpc';
 import type { VideoStatus, DocumentType } from '@/server/db/schema';
+import {
+  logVideoStatusChange,
+  logVideoDueDateChange,
+  logVideoPublishDateChange,
+} from '@/lib/audit-log';
 
 /**
  * Video status enum values for validation
@@ -203,12 +208,22 @@ export const videoRouter = router({
 
   /**
    * Update a video
+   * Logs metadata changes (status, due date, publish date) to audit log
    */
   update: editorProcedure
     .input(videoUpdateInput)
     .mutation(async ({ ctx, input }) => {
       const { repository, user } = ctx;
       const { id, categoryIds, ...updateData } = input;
+
+      // Get current video state for audit logging
+      const currentVideo = await repository.getVideo(id);
+      if (!currentVideo) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Video not found',
+        });
+      }
 
       // Update the video
       const video = await repository.updateVideo(id, updateData);
@@ -225,7 +240,47 @@ export const videoRouter = router({
         await repository.setVideoCategories(id, categoryIds);
       }
 
-      // Log audit trail
+      // Log specific metadata changes to audit log
+      if (
+        updateData.status !== undefined &&
+        updateData.status !== currentVideo.status
+      ) {
+        await logVideoStatusChange(
+          repository,
+          id,
+          user.id,
+          currentVideo.status,
+          updateData.status
+        );
+      }
+
+      if (
+        updateData.dueDate !== undefined &&
+        updateData.dueDate !== currentVideo.dueDate
+      ) {
+        await logVideoDueDateChange(
+          repository,
+          id,
+          user.id,
+          currentVideo.dueDate,
+          updateData.dueDate
+        );
+      }
+
+      if (
+        updateData.publishDate !== undefined &&
+        updateData.publishDate !== currentVideo.publishDate
+      ) {
+        await logVideoPublishDateChange(
+          repository,
+          id,
+          user.id,
+          currentVideo.publishDate,
+          updateData.publishDate
+        );
+      }
+
+      // Log general audit trail
       await repository.createAuditLog({
         userId: user.id,
         action: 'video.updated',

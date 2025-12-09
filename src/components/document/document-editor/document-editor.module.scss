@@ -137,6 +137,40 @@
   color: var(--color-foreground);
 }
 
+.importExportActions {
+  display: flex;
+  gap: var(--spacing-2);
+  margin-left: var(--spacing-3);
+}
+
+.toolbarButton {
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-in-out),
+    border-color var(--duration-fast) var(--ease-in-out);
+
+  &:hover:not(:disabled) {
+    background: var(--color-muted);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
 // =============================================================================
 // VIEW MODE TOGGLE
 // =============================================================================

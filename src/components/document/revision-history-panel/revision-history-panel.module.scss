@@ -1,0 +1,134 @@
+/**
+ * RevisionHistoryPanel Component Styles
+ *
+ * Displays a list of document revisions in a side panel.
+ */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-background);
+  border-left: var(--border-width-thin) solid var(--color-border);
+}
+
+.header {
+  padding: var(--spacing-4);
+  border-bottom: var(--border-width-thin) solid var(--color-border);
+}
+
+.title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-foreground);
+  margin: 0 0 var(--spacing-1) 0;
+}
+
+.subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted-foreground);
+  margin: 0;
+}
+
+.loading,
+.empty {
+  padding: var(--spacing-8) var(--spacing-4);
+  text-align: center;
+  color: var(--color-muted-foreground);
+
+  p {
+    margin: 0 0 var(--spacing-2) 0;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.emptyHint {
+  font-size: var(--font-size-xs);
+  color: var(--color-foreground-subtle);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.item {
+  padding: var(--spacing-4);
+  border-bottom: var(--border-width-thin) solid var(--color-border);
+  transition: background-color var(--duration-normal) var(--ease-in-out);
+
+  &:hover {
+    background: var(--color-muted);
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.itemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-2);
+}
+
+.versionInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.versionBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-foreground);
+}
+
+.currentLabel {
+  font-size: 0.625rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-success);
+  background: var(--color-accent);
+  padding: var(--spacing-0-5) var(--spacing-2);
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.timestamp {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted-foreground);
+}
+
+.author {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted-foreground);
+  margin: 0 0 var(--spacing-2) 0;
+}
+
+.preview {
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+  color: var(--color-foreground);
+  margin: 0 0 var(--spacing-3) 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.actions {
+  display: flex;
+  gap: var(--spacing-2);
+}

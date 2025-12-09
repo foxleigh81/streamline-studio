@@ -15,6 +15,7 @@ import {
   categories,
   videoCategories,
   auditLog,
+  documentRevisions,
   type Video,
   type NewVideo,
   type Document,
@@ -25,6 +26,7 @@ import {
   type DocumentType,
   type AuditLogEntry,
   type NewAuditLogEntry,
+  type DocumentRevision,
 } from '@/server/db/schema';
 import type * as schema from '@/server/db/schema';
 
@@ -662,6 +664,218 @@ export class WorkspaceRepository {
       )
       .orderBy(desc(auditLog.createdAt))
       .limit(limit);
+  }
+
+  // ===========================================================================
+  // DOCUMENT REVISIONS
+  // ===========================================================================
+
+  /**
+   * Update document with optimistic locking and revision creation
+   * Uses SELECT FOR UPDATE to prevent race conditions
+   *
+   * @param id - Document ID
+   * @param content - New content
+   * @param expectedVersion - Expected current version
+   * @param userId - User making the update
+   * @returns Updated document or null if version mismatch
+   * @throws Error if document not found or belongs to different workspace
+   * @see ADR-009: Versioning and Audit Approach
+   */
+  async updateDocumentWithRevision(
+    id: string,
+    content: string,
+    expectedVersion: number,
+    userId: string
+  ): Promise<{ document: Document; versionMatch: boolean }> {
+    // First verify the document belongs to a video in this workspace
+    const existingDoc = await this.getDocument(id);
+    if (!existingDoc) {
+      throw new Error('Document not found or access denied');
+    }
+
+    // Use a transaction with SELECT FOR UPDATE
+    return await this.db.transaction(async (tx) => {
+      // Lock the row and get current state
+      const [current] = await tx
+        .select()
+        .from(documents)
+        .where(eq(documents.id, id))
+        .for('update');
+
+      if (!current) {
+        throw new Error('Document not found');
+      }
+
+      // Check version for optimistic concurrency control
+      if (current.version !== expectedVersion) {
+        // Return current document without updating
+        return {
+          document: current,
+          versionMatch: false,
+        };
+      }
+
+      // Create revision of current content (before update)
+      await tx.insert(documentRevisions).values({
+        documentId: id,
+        content: current.content,
+        version: current.version,
+        createdBy: current.updatedBy ?? userId,
+      });
+
+      // Update document with new content and incremented version
+      const [updated] = await tx
+        .update(documents)
+        .set({
+          content,
+          version: current.version + 1,
+          updatedBy: userId,
+          updatedAt: new Date(),
+        })
+        .where(eq(documents.id, id))
+        .returning();
+
+      if (!updated) {
+        throw new Error('Failed to update document');
+      }
+
+      return {
+        document: updated,
+        versionMatch: true,
+      };
+    });
+  }
+
+  /**
+   * Get revisions for a document
+   * Returns revisions ordered by version descending (newest first)
+   *
+   * @param documentId - Document ID
+   * @param options - Pagination options
+   */
+  async getDocumentRevisions(
+    documentId: string,
+    options?: PaginationOptions
+  ): Promise<DocumentRevision[]> {
+    // First verify the document belongs to a video in this workspace
+    const document = await this.getDocument(documentId);
+    if (!document) {
+      return [];
+    }
+
+    const limit = Math.min(options?.limit ?? 100, 100); // Max 100 revisions per page
+
+    return this.db
+      .select()
+      .from(documentRevisions)
+      .where(eq(documentRevisions.documentId, documentId))
+      .orderBy(desc(documentRevisions.createdAt))
+      .limit(limit);
+  }
+
+  /**
+   * Get a single revision by ID
+   *
+   * @param revisionId - Revision ID
+   */
+  async getDocumentRevision(
+    revisionId: string
+  ): Promise<DocumentRevision | null> {
+    const result = await this.db
+      .select({
+        id: documentRevisions.id,
+        documentId: documentRevisions.documentId,
+        content: documentRevisions.content,
+        version: documentRevisions.version,
+        createdAt: documentRevisions.createdAt,
+        createdBy: documentRevisions.createdBy,
+      })
+      .from(documentRevisions)
+      .innerJoin(documents, eq(documentRevisions.documentId, documents.id))
+      .innerJoin(videos, eq(documents.videoId, videos.id))
+      .where(
+        and(
+          eq(documentRevisions.id, revisionId),
+          eq(videos.workspaceId, this.workspaceId)
+        )
+      )
+      .limit(1);
+
+    return result[0] ?? null;
+  }
+
+  /**
+   * Restore a revision (creates a new version with old content)
+   * Does not rewrite history - appends to version history
+   *
+   * @param documentId - Document ID
+   * @param revisionId - Revision ID to restore
+   * @param userId - User performing the restore
+   * @returns Updated document with restored content as new version
+   * @see ADR-009: Versioning and Audit Approach
+   */
+  async restoreDocumentRevision(
+    documentId: string,
+    revisionId: string,
+    userId: string
+  ): Promise<Document> {
+    // Verify the document belongs to this workspace
+    const document = await this.getDocument(documentId);
+    if (!document) {
+      throw new Error('Document not found or access denied');
+    }
+
+    // Get the revision
+    const revision = await this.getDocumentRevision(revisionId);
+    if (!revision) {
+      throw new Error('Revision not found or access denied');
+    }
+
+    // Verify the revision belongs to this document
+    if (revision.documentId !== documentId) {
+      throw new Error('Revision does not belong to this document');
+    }
+
+    // Use a transaction to create revision of current state and update
+    return await this.db.transaction(async (tx) => {
+      // Get current document state
+      const [current] = await tx
+        .select()
+        .from(documents)
+        .where(eq(documents.id, documentId))
+        .for('update');
+
+      if (!current) {
+        throw new Error('Document not found');
+      }
+
+      // Create revision of current content
+      await tx.insert(documentRevisions).values({
+        documentId,
+        content: current.content,
+        version: current.version,
+        createdBy: current.updatedBy ?? userId,
+      });
+
+      // Update document with restored content as new version
+      const [restored] = await tx
+        .update(documents)
+        .set({
+          content: revision.content,
+          version: current.version + 1,
+          updatedBy: userId,
+          updatedAt: new Date(),
+        })
+        .where(eq(documents.id, documentId))
+        .returning();
+
+      if (!restored) {
+        throw new Error('Failed to restore document');
+      }
+
+      return restored;
+    });
   }
 }
 

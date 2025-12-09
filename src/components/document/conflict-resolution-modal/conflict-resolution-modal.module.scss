@@ -1,0 +1,200 @@
+/**
+ * ConflictResolutionModal Component Styles
+ *
+ * Uses CSS custom properties from the theme system.
+ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--color-overlay);
+  z-index: var(--z-modal-backdrop);
+  animation: fadeIn var(--duration-moderate) var(--ease-in);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay {
+    animation: none;
+  }
+}
+
+.content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 600px;
+  width: 90%;
+  padding: var(--spacing-6);
+  background: var(--color-background);
+  border: var(--border-width-thin) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: var(--z-modal);
+  animation: slideIn var(--duration-moderate) var(--ease-out);
+
+  &:focus-visible {
+    outline: var(--border-width-medium) solid var(--color-ring);
+    outline-offset: var(--spacing-0-5);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content {
+    animation: none;
+  }
+}
+
+.title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-foreground);
+  margin: 0 0 var(--spacing-4) 0;
+}
+
+.description {
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  color: var(--color-muted-foreground);
+  margin: 0 0 var(--spacing-6) 0;
+
+  p {
+    margin: 0 0 var(--spacing-4) 0;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  strong {
+    color: var(--color-foreground);
+    font-weight: var(--font-weight-semibold);
+  }
+}
+
+.preview {
+  margin: var(--spacing-4) 0;
+  padding: var(--spacing-3);
+  background: var(--color-muted);
+  border: var(--border-width-thin) solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.previewLabel {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  margin: 0 0 var(--spacing-2) 0;
+}
+
+.previewContent {
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  color: var(--color-foreground);
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.warning {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-foreground);
+  margin-top: var(--spacing-4);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-4);
+}
+
+.reloadButton,
+.saveButton {
+  flex-shrink: 0;
+}
+
+.buttonIcon {
+  display: inline-flex;
+  margin-right: var(--spacing-2);
+}
+
+.outcomes {
+  padding: var(--spacing-4);
+  background: var(--color-muted);
+  border: var(--border-width-thin) solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  color: var(--color-muted-foreground);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.outcome {
+  strong {
+    color: var(--color-foreground);
+    font-weight: var(--font-weight-semibold);
+    display: block;
+    margin-bottom: var(--spacing-1);
+  }
+}
+
+.closeButton {
+  position: absolute;
+  top: var(--spacing-4);
+  right: var(--spacing-4);
+  width: var(--spacing-8);
+  height: var(--spacing-8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-2xl);
+  line-height: var(--line-height-none);
+  color: var(--color-muted-foreground);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-normal) var(--ease-in-out),
+    color var(--duration-normal) var(--ease-in-out);
+
+  &:hover:not(:disabled) {
+    background: var(--color-muted);
+    color: var(--color-foreground);
+  }
+
+  &:focus-visible {
+    outline: var(--border-width-medium) solid var(--color-ring);
+    outline-offset: var(--spacing-0-5);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

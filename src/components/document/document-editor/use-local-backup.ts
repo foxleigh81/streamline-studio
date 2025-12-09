@@ -22,6 +22,8 @@ export interface LocalBackupResult {
   hasBackup: boolean;
   /** The backup content (if any) */
   backupContent: string | null;
+  /** The backup timestamp (if any) */
+  backupTimestamp: Date | null;
   /** Save content to local storage */
   saveBackup: (content: string) => void;
   /** Restore backup content */
@@ -40,6 +42,16 @@ export interface LocalBackupResult {
  */
 function getBackupKey(documentId: string): string {
   return `doc-backup-${documentId}`;
+}
+
+/**
+ * Generates a localStorage key for a document backup timestamp.
+ *
+ * @param documentId - The document ID
+ * @returns The localStorage key for timestamp
+ */
+function getBackupTimestampKey(documentId: string): string {
+  return `doc-backup-timestamp-${documentId}`;
 }
 
 /**
@@ -84,8 +96,10 @@ export function useLocalBackup({
 }: LocalBackupConfig): LocalBackupResult {
   const [hasBackup, setHasBackup] = useState(false);
   const [backupContent, setBackupContent] = useState<string | null>(null);
+  const [backupTimestamp, setBackupTimestamp] = useState<Date | null>(null);
 
   const backupKey = getBackupKey(documentId);
+  const backupTimestampKey = getBackupTimestampKey(documentId);
 
   /**
    * Check for existing backup on mount.
@@ -95,14 +109,18 @@ export function useLocalBackup({
 
     try {
       const backup = localStorage.getItem(backupKey);
+      const timestampStr = localStorage.getItem(backupTimestampKey);
       if (backup && backup !== initialContent) {
         setHasBackup(true);
         setBackupContent(backup);
+        if (timestampStr) {
+          setBackupTimestamp(new Date(timestampStr));
+        }
       }
     } catch (error) {
       console.error('Failed to check for backup:', error);
     }
-  }, [backupKey, initialContent]);
+  }, [backupKey, backupTimestampKey, initialContent]);
 
   /**
    * Save content to localStorage.
@@ -121,13 +139,15 @@ export function useLocalBackup({
           return;
         }
 
+        const timestamp = new Date().toISOString();
         localStorage.setItem(backupKey, content);
+        localStorage.setItem(backupTimestampKey, timestamp);
       } catch (error) {
         // localStorage quota exceeded or other error
         console.error('Failed to save backup:', error);
       }
     },
-    [backupKey]
+    [backupKey, backupTimestampKey]
   );
 
   /**
@@ -138,6 +158,7 @@ export function useLocalBackup({
       onRestore?.(backupContent);
       setHasBackup(false);
       setBackupContent(null);
+      setBackupTimestamp(null);
     }
   }, [backupContent, onRestore]);
 
@@ -149,12 +170,14 @@ export function useLocalBackup({
 
     try {
       localStorage.removeItem(backupKey);
+      localStorage.removeItem(backupTimestampKey);
       setHasBackup(false);
       setBackupContent(null);
+      setBackupTimestamp(null);
     } catch (error) {
       console.error('Failed to clear backup:', error);
     }
-  }, [backupKey]);
+  }, [backupKey, backupTimestampKey]);
 
   /**
    * Dismiss the backup without restoring.
@@ -162,12 +185,14 @@ export function useLocalBackup({
   const dismissBackup = useCallback(() => {
     setHasBackup(false);
     setBackupContent(null);
+    setBackupTimestamp(null);
     // Don't clear from localStorage in case user changes their mind
   }, []);
 
   return {
     hasBackup,
     backupContent,
+    backupTimestamp,
     saveBackup,
     restoreBackup,
     clearBackup,
