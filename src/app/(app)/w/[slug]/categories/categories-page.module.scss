@@ -126,7 +126,7 @@
   transition: box-shadow var(--duration-fast) var(--ease-in-out);
 
   &:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-sm);
   }
 }
 
@@ -215,7 +215,7 @@
   padding: var(--spacing-6);
   background: var(--color-card);
   border-radius: var(--radius-lg);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-lg);
 }
 
 .modalTitle {

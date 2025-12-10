@@ -133,6 +133,38 @@ export const workspaceUsers = pgTable(
 );
 
 /**
+ * Invitations table
+ * Stores pending workspace invitations
+ * @see Phase 5.2: Team Management
+ */
+export const invitations = pgTable(
+  'invitations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    email: text('email').notNull(),
+    role: workspaceRoleEnum('role').notNull().default('editor'),
+    token: text('token').notNull().unique(), // 256-bit token as hex (64 chars)
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    attempts: integer('attempts').notNull().default(0),
+    createdBy: uuid('created_by')
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+  },
+  (table) => [
+    index('idx_invitations_workspace').on(table.workspaceId),
+    index('idx_invitations_email').on(table.email),
+    index('idx_invitations_token').on(table.token),
+  ]
+);
+
+/**
  * Sessions table
  * Stores user sessions for Lucia Auth
  */
@@ -304,11 +336,13 @@ export const workspacesRelations = relations(workspaces, ({ many }) => ({
   videos: many(videos),
   categories: many(categories),
   auditLogs: many(auditLog),
+  invitations: many(invitations),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
   workspaceUsers: many(workspaceUsers),
   sessions: many(sessions),
+  invitationsCreated: many(invitations),
 }));
 
 export const workspaceUsersRelations = relations(workspaceUsers, ({ one }) => ({
@@ -390,6 +424,17 @@ export const documentRevisionsRelations = relations(
   })
 );
 
+export const invitationsRelations = relations(invitations, ({ one }) => ({
+  workspace: one(workspaces, {
+    fields: [invitations.workspaceId],
+    references: [workspaces.id],
+  }),
+  creator: one(users, {
+    fields: [invitations.createdBy],
+    references: [users.id],
+  }),
+}));
+
 // =============================================================================
 // TYPE EXPORTS
 // =============================================================================
@@ -428,3 +473,6 @@ export type DocumentType = (typeof documentTypeEnum.enumValues)[number];
 
 export type VideoCategory = typeof videoCategories.$inferSelect;
 export type NewVideoCategory = typeof videoCategories.$inferInsert;
+
+export type Invitation = typeof invitations.$inferSelect;
+export type NewInvitation = typeof invitations.$inferInsert;

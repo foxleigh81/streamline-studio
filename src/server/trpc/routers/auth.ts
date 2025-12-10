@@ -58,6 +58,11 @@ const registerInputSchema = z.object({
     .min(1, 'Name is required')
     .max(100, 'Name too long')
     .optional(),
+  workspaceName: z
+    .string()
+    .min(1, 'Workspace name is required')
+    .max(100, 'Workspace name too long')
+    .optional(), // Required in multi-tenant, optional in single-tenant
 });
 
 /**
@@ -92,7 +97,7 @@ export const authRouter = router({
   register: publicProcedure
     .input(registerInputSchema)
     .mutation(async ({ ctx, input }): Promise<AuthResponse> => {
-      const { email, password, name } = input;
+      const { email, password, name, workspaceName } = input;
       const clientIp = getClientIp(ctx.headers);
 
       // Rate limit check
@@ -107,6 +112,18 @@ export const authRouter = router({
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: passwordValidation.errors[0] ?? 'Invalid password',
+        });
+      }
+
+      // Determine mode
+      const isSingleTenant = serverEnv.MODE === 'single-tenant';
+      const isMultiTenant = serverEnv.MODE === 'multi-tenant';
+
+      // In multi-tenant mode, workspace name is required
+      if (isMultiTenant && !workspaceName) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Workspace name is required in multi-tenant mode',
         });
       }
 
@@ -130,9 +147,9 @@ export const authRouter = router({
       // Hash password
       const passwordHash = await hashPassword(password);
 
-      // Determine if this is single-tenant mode and first user
-      const isSingleTenant = serverEnv.MODE === 'single-tenant';
+      // Determine workspace creation strategy
       let needsDefaultWorkspace = false;
+      let createNewWorkspace = isMultiTenant; // Always create in multi-tenant
 
       if (isSingleTenant) {
         // Check if any workspace exists (indicates this is the first user)
@@ -141,6 +158,7 @@ export const authRouter = router({
           .from(workspaces)
           .limit(1);
         needsDefaultWorkspace = existingWorkspaces.length === 0;
+        createNewWorkspace = needsDefaultWorkspace;
       }
 
       // Use transaction to create user and optionally workspace atomically
@@ -165,14 +183,38 @@ export const authRouter = router({
 
         let workspace = null;
 
-        // In single-tenant mode, create default workspace on first registration
-        if (needsDefaultWorkspace) {
+        // Create workspace if needed
+        if (createNewWorkspace) {
+          // Generate slug from workspace name
+          const slug = isMultiTenant
+            ? workspaceName!
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-|-$/g, '')
+            : 'default';
+
+          // In multi-tenant, ensure slug is unique
+          if (isMultiTenant) {
+            const existingWorkspace = await tx
+              .select({ id: workspaces.id })
+              .from(workspaces)
+              .where(eq(workspaces.slug, slug))
+              .limit(1);
+
+            if (existingWorkspace.length > 0) {
+              throw new TRPCError({
+                code: 'BAD_REQUEST',
+                message: `Workspace name "${workspaceName}" is already taken. Please choose a different name.`,
+              });
+            }
+          }
+
           const workspaceResult = await tx
             .insert(workspaces)
             .values({
-              name: 'My Workspace',
-              slug: 'default',
-              mode: 'single-tenant',
+              name: workspaceName ?? 'My Workspace',
+              slug,
+              mode: isMultiTenant ? 'multi-tenant' : 'single-tenant',
             })
             .returning();
 

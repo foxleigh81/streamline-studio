@@ -34,6 +34,9 @@
 .sidebarHeader {
   padding: var(--spacing-6) var(--spacing-4);
   border-bottom: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
 }
 
 .logo {
@@ -55,6 +58,10 @@
       border-radius: var(--radius-sm);
     }
   }
+}
+
+.workspaceSwitcherContainer {
+  width: 100%;
 }
 
 /* Navigation */

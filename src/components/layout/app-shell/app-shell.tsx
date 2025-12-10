@@ -1,9 +1,11 @@
 'use client';
 
-import { type ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SkipLink } from '@/components/ui/skip-link';
+import { WorkspaceSwitcher } from '@/components/workspace/workspace-switcher';
+import { CreateWorkspaceModal } from '@/components/workspace/create-workspace-modal';
 import styles from './app-shell.module.scss';
 
 /**
@@ -39,6 +41,12 @@ const navigationItems = [
     ariaLabel: 'Navigate to categories page',
   },
   {
+    name: 'Team',
+    href: '/team',
+    icon: 'team',
+    ariaLabel: 'Navigate to team page',
+  },
+  {
     name: 'Settings',
     href: '/settings',
     icon: 'settings',
@@ -55,6 +63,7 @@ export function AppShell({
   className,
 }: AppShellProps) {
   const pathname = usePathname();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   /**
    * Check if a navigation item is active
@@ -82,6 +91,12 @@ export function AppShell({
           <h1 className={styles.logo}>
             <Link href={buildLink('/videos')}>Streamline Studio</Link>
           </h1>
+          <div className={styles.workspaceSwitcherContainer}>
+            <WorkspaceSwitcher
+              workspaceSlug={workspaceSlug}
+              onCreateWorkspace={() => setIsCreateModalOpen(true)}
+            />
+          </div>
         </div>
 
         <nav className={styles.nav} aria-label="Primary navigation">
@@ -97,6 +112,7 @@ export function AppShell({
                   <span className={styles.navIcon} aria-hidden="true">
                     {item.icon === 'video' && '🎥'}
                     {item.icon === 'tag' && '🏷️'}
+                    {item.icon === 'team' && '👥'}
                     {item.icon === 'settings' && '⚙️'}
                   </span>
                   <span className={styles.navText}>{item.name}</span>
@@ -120,6 +136,12 @@ export function AppShell({
       <main id="main-content" className={styles.main} tabIndex={-1}>
         {children}
       </main>
+
+      {/* Create Workspace Modal */}
+      <CreateWorkspaceModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
     </div>
   );
 }

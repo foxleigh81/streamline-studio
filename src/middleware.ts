@@ -13,6 +13,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { isSetupCompleteSync } from '@/lib/setup';
+import { serverEnv } from '@/lib/env';
 
 /**
  * Verifies that the request Origin matches the Host
@@ -69,21 +70,35 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith('/favicon.ico') ||
     pathname.includes('.');
 
-  // Check if setup is complete (only for non-exempt paths)
-  if (!isSetupPath && !isHealthCheck && !isSetupApiCall && !isStaticFile) {
-    const setupComplete = isSetupCompleteSync();
+  // In multi-tenant mode, skip setup wizard entirely
+  const isMultiTenant = serverEnv.MODE === 'multi-tenant';
 
-    if (!setupComplete) {
-      // Redirect to setup wizard
-      console.log('[Middleware] Setup not complete, redirecting to /setup');
-      return NextResponse.redirect(new URL('/setup', request.url));
+  if (!isMultiTenant) {
+    // Single-tenant mode: enforce setup wizard
+    // Check if setup is complete (only for non-exempt paths)
+    if (!isSetupPath && !isHealthCheck && !isSetupApiCall && !isStaticFile) {
+      const setupComplete = isSetupCompleteSync();
+
+      if (!setupComplete) {
+        // Redirect to setup wizard
+        console.warn('[Middleware] Setup not complete, redirecting to /setup');
+        return NextResponse.redirect(new URL('/setup', request.url));
+      }
     }
-  }
 
-  // If on setup page but setup is complete, redirect to home
-  if (isSetupPath && isSetupCompleteSync()) {
-    console.log('[Middleware] Setup already complete, redirecting to home');
-    return NextResponse.redirect(new URL('/', request.url));
+    // If on setup page but setup is complete, redirect to home
+    if (isSetupPath && isSetupCompleteSync()) {
+      console.warn('[Middleware] Setup already complete, redirecting to home');
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+  } else {
+    // Multi-tenant mode: setup wizard is disabled
+    if (isSetupPath) {
+      console.warn(
+        '[Middleware] Setup wizard disabled in multi-tenant mode, redirecting to home'
+      );
+      return NextResponse.redirect(new URL('/', request.url));
+    }
   }
 
   // Allow GET, HEAD, OPTIONS without CSRF check

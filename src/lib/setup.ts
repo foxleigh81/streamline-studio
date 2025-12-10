@@ -74,7 +74,7 @@ export async function markSetupComplete(): Promise<void> {
       'utf-8'
     );
 
-    console.log('[Setup] Setup marked as complete');
+    console.warn('[Setup] Setup marked as complete');
   } catch (error) {
     console.error('[Setup] Error marking setup as complete:', error);
     throw new Error('Failed to persist setup completion');

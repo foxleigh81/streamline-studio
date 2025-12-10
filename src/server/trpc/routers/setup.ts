@@ -210,7 +210,7 @@ export const setupRouter = router({
       const cookie = createSessionCookie(sessionToken);
       ctx.headers.set('Set-Cookie', cookie);
 
-      console.log('[Setup] Initial setup completed successfully', {
+      console.warn('[Setup] Initial setup completed successfully', {
         userId: newUser.id,
         workspaceId: newWorkspace.id,
       });

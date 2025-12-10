@@ -6,6 +6,9 @@ import { videoRouter } from './routers/video';
 import { categoryRouter } from './routers/category';
 import { documentRouter } from './routers/document';
 import { revisionRouter } from './routers/revision';
+import { invitationRouter } from './routers/invitation';
+import { teamRouter } from './routers/team';
+import { workspaceRouter } from './routers/workspace';
 
 /**
  * tRPC Root Router
@@ -85,8 +88,26 @@ export const appRouter = router({
    */
   revision: revisionRouter,
 
-  // TODO: Phase 1.4 - Add workspaceRouter for workspace management
-  // workspace: workspaceRouter,
+  /**
+   * Invitation router
+   * Handles workspace invitation operations
+   * @see Phase 5.2
+   */
+  invitation: invitationRouter,
+
+  /**
+   * Team router
+   * Handles workspace team member management
+   * @see Phase 5.2
+   */
+  team: teamRouter,
+
+  /**
+   * Workspace router
+   * Handles workspace listing and creation
+   * @see Phase 5.3
+   */
+  workspace: workspaceRouter,
 });
 
 // Export type for client-side usage

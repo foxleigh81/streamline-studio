@@ -25,8 +25,18 @@ const serverEnvSchema = z.object({
     .string()
     .min(32, 'SESSION_SECRET must be at least 32 characters'),
 
-  // Mode
+  // Mode (default: single-tenant for self-hosted)
   MODE: z.enum(['single-tenant', 'multi-tenant']).default('single-tenant'),
+
+  // SMTP configuration (required for multi-tenant invitation emails)
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z
+    .string()
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASSWORD: z.string().optional(),
+  SMTP_FROM: z.string().email().optional(),
 
   // Proxy settings
   TRUSTED_PROXY: z

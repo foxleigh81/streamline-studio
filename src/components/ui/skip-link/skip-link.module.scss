@@ -18,7 +18,7 @@
   font-weight: var(--font-weight-medium);
   text-decoration: none;
   border-radius: var(--radius-md);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-md);
   transition:
     top var(--duration-fast) var(--ease-in-out),
     transform var(--duration-fast) var(--ease-in-out);
