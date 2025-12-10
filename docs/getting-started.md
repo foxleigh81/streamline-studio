@@ -279,15 +279,32 @@ In multi-tenant mode, users must create or be invited to workspaces:
 
 ### Environment Variables Reference
 
-| Variable            | Required | Default         | Description                               |
-| ------------------- | -------- | --------------- | ----------------------------------------- |
-| `DATABASE_URL`      | Yes      | -               | PostgreSQL connection string              |
-| `SESSION_SECRET`    | Yes      | -               | Secret for session encryption (32+ chars) |
-| `POSTGRES_PASSWORD` | Yes\*    | -               | PostgreSQL password (\*Docker only)       |
-| `MODE`              | No       | `single-tenant` | Deployment mode                           |
-| `TRUSTED_PROXY`     | No       | `false`         | Enable when behind reverse proxy          |
-| `PORT`              | No       | `3000`          | HTTP port                                 |
-| `DATA_DIR`          | No       | `/data`         | Directory for setup flag file             |
+#### Required Variables
+
+| Variable            | Required | Default | Description                               |
+| ------------------- | -------- | ------- | ----------------------------------------- |
+| `DATABASE_URL`      | Yes      | -       | PostgreSQL connection string              |
+| `SESSION_SECRET`    | Yes      | -       | Secret for session encryption (32+ chars) |
+| `POSTGRES_PASSWORD` | Yes\*    | -       | PostgreSQL password (\*Docker only)       |
+
+#### Optional Variables
+
+| Variable        | Default         | Description                      |
+| --------------- | --------------- | -------------------------------- |
+| `MODE`          | `single-tenant` | Deployment mode                  |
+| `TRUSTED_PROXY` | `false`         | Enable when behind reverse proxy |
+| `PORT`          | `3000`          | HTTP port                        |
+| `DATA_DIR`      | `/data`         | Directory for setup flag file    |
+
+#### SMTP Variables (Required for multi-tenant invitations)
+
+| Variable        | Description             |
+| --------------- | ----------------------- |
+| `SMTP_HOST`     | SMTP server hostname    |
+| `SMTP_PORT`     | SMTP port (usually 587) |
+| `SMTP_USER`     | SMTP username           |
+| `SMTP_PASSWORD` | SMTP password           |
+| `SMTP_FROM`     | From email address      |
 
 ### Security Configuration
 

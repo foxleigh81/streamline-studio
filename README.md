@@ -7,9 +7,11 @@ A self-hostable web application for YouTubers to plan and manage video content. 
 - **Video Planning**: Organize videos from idea to publication with status tracking
 - **Document Management**: Scripts, descriptions, notes, and thumbnail ideas per video
 - **Category System**: Flexible tagging with custom colours
-- **Version History**: Full revision history with optimistic locking (Phase 3)
+- **Version History**: Full revision history with optimistic locking
+- **Team Management**: Invite team members with role-based access (Owner, Admin, Member)
 - **Multi-tenancy**: Single-tenant (self-hosted) or multi-tenant (SaaS) modes
 - **Self-Hostable**: Single `docker-compose up` to deploy
+- **YouTube Integration**: Connect your channel and sync videos _(coming in Phase 6)_
 
 ## Tech Stack
 
@@ -94,27 +96,31 @@ The setup wizard will guide you through creating your admin account and workspac
 streamline-studio/
 ├── src/
 │   ├── app/                 # Next.js App Router pages
-│   │   ├── (auth)/          # Authentication pages (login, register)
+│   │   ├── (app)/           # Authenticated app routes (workspace pages)
+│   │   ├── (auth)/          # Authentication pages (login, register, invite)
 │   │   └── api/             # API routes (tRPC, health)
 │   ├── components/          # Pure UI components (no context access)
-│   │   └── ui/              # Base UI components (Button, Input)
-│   ├── partials/            # Stateful components (context access allowed)
+│   │   ├── ui/              # Base UI components (Button, Input, etc.)
+│   │   ├── document/        # Document/editor components
+│   │   ├── video/           # Video-related components
+│   │   └── team/            # Team management components
 │   ├── lib/                 # Shared utilities
 │   │   ├── auth/            # Authentication utilities
+│   │   ├── accessibility/   # A11y utilities (focus trap, ARIA, etc.)
 │   │   ├── trpc/            # tRPC client
 │   │   └── workspace/       # Workspace context
 │   ├── server/              # Server-side code
 │   │   ├── db/              # Database schema and connection
-│   │   ├── repositories/    # Data access layer
+│   │   ├── repositories/    # Data access layer (WorkspaceRepository)
 │   │   └── trpc/            # tRPC routers and middleware
 │   └── themes/              # CSS theme system
 │       └── default/         # Default theme (YouTube Studio colours)
 ├── docs/
-│   ├── adrs/                # Architecture Decision Records
+│   ├── adrs/                # Architecture Decision Records (16 total)
 │   └── planning/            # Implementation phases
 ├── drizzle/                 # Database migrations
 ├── e2e/                     # Playwright E2E tests
-└── scripts/                 # Utility scripts (seed, etc.)
+└── scripts/                 # Utility scripts (seed, migrate)
 ```
 
 ## Available Scripts
@@ -150,14 +156,32 @@ npm run build-storybook  # Build Storybook static site
 
 ## Environment Variables
 
-| Variable            | Required | Default         | Description                                 |
-| ------------------- | -------- | --------------- | ------------------------------------------- |
-| `DATABASE_URL`      | Yes      | -               | PostgreSQL connection string                |
-| `POSTGRES_PASSWORD` | Yes\*    | -               | PostgreSQL password (\*for Docker setup)    |
-| `SESSION_SECRET`    | Yes      | -               | 32+ character secret for session encryption |
-| `MODE`              | No       | `single-tenant` | `single-tenant` or `multi-tenant`           |
-| `TRUSTED_PROXY`     | No       | `false`         | Set `true` when behind reverse proxy        |
-| `NODE_ENV`          | No       | `development`   | `development` or `production`               |
+### Required
+
+| Variable            | Required | Default | Description                                 |
+| ------------------- | -------- | ------- | ------------------------------------------- |
+| `DATABASE_URL`      | Yes      | -       | PostgreSQL connection string                |
+| `POSTGRES_PASSWORD` | Yes\*    | -       | PostgreSQL password (\*for Docker setup)    |
+| `SESSION_SECRET`    | Yes      | -       | 32+ character secret for session encryption |
+
+### Optional
+
+| Variable        | Default         | Description                          |
+| --------------- | --------------- | ------------------------------------ |
+| `MODE`          | `single-tenant` | `single-tenant` or `multi-tenant`    |
+| `TRUSTED_PROXY` | `false`         | Set `true` when behind reverse proxy |
+| `DATA_DIR`      | `/data`         | Directory for persistent data        |
+| `NODE_ENV`      | `development`   | `development` or `production`        |
+
+### SMTP (Required for multi-tenant invitations)
+
+| Variable        | Description             |
+| --------------- | ----------------------- |
+| `SMTP_HOST`     | SMTP server hostname    |
+| `SMTP_PORT`     | SMTP port (usually 587) |
+| `SMTP_USER`     | SMTP username           |
+| `SMTP_PASSWORD` | SMTP password           |
+| `SMTP_FROM`     | From email address      |
 
 **Note:** The password in `DATABASE_URL` must match `POSTGRES_PASSWORD` when using Docker.
 
@@ -209,15 +233,16 @@ Direct database queries outside repositories are blocked by ESLint rules.
 
 ### Key ADRs
 
-| ADR                                                | Title                       |
-| -------------------------------------------------- | --------------------------- |
-| [ADR-001](docs/adrs/001-nextjs-framework.md)       | Next.js Framework Selection |
-| [ADR-002](docs/adrs/002-styling-solution.md)       | CSS Modules Styling         |
-| [ADR-006](docs/adrs/006-orm-selection.md)          | Drizzle ORM                 |
-| [ADR-007](docs/adrs/007-api-and-auth.md)           | API and Authentication      |
-| [ADR-008](docs/adrs/008-multi-tenancy-strategy.md) | Multi-tenancy Strategy      |
-| [ADR-011](docs/adrs/011-self-hosting-strategy.md)  | Self-Hosting Strategy       |
-| [ADR-014](docs/adrs/014-security-architecture.md)  | Security Architecture       |
+| ADR                                                | Title                         |
+| -------------------------------------------------- | ----------------------------- |
+| [ADR-001](docs/adrs/001-nextjs-framework.md)       | Next.js Framework Selection   |
+| [ADR-002](docs/adrs/002-styling-solution.md)       | CSS Modules Styling           |
+| [ADR-006](docs/adrs/006-orm-selection.md)          | Drizzle ORM                   |
+| [ADR-007](docs/adrs/007-api-and-auth.md)           | API and Authentication        |
+| [ADR-008](docs/adrs/008-multi-tenancy-strategy.md) | Multi-tenancy Strategy        |
+| [ADR-011](docs/adrs/011-self-hosting-strategy.md)  | Self-Hosting Strategy         |
+| [ADR-014](docs/adrs/014-security-architecture.md)  | Security Architecture         |
+| [ADR-016](docs/adrs/016-youtube-integration.md)    | YouTube Integration (Phase 6) |
 
 ## Development
 
@@ -230,8 +255,9 @@ Direct database queries outside repositories are blocked by ESLint rules.
 
 ### Component Guidelines
 
-- **Components** (`/src/components`): Pure UI, data via props only
-- **Partials** (`/src/partials`): Can access contexts, handle data fetching
+- **Components** (`/src/components`): Pure UI components, receive data via props only
+- **Page Components** (`/src/app/**/page.tsx`): Server/Client components that handle data fetching
+- **Server Code** (`/src/server`): tRPC routers, repositories, database access
 
 ### Testing Strategy
 
