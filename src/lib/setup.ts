@@ -11,9 +11,12 @@
  * @see /docs/adrs/014-security-architecture.md
  */
 
-import { readFile, writeFile, mkdir } from 'fs/promises';
+import { readFile, writeFile, mkdir, chmod } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
+import { createLogger } from './logger';
+
+const logger = createLogger('setup');
 
 /**
  * Path to the setup completion flag file
@@ -31,7 +34,7 @@ export function isSetupCompleteSync(): boolean {
   try {
     return existsSync(SETUP_FLAG_PATH);
   } catch (error) {
-    console.error('[Setup] Error checking setup status:', error);
+    logger.error({ error }, 'Error checking setup status');
     // If we can't read the file, assume setup is not complete
     return false;
   }
@@ -74,9 +77,16 @@ export async function markSetupComplete(): Promise<void> {
       'utf-8'
     );
 
-    console.warn('[Setup] Setup marked as complete');
+    // Set file to read-only to prevent accidental deletion
+    // 0o444 = r--r--r-- (read-only for all users)
+    await chmod(SETUP_FLAG_PATH, 0o444);
+
+    logger.info(
+      { timestamp: completionData.timestamp },
+      'Setup marked as complete'
+    );
   } catch (error) {
-    console.error('[Setup] Error marking setup as complete:', error);
+    logger.error({ error }, 'Error marking setup as complete');
     throw new Error('Failed to persist setup completion');
   }
 }
@@ -99,7 +109,7 @@ export async function getSetupDetails(): Promise<{
     const content = await readFile(SETUP_FLAG_PATH, 'utf-8');
     return JSON.parse(content);
   } catch (error) {
-    console.error('[Setup] Error reading setup details:', error);
+    logger.error({ error }, 'Error reading setup details');
     return null;
   }
 }

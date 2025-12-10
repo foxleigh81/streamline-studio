@@ -12,6 +12,9 @@
  */
 
 import { serverEnv } from './env';
+import { createLogger } from './logger';
+
+const logger = createLogger('email');
 
 /**
  * Email options for sending
@@ -75,11 +78,15 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
 
   // In development, log to console
   if (serverEnv.NODE_ENV === 'development') {
-    console.warn('[Email] Would send email (dev mode):');
-    console.warn(`  To: ${to}`);
-    console.warn(`  Subject: ${subject}`);
-    if (text) console.warn(`  Text: ${text}`);
-    if (html) console.warn(`  HTML: ${html.substring(0, 100)}...`);
+    logger.info(
+      {
+        to,
+        subject,
+        hasText: !!text,
+        hasHtml: !!html,
+      },
+      'Would send email (dev mode)'
+    );
     return;
   }
 
@@ -119,7 +126,7 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
     html,
   });
 
-  console.warn(`[Email] Sent email to ${to}: ${subject}`);
+  logger.info({ to, subject }, 'Email sent successfully');
 }
 
 /**

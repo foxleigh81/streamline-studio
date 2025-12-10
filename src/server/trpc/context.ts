@@ -7,7 +7,7 @@ import type {
   WorkspaceUser,
   WorkspaceRole,
 } from '@/server/db/schema';
-import { validateSessionToken, parseSessionToken } from '@/lib/auth';
+import { validateSessionToken, parseSessionToken } from '@/lib/auth/session';
 import type { WorkspaceRepository } from '@/server/repositories';
 
 /**

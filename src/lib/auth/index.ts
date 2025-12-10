@@ -43,9 +43,6 @@ export {
   type RateLimitConfig,
 } from './rate-limit';
 
-export {
-  validateRequest,
-  validateWorkspaceAccess,
-  type WorkspaceAccessResult,
-  type UserValidationResult,
-} from './workspace';
+// Note: workspace.ts exports are NOT re-exported here to avoid circular dependencies
+// Import directly from '@/lib/auth/workspace' when needed in server components/layouts
+// export { validateRequest, validateWorkspaceAccess } from './workspace';

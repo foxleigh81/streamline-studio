@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { validateRequest, validateWorkspaceAccess } from '@/lib/auth';
+import { validateRequest, validateWorkspaceAccess } from '@/lib/auth/workspace';
 import { AppShell } from '@/components/layout/app-shell';
 
 /**

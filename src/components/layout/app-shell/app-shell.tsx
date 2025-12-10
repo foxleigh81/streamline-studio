@@ -2,7 +2,9 @@
 
 import { type ReactNode, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { Video, Tag, Users, Settings, LogOut } from 'lucide-react';
+import { trpc } from '@/lib/trpc/client';
 import { SkipLink } from '@/components/ui/skip-link';
 import { WorkspaceSwitcher } from '@/components/workspace/workspace-switcher';
 import { CreateWorkspaceModal } from '@/components/workspace/create-workspace-modal';
@@ -63,7 +65,23 @@ export function AppShell({
   className,
 }: AppShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // Logout mutation
+  const logoutMutation = trpc.auth.logout.useMutation({
+    onSuccess: () => {
+      // Redirect to login page after successful logout
+      router.push('/login');
+    },
+  });
+
+  /**
+   * Handle logout
+   */
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
 
   /**
    * Check if a navigation item is active
@@ -110,10 +128,12 @@ export function AppShell({
                   aria-current={isActive(item.href) ? 'page' : undefined}
                 >
                   <span className={styles.navIcon} aria-hidden="true">
-                    {item.icon === 'video' && '🎥'}
-                    {item.icon === 'tag' && '🏷️'}
-                    {item.icon === 'team' && '👥'}
-                    {item.icon === 'settings' && '⚙️'}
+                    {item.icon === 'video' && <Video className={styles.icon} />}
+                    {item.icon === 'tag' && <Tag className={styles.icon} />}
+                    {item.icon === 'team' && <Users className={styles.icon} />}
+                    {item.icon === 'settings' && (
+                      <Settings className={styles.icon} />
+                    )}
                   </span>
                   <span className={styles.navText}>{item.name}</span>
                 </Link>
@@ -123,12 +143,17 @@ export function AppShell({
         </nav>
 
         <div className={styles.sidebarFooter}>
-          <form action="/api/auth/logout" method="POST">
-            <button type="submit" className={styles.logoutButton}>
-              <span aria-hidden="true">👋</span>
-              <span>Logout</span>
-            </button>
-          </form>
+          <button
+            type="button"
+            className={styles.logoutButton}
+            onClick={handleLogout}
+            disabled={logoutMutation.isPending}
+          >
+            <LogOut className={styles.icon} aria-hidden="true" />
+            <span>
+              {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
+            </span>
+          </button>
         </div>
       </aside>
 

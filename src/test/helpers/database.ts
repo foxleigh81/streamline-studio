@@ -12,7 +12,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
 import { Pool } from 'pg';
 import * as schema from '@/server/db/schema';
-import { hashPassword } from '@/lib/auth';
+import { hashPassword } from '@/lib/auth/password';
 
 // Test database URL - defaults to a test database
 const TEST_DATABASE_URL =

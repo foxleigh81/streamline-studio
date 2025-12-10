@@ -1,11 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { trpc } from '@/lib/trpc/client';
 import { Button } from '@/components/ui/button';
 import { ColorPicker, PRESET_COLORS } from '@/components/category/color-picker';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import {
+  trapFocus,
+  saveFocus,
+  restoreFocus,
+} from '@/lib/accessibility/focus-trap';
+import { announce } from '@/lib/accessibility/aria';
 import type { Category } from '@/server/db/schema';
 import styles from './categories-page.module.scss';
 
@@ -22,12 +28,16 @@ export function CategoriesPageClient({
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
-  const [editColor, setEditColor] = useState(PRESET_COLORS[0]);
+  const [editColor, setEditColor] = useState<string>(PRESET_COLORS[0]);
   const [newName, setNewName] = useState('');
-  const [newColor, setNewColor] = useState(PRESET_COLORS[0]);
+  const [newColor, setNewColor] = useState<string>(PRESET_COLORS[0]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const utils = trpc.useUtils();
+
+  // Focus trap refs
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   // Queries
   const { data: categories, isLoading } = trpc.category.list.useQuery({
@@ -57,6 +67,51 @@ export function CategoriesPageClient({
       setDeletingId(null);
     },
   });
+
+  /**
+   * Announce loading state changes to screen readers
+   */
+  useEffect(() => {
+    if (isLoading) {
+      announce('Loading categories...');
+    } else if (categories && categories.length > 0) {
+      announce(
+        `Loaded ${categories.length} ${categories.length === 1 ? 'category' : 'categories'}`
+      );
+    } else {
+      announce('No categories found');
+    }
+  }, [isLoading, categories?.length]);
+
+  /**
+   * Focus trap for delete dialog
+   */
+  useEffect(() => {
+    if (!deletingId || !dialogRef.current) return;
+
+    // Save the currently focused element
+    previousFocusRef.current = saveFocus();
+
+    // Set up focus trap
+    const cleanup = trapFocus(dialogRef.current);
+
+    // Handle Escape key to close dialog
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setDeletingId(null);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+
+    // Cleanup on unmount or when dialog closes
+    return () => {
+      cleanup();
+      document.removeEventListener('keydown', handleEscape);
+      // Restore focus to the element that was focused before the dialog opened
+      restoreFocus(previousFocusRef.current);
+    };
+  }, [deletingId]);
 
   /**
    * Handle create category
@@ -305,19 +360,23 @@ export function CategoriesPageClient({
       {deletingId && (
         <div
           className={styles.modal}
-          role="dialog"
+          role="alertdialog"
           aria-labelledby="delete-dialog-title"
+          aria-describedby="delete-dialog-description"
           aria-modal="true"
         >
           <div
             className={styles.modalOverlay}
             onClick={() => setDeletingId(null)}
           />
-          <div className={styles.modalContent}>
+          <div className={styles.modalContent} ref={dialogRef}>
             <h3 id="delete-dialog-title" className={styles.modalTitle}>
               Delete Category
             </h3>
-            <p className={styles.modalDescription}>
+            <p
+              id="delete-dialog-description"
+              className={styles.modalDescription}
+            >
               Are you sure you want to delete this category? This will unlink it
               from all videos, but videos will not be deleted.
             </p>

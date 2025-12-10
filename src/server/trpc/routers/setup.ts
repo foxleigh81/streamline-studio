@@ -10,15 +10,14 @@
 
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { router, publicProcedure } from '../trpc';
+import { router, publicProcedure } from '../procedures';
 import { users, workspaces, workspaceUsers } from '@/server/db/schema';
+import { validatePassword, hashPassword } from '@/lib/auth/password';
 import {
-  validatePassword,
-  hashPassword,
   generateSessionToken,
   createSession,
   createSessionCookie,
-} from '@/lib/auth';
+} from '@/lib/auth/session';
 import {
   isSetupComplete,
   markSetupComplete,

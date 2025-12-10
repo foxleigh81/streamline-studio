@@ -40,6 +40,29 @@ const nextConfig: NextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()',
           },
+          // Strict-Transport-Security (HSTS)
+          // Forces HTTPS for 1 year, including subdomains
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains',
+          },
+          // Content-Security-Policy
+          // Restricts resource loading to prevent XSS attacks
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // unsafe-eval needed for Next.js dev, unsafe-inline for inline scripts
+              "style-src 'self' 'unsafe-inline'", // unsafe-inline needed for CSS-in-JS and Next.js
+              "img-src 'self' data: https://i.ytimg.com", // Allow YouTube thumbnails
+              "font-src 'self' data:",
+              "connect-src 'self'",
+              "frame-ancestors 'none'", // Equivalent to X-Frame-Options: DENY
+              "base-uri 'self'",
+              "form-action 'self'",
+              'upgrade-insecure-requests',
+            ].join('; '),
+          },
         ],
       },
     ];

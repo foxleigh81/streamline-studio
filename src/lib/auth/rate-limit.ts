@@ -1,14 +1,21 @@
 /**
  * Rate Limiting
  *
- * Implements in-memory rate limiting for authentication endpoints.
- * Uses a sliding window algorithm with configurable limits.
+ * Implements Redis-based rate limiting for authentication endpoints with
+ * in-memory fallback for local development.
+ *
+ * Production deployments MUST use Redis to ensure rate limiting works
+ * correctly across multiple instances and persists across restarts.
  *
  * @see /docs/adrs/007-api-and-auth.md
  * @see /docs/adrs/014-security-architecture.md
  */
 
 import { TRPCError } from '@trpc/server';
+import Redis from 'ioredis';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('rate-limit');
 
 /**
  * Rate limit configuration
@@ -21,7 +28,7 @@ export interface RateLimitConfig {
 }
 
 /**
- * Rate limit record for tracking requests
+ * Rate limit record for tracking requests (in-memory fallback only)
  */
 interface RateLimitRecord {
   /** Number of requests in the current window */
@@ -29,13 +36,6 @@ interface RateLimitRecord {
   /** Timestamp when the window resets */
   resetAt: number;
 }
-
-/**
- * In-memory rate limit store
- * Note: This resets on server restart. For production with multiple
- * instances, consider Redis-based rate limiting.
- */
-const rateLimitStore = new Map<string, RateLimitRecord>();
 
 /**
  * Rate limit configurations for different endpoints
@@ -61,6 +61,154 @@ export const RATE_LIMITS = {
 } as const;
 
 /**
+ * Redis client (singleton)
+ */
+let redisClient: Redis | null = null;
+
+/**
+ * In-memory fallback store (used only in development without Redis)
+ */
+const inMemoryStore = new Map<string, RateLimitRecord>();
+
+/**
+ * Initialize Redis connection
+ */
+function getRedisClient(): Redis | null {
+  // Return existing client if already initialized
+  if (redisClient !== null) {
+    return redisClient;
+  }
+
+  const redisUrl = process.env.REDIS_URL;
+
+  // No Redis URL configured
+  if (!redisUrl) {
+    // In production, warn about missing Redis (security risk)
+    if (process.env.NODE_ENV === 'production') {
+      logger.warn(
+        'REDIS_URL not configured in production. ' +
+          'Rate limiting will use in-memory fallback which does NOT work ' +
+          'correctly with multiple instances or server restarts. ' +
+          'Configure Redis for production deployments.'
+      );
+    } else {
+      logger.info('Using in-memory rate limiting in development mode');
+    }
+    return null;
+  }
+
+  try {
+    redisClient = new Redis(redisUrl, {
+      maxRetriesPerRequest: 3,
+      enableReadyCheck: true,
+      // Reconnection strategy
+      retryStrategy(times) {
+        const delay = Math.min(times * 50, 2000);
+        return delay;
+      },
+    });
+
+    redisClient.on('error', (error) => {
+      logger.error({ error }, 'Redis connection error');
+    });
+
+    redisClient.on('connect', () => {
+      logger.info('Redis connected successfully');
+    });
+
+    return redisClient;
+  } catch (error) {
+    logger.error({ error }, 'Failed to initialize Redis client');
+    return null;
+  }
+}
+
+/**
+ * Check rate limit using Redis (production)
+ */
+async function checkRateLimitRedis(
+  redis: Redis,
+  key: string,
+  config: RateLimitConfig
+): Promise<void> {
+  const windowKey = `rate_limit:${key}`;
+
+  try {
+    // Use Redis INCR for atomic increment
+    const count = await redis.incr(windowKey);
+
+    // Set expiration on first request
+    if (count === 1) {
+      await redis.pexpire(windowKey, config.windowMs);
+    }
+
+    // Check if limit exceeded
+    if (count > config.limit) {
+      // Get TTL to calculate retry-after
+      const ttl = await redis.pttl(windowKey);
+      const retryAfterSeconds = ttl > 0 ? Math.ceil(ttl / 1000) : 60;
+
+      throw new TRPCError({
+        code: 'TOO_MANY_REQUESTS',
+        message: `Too many attempts. Please try again in ${retryAfterSeconds} seconds.`,
+      });
+    }
+  } catch (error) {
+    // If it's already a TRPCError, re-throw it
+    if (error instanceof TRPCError) {
+      throw error;
+    }
+
+    // Redis error - decide fail-open or fail-closed
+    const failClosed = process.env.RATE_LIMIT_FAIL_CLOSED === 'true';
+
+    if (failClosed) {
+      // Fail closed: deny request when Redis is unavailable (more secure)
+      logger.error({ error }, 'Redis error, failing closed');
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Rate limiting service temporarily unavailable',
+      });
+    } else {
+      // Fail open: allow request when Redis is unavailable (default)
+      logger.error({ error }, 'Redis error, failing open (allowing request)');
+      // Allow the request to proceed
+    }
+  }
+}
+
+/**
+ * Check rate limit using in-memory store (development fallback)
+ */
+function checkRateLimitInMemory(key: string, config: RateLimitConfig): void {
+  const now = Date.now();
+  const record = inMemoryStore.get(key);
+
+  // No existing record or window expired - create new
+  if (!record || now > record.resetAt) {
+    inMemoryStore.set(key, {
+      count: 1,
+      resetAt: now + config.windowMs,
+    });
+    return;
+  }
+
+  // Check if limit exceeded
+  if (record.count >= config.limit) {
+    const retryAfterMs = record.resetAt - now;
+    const retryAfterSeconds = Math.ceil(retryAfterMs / 1000);
+
+    throw new TRPCError({
+      code: 'TOO_MANY_REQUESTS',
+      message: `Too many attempts. Please try again in ${retryAfterSeconds} seconds.`,
+    });
+  }
+
+  // Increment counter
+  record.count++;
+}
+
+/**
  * Gets the client IP from request headers
  * Supports X-Forwarded-For when TRUSTED_PROXY=true
  *
@@ -80,8 +228,8 @@ export function getClientIp(headers: Headers): string {
 
     // Log warning if TRUSTED_PROXY is set but no header present
     if (!forwardedFor) {
-      console.warn(
-        '[Security] TRUSTED_PROXY=true but no X-Forwarded-For header. ' +
+      logger.warn(
+        'TRUSTED_PROXY=true but no X-Forwarded-For header. ' +
           'Rate limiting may be ineffective.'
       );
     }
@@ -103,31 +251,15 @@ export async function checkRateLimit(
   key: string,
   config: RateLimitConfig
 ): Promise<void> {
-  const now = Date.now();
-  const record = rateLimitStore.get(key);
+  const redis = getRedisClient();
 
-  // No existing record or window expired - create new
-  if (!record || now > record.resetAt) {
-    rateLimitStore.set(key, {
-      count: 1,
-      resetAt: now + config.windowMs,
-    });
-    return;
+  if (redis && redis.status === 'ready') {
+    // Use Redis for distributed rate limiting
+    await checkRateLimitRedis(redis, key, config);
+  } else {
+    // Fallback to in-memory (development only)
+    checkRateLimitInMemory(key, config);
   }
-
-  // Check if limit exceeded
-  if (record.count >= config.limit) {
-    const retryAfterMs = record.resetAt - now;
-    const retryAfterSeconds = Math.ceil(retryAfterMs / 1000);
-
-    throw new TRPCError({
-      code: 'TOO_MANY_REQUESTS',
-      message: `Too many attempts. Please try again in ${retryAfterSeconds} seconds.`,
-    });
-  }
-
-  // Increment counter
-  record.count++;
 }
 
 /**
@@ -163,19 +295,19 @@ export function createPasswordResetRateLimitKey(email: string): string {
 }
 
 /**
- * Cleanup expired rate limit records
+ * Cleanup expired rate limit records (in-memory only)
  * Should be called periodically to prevent memory leaks
  */
 export function cleanupExpiredRecords(): void {
   const now = Date.now();
-  for (const [key, record] of rateLimitStore) {
+  for (const [key, record] of inMemoryStore) {
     if (now > record.resetAt) {
-      rateLimitStore.delete(key);
+      inMemoryStore.delete(key);
     }
   }
 }
 
-// Cleanup expired records every 5 minutes
+// Cleanup expired in-memory records every 5 minutes
 if (typeof setInterval !== 'undefined') {
   setInterval(cleanupExpiredRecords, 5 * 60 * 1000);
 }
@@ -185,13 +317,39 @@ if (typeof setInterval !== 'undefined') {
  *
  * @param key - The rate limit key to reset
  */
-export function resetRateLimit(key: string): void {
-  rateLimitStore.delete(key);
+export async function resetRateLimit(key: string): Promise<void> {
+  const redis = getRedisClient();
+
+  if (redis && redis.status === 'ready') {
+    await redis.del(`rate_limit:${key}`);
+  } else {
+    inMemoryStore.delete(key);
+  }
 }
 
 /**
  * Clears all rate limits (for testing purposes)
  */
-export function clearAllRateLimits(): void {
-  rateLimitStore.clear();
+export async function clearAllRateLimits(): Promise<void> {
+  const redis = getRedisClient();
+
+  if (redis && redis.status === 'ready') {
+    // Delete all rate limit keys
+    const keys = await redis.keys('rate_limit:*');
+    if (keys.length > 0) {
+      await redis.del(...keys);
+    }
+  } else {
+    inMemoryStore.clear();
+  }
+}
+
+/**
+ * Gracefully close Redis connection (for testing and shutdown)
+ */
+export async function closeRedisConnection(): Promise<void> {
+  if (redisClient) {
+    await redisClient.quit();
+    redisClient = null;
+  }
 }

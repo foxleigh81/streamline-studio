@@ -14,6 +14,9 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { isSetupCompleteSync } from '@/lib/setup';
 import { serverEnv } from '@/lib/env';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('middleware');
 
 /**
  * Verifies that the request Origin matches the Host
@@ -81,21 +84,24 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 
       if (!setupComplete) {
         // Redirect to setup wizard
-        console.warn('[Middleware] Setup not complete, redirecting to /setup');
+        logger.warn(
+          { path: pathname },
+          'Setup not complete, redirecting to /setup'
+        );
         return NextResponse.redirect(new URL('/setup', request.url));
       }
     }
 
     // If on setup page but setup is complete, redirect to home
     if (isSetupPath && isSetupCompleteSync()) {
-      console.warn('[Middleware] Setup already complete, redirecting to home');
+      logger.warn('Setup already complete, redirecting to home');
       return NextResponse.redirect(new URL('/', request.url));
     }
   } else {
     // Multi-tenant mode: setup wizard is disabled
     if (isSetupPath) {
-      console.warn(
-        '[Middleware] Setup wizard disabled in multi-tenant mode, redirecting to home'
+      logger.warn(
+        'Setup wizard disabled in multi-tenant mode, redirecting to home'
       );
       return NextResponse.redirect(new URL('/', request.url));
     }
@@ -137,10 +143,13 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     }
 
     // No Origin and no valid same-origin Referer - reject
-    console.warn('[CSRF] Request blocked: Missing Origin header', {
-      path: request.nextUrl.pathname,
-      method: request.method,
-    });
+    logger.warn(
+      {
+        path: request.nextUrl.pathname,
+        method: request.method,
+      },
+      'CSRF: Request blocked - Missing Origin header'
+    );
 
     return new NextResponse(null, {
       status: 403,
@@ -150,11 +159,14 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 
   // Verify Origin matches Host
   if (!hostHeader || !verifyRequestOrigin(originHeader, [hostHeader])) {
-    console.warn('[CSRF] Request blocked: Origin mismatch', {
-      origin: originHeader,
-      host: hostHeader,
-      path: request.nextUrl.pathname,
-    });
+    logger.warn(
+      {
+        origin: originHeader,
+        host: hostHeader,
+        path: request.nextUrl.pathname,
+      },
+      'CSRF: Request blocked - Origin mismatch'
+    );
 
     return new NextResponse(null, {
       status: 403,
