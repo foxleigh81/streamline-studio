@@ -53,8 +53,8 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Security: Install dumb-init for proper signal handling
-RUN apk --no-cache add dumb-init && \
+# Security: Install dumb-init for proper signal handling and PostgreSQL client for migrations
+RUN apk --no-cache add dumb-init postgresql-client && \
     rm -rf /var/cache/apk/*
 
 # Set production environment
@@ -63,14 +63,26 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
+# Install migration dependencies (pg and drizzle-orm needed by migrate.js)
+# These are minimal and required for startup migrations
+COPY package.json package-lock.json* ./
+RUN npm ci --omit=dev --ignore-scripts && \
+    npm cache clean --force
+
 # Copy standalone output with correct ownership
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Copy migration files for startup
+# Copy migration files and configuration for startup
 COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
+COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./drizzle.config.ts
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
+
+# Copy and set permissions for entrypoint script
+COPY --chown=nextjs:nodejs docker-entrypoint.sh ./
+RUN chmod +x docker-entrypoint.sh
 
 # Create data directory for setup flag
 RUN mkdir -p /data && chown nextjs:nodejs /data
@@ -82,11 +94,11 @@ USER nextjs
 EXPOSE 3000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # Security: Use dumb-init for proper signal handling
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application
-CMD ["node", "server.js"]
+# Run entrypoint script (handles migrations and starts server)
+CMD ["./docker-entrypoint.sh"]

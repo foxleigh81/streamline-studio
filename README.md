@@ -62,17 +62,31 @@ Visit [http://localhost:3000](http://localhost:3000) to access the application.
 
 ### Docker Deployment
 
+For complete Docker deployment instructions, see **[DOCKER.md](DOCKER.md)**.
+
+Quick start:
+
 ```bash
+# Copy environment file
+cp .env.example .env
+
 # Generate secrets
-export SESSION_SECRET=$(openssl rand -base64 32)
-export POSTGRES_PASSWORD=$(openssl rand -base64 24)
+echo "POSTGRES_PASSWORD=$(openssl rand -base64 24)" >> .env
+echo "SESSION_SECRET=$(openssl rand -base64 32)" >> .env
+
+# Edit .env and update DATABASE_URL with the generated password
+nano .env
 
 # Start the full stack
 docker-compose up -d
 
 # View logs
 docker-compose logs -f app
+
+# Access the setup wizard at http://localhost:3000
 ```
+
+The setup wizard will guide you through creating your admin account and workspace.
 
 ## Project Structure
 
@@ -188,6 +202,7 @@ Direct database queries outside repositories are blocked by ESLint rules.
 
 ## Documentation
 
+- [Docker Deployment Guide](DOCKER.md) - Complete self-hosting instructions
 - [Getting Started Guide](docs/getting-started.md)
 - [Architecture Decision Records](docs/adrs/)
 - [Implementation Plan](docs/planning/app-planning-phases.md)
@@ -228,7 +243,12 @@ Direct database queries outside repositories are blocked by ESLint rules.
 
 ### Docker (Recommended)
 
-See [Self-Hosting Guide](docs/getting-started.md#docker-deployment) for complete instructions.
+See [Docker Deployment Guide](DOCKER.md) for complete instructions including:
+
+- Production deployment with reverse proxy
+- Security best practices
+- Backup and restore procedures
+- Troubleshooting common issues
 
 ### Manual
 
