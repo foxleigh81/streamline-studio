@@ -210,13 +210,14 @@ function checkRateLimitInMemory(key: string, config: RateLimitConfig): void {
 
 /**
  * Gets the client IP from request headers
- * Supports X-Forwarded-For when TRUSTED_PROXY=true
+ * Supports X-Forwarded-For and X-Real-IP when TRUSTED_PROXY=true
  *
  * @param headers - Request headers
  * @returns Client IP address
  */
 export function getClientIp(headers: Headers): string {
   if (process.env.TRUSTED_PROXY === 'true') {
+    // Try X-Forwarded-For first (standard for proxies/load balancers)
     const forwardedFor = headers.get('x-forwarded-for');
     if (forwardedFor) {
       // Get the first IP in the chain (original client)
@@ -226,13 +227,17 @@ export function getClientIp(headers: Headers): string {
       }
     }
 
-    // Log warning if TRUSTED_PROXY is set but no header present
-    if (!forwardedFor) {
-      logger.warn(
-        'TRUSTED_PROXY=true but no X-Forwarded-For header. ' +
-          'Rate limiting may be ineffective.'
-      );
+    // Fallback to X-Real-IP (used by some proxies like nginx)
+    const realIp = headers.get('x-real-ip');
+    if (realIp) {
+      return realIp.trim();
     }
+
+    // Log warning if TRUSTED_PROXY is set but no header present
+    logger.warn(
+      'TRUSTED_PROXY=true but no X-Forwarded-For header. ' +
+        'Rate limiting may be ineffective.'
+    );
   }
 
   // Fallback: use a constant for development
