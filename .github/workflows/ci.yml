@@ -226,7 +226,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/streamline_test
           MODE: single-tenant
-          SESSION_SECRET: test-secret-for-ci-only
+          SESSION_SECRET: test-secret-for-ci-only-do-not-use-in-production
         run: npm run build
 
       - name: Check build output
