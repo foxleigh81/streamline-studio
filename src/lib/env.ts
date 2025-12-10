@@ -57,6 +57,33 @@ const serverEnvSchema = z.object({
     .string()
     .transform((val) => parseInt(val, 10))
     .default('3000'),
+
+  // YouTube Integration (Phase 6 - optional)
+  // Required only if YouTube features are enabled
+  YOUTUBE_CLIENT_ID: z.string().optional(),
+  YOUTUBE_CLIENT_SECRET: z.string().optional(),
+  YOUTUBE_REDIRECT_URI: z.string().url().optional(),
+  YOUTUBE_TOKEN_ENCRYPTION_KEY: z
+    .string()
+    .length(
+      64,
+      'YOUTUBE_TOKEN_ENCRYPTION_KEY must be a 64-character hex string (32 bytes)'
+    )
+    .regex(
+      /^[0-9a-fA-F]+$/,
+      'YOUTUBE_TOKEN_ENCRYPTION_KEY must be a hex string'
+    )
+    .optional(),
+
+  // YouTube Quota (optional, for multi-tenant deployments)
+  YOUTUBE_QUOTA_PER_WORKSPACE: z
+    .string()
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .optional(),
+  YOUTUBE_SYNC_INTERVAL_HOURS: z
+    .string()
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .optional(),
 });
 
 /**

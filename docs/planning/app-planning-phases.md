@@ -1,23 +1,23 @@
 # Streamline Studio: Multi-Phase Implementation Plan
 
 **Project**: YouTube Content Planner
-**Version**: 2.6 (Phase 5 Complete)
+**Version**: 2.7 (Phase 6 Design Complete)
 **Date**: 2025-12-10
 **Status**: Approved for Implementation
-**Last Progress Update**: 2025-12-10 (Phase 5 Complete)
+**Last Progress Update**: 2025-12-10 (Phase 6 Design Complete)
 
 ---
 
 ## Current Progress Summary
 
-| Phase   | Status         | Completion |
-| ------- | -------------- | ---------- |
-| Phase 1 | ✅ Complete    | 100%       |
-| Phase 2 | ✅ Complete    | 100%       |
-| Phase 3 | ✅ Complete    | 100%       |
-| Phase 4 | ✅ Complete    | 100%       |
-| Phase 5 | ✅ Complete    | 100%       |
-| Phase 6 | ❌ Not Started | 0%         |
+| Phase   | Status             | Completion          |
+| ------- | ------------------ | ------------------- |
+| Phase 1 | ✅ Complete        | 100%                |
+| Phase 2 | ✅ Complete        | 100%                |
+| Phase 3 | ✅ Complete        | 100%                |
+| Phase 4 | ✅ Complete        | 100%                |
+| Phase 5 | ✅ Complete        | 100%                |
+| Phase 6 | 📐 Design Complete | 0% (implementation) |
 
 **Phase 1 Breakdown:**
 
@@ -864,21 +864,123 @@ videoRouter.list = protectedProcedure
 
 ---
 
-## Phase 6: YouTube Integration (Design Only)
+## Phase 6: YouTube Integration
 
 ### Goals
 
-- Design YouTube Data API integration architecture
-- Plan OAuth flow for YouTube account connection
-- Design sync mechanism and quota management
-- Prepare schema for youtube\_\* tables
+- Connect YouTube channels via OAuth 2.0
+- Sync video metadata from YouTube to local database
+- Display analytics (views, likes, comments)
+- Link local video projects to published YouTube videos
 
-### Deliverables
+### Design Status: COMPLETE
 
-1. ADR for YouTube Integration Approach
-2. Schema designs for youtube_channels and youtube_videos tables
-3. Background job architecture diagram (BullMQ evaluation)
-4. API quota management strategy document
+All foundational design work has been completed:
+
+1. **ADR-016: YouTube Integration Architecture** - Full technical specification
+2. **Database schema designs** - youtube_channels, youtube_video_cache, video_youtube_links, youtube_quota_usage
+3. **OAuth flow architecture** - Authorization code flow with PKCE and state validation
+4. **Background job design** - Graphile Worker jobs for sync and token refresh
+5. **Quota management strategy** - Per-workspace tracking, caching, and batching
+
+### Phase 6.1: OAuth & Channel Connection
+
+| Task   | Description                                 | Priority | Dependencies |
+| ------ | ------------------------------------------- | -------- | ------------ |
+| 6.1.1  | Add YouTube environment variables to env.ts | High     | -            |
+| 6.1.2  | Create youtube_channels table migration     | High     | 6.1.1        |
+| 6.1.3  | Implement token encryption service          | High     | 6.1.1        |
+| 6.1.4  | Create OAuth authorization URL generator    | High     | 6.1.1        |
+| 6.1.5  | Create OAuth callback REST endpoint         | High     | 6.1.3, 6.1.4 |
+| 6.1.6  | Create youtubeRouter tRPC router (channels) | High     | 6.1.2, 6.1.5 |
+| 6.1.7  | Create YouTube settings page UI             | Medium   | 6.1.6        |
+| 6.1.8  | Add channel disconnect functionality        | Medium   | 6.1.6        |
+| 6.1.9  | Implement token refresh job                 | Medium   | 6.1.3        |
+| 6.1.10 | Add audit logging for channel operations    | Medium   | 6.1.6        |
+| 6.1.11 | Write integration tests for OAuth flow      | High     | 6.1.5        |
+| 6.1.12 | Document self-hosting YouTube setup         | Medium   | 6.1.7        |
+
+### Phase 6.2: Video Sync
+
+| Task   | Description                                   | Priority | Dependencies |
+| ------ | --------------------------------------------- | -------- | ------------ |
+| 6.2.1  | Create youtube_video_cache table migration    | High     | 6.1.2        |
+| 6.2.2  | Create video_youtube_links table migration    | High     | 6.2.1        |
+| 6.2.3  | Implement YouTube API client service          | High     | 6.1.3        |
+| 6.2.4  | Create channel video sync job                 | High     | 6.2.3        |
+| 6.2.5  | Implement incremental sync (new videos only)  | Medium   | 6.2.4        |
+| 6.2.6  | Add sync trigger to tRPC router               | Medium   | 6.2.4        |
+| 6.2.7  | Create video linking UI                       | Medium   | 6.2.2        |
+| 6.2.8  | Display YouTube metadata on video detail page | Medium   | 6.2.7        |
+| 6.2.9  | Add YouTube thumbnail import option           | Low      | 6.2.8        |
+| 6.2.10 | Create youtube_quota_usage table migration    | Medium   | -            |
+| 6.2.11 | Implement quota tracking service              | Medium   | 6.2.10       |
+| 6.2.12 | Write integration tests for video sync        | High     | 6.2.4        |
+
+### Phase 6.3: Analytics
+
+| Task  | Description                            | Priority | Dependencies |
+| ----- | -------------------------------------- | -------- | ------------ |
+| 6.3.1 | Implement YouTube Analytics API client | High     | 6.1.3        |
+| 6.3.2 | Create analytics sync job              | Medium   | 6.3.1        |
+| 6.3.3 | Add analytics endpoints to tRPC router | Medium   | 6.3.1        |
+| 6.3.4 | Create video stats component           | Medium   | 6.3.3        |
+| 6.3.5 | Create channel dashboard widget        | Low      | 6.3.3        |
+| 6.3.6 | Implement date range analytics queries | Low      | 6.3.1        |
+| 6.3.7 | Add analytics to video detail page     | Medium   | 6.3.4        |
+| 6.3.8 | Write integration tests for analytics  | Medium   | 6.3.3        |
+
+### Phase 6.4: Advanced Features (Future)
+
+| Task  | Description                  | Priority | Dependencies |
+| ----- | ---------------------------- | -------- | ------------ |
+| 6.4.1 | Video upload via YouTube API | Low      | 6.2.3        |
+| 6.4.2 | Scheduled publishing support | Low      | 6.4.1        |
+| 6.4.3 | Bulk metadata update         | Low      | 6.2.3        |
+| 6.4.4 | YouTube webhook integration  | Low      | 6.2.4        |
+
+### Technical Specifications
+
+**OAuth Scopes Required**:
+
+- `youtube.readonly` - Read channel and video data
+- `yt-analytics.readonly` - Read analytics data
+
+**API Quota Budget** (10,000 units/day default):
+| Operation | Cost | Budgeted Calls/Day |
+|-----------|------|-------------------|
+| channels.list | 1 | 100 |
+| playlistItems.list | 1 | 500 |
+| videos.list (batch 50) | 1 | 200 |
+| Analytics API | N/A | Separate quota |
+| **Reserved buffer** | - | 9,200 |
+
+**Background Jobs**:
+
+- `youtube:refresh_token` - 5 min before expiry
+- `youtube:sync_channel` - Every 6 hours
+- `youtube:sync_analytics` - Daily
+
+**Security Requirements**:
+
+- AES-256-GCM token encryption
+- CSRF state parameter validation
+- PKCE code challenge
+- Owner-only channel management
+- Audit logging for all operations
+
+### Phase 6 Gate Criteria
+
+Before marking Phase 6 complete:
+
+- [ ] All OAuth flows working (connect, disconnect, refresh)
+- [ ] Video sync functioning with quota tracking
+- [ ] Analytics displaying on video detail page
+- [ ] Cross-workspace isolation verified by tests
+- [ ] Token encryption working correctly
+- [ ] Self-hosting documentation complete
+- [ ] Security review passed
+- [ ] TRON accessibility review passed
 
 ---
 
@@ -933,6 +1035,19 @@ videoRouter.list = protectedProcedure
 - [x] Email sending does not allow header injection
 - [x] Session invalidated on password change
 
+### Phase 6 Security Checklist (YouTube Integration)
+
+- [ ] OAuth state parameter prevents CSRF attacks
+- [ ] PKCE code challenge implemented
+- [ ] Refresh tokens encrypted with AES-256-GCM at rest
+- [ ] Access tokens never logged or exposed in errors
+- [ ] Token encryption key from environment variable
+- [ ] Cross-workspace YouTube credential isolation tested
+- [ ] Owner-only permission for channel connect/disconnect
+- [ ] Quota exhaustion cannot affect other workspaces
+- [ ] Audit logging for all YouTube operations
+- [ ] Self-hosting docs warn about credential security
+
 ---
 
 ## Appendix: Key Decisions Summary
@@ -956,6 +1071,7 @@ videoRouter.list = protectedProcedure
 | Security Architecture | Defense-in-depth                          | ADR-014               |
 | URL Structure         | /w/[slug]/...                             | Architecture Decision |
 | Session Storage       | HTTP-only cookies                         | ADR-007, ADR-014      |
+| YouTube Integration   | OAuth 2.0 + Encrypted tokens              | ADR-016               |
 
 ---
 
@@ -977,6 +1093,8 @@ videoRouter.list = protectedProcedure
 | ADR-012 | Background Jobs Strategy       | Accepted |
 | ADR-013 | Markdown Editor Selection      | Accepted |
 | ADR-014 | Security Architecture          | Accepted |
+| ADR-015 | Row-Level Security Evaluation  | Deferred |
+| ADR-016 | YouTube Integration            | Accepted |
 
 ---
 
@@ -1018,6 +1136,17 @@ The QA Architect identified 26 mitigations. Key ones by phase:
 - MIT-025: Invitation token attempt limiting
 - MIT-026: Test workspace removal during active session
 
+### Phase 6
+
+- MIT-027: OAuth state parameter validation with cryptographic randomness
+- MIT-028: PKCE implementation for OAuth code exchange
+- MIT-029: AES-256-GCM encryption for refresh token storage
+- MIT-030: Per-workspace quota tracking to prevent resource exhaustion
+- MIT-031: Token refresh proactive scheduling (5 min before expiry)
+- MIT-032: Cross-workspace YouTube credential isolation tests
+- MIT-033: Graceful handling of Google API quota exceeded errors
+- MIT-034: Self-hosting documentation for Google Cloud OAuth setup
+
 ---
 
 ## Revision History
@@ -1032,3 +1161,4 @@ The QA Architect identified 26 mitigations. Key ones by phase:
 | 2025-12-09 | 2.4     | Strategic Project Planner                       | Phase 3 COMPLETE: All gates passed. Reviews: QA Architect (PASS WITH RECOMMENDATIONS), Security Architect (SECURE WITH RECOMMENDATIONS), Code Quality (APPROVED after fixes). Optimistic locking with conflict resolution, revision history with restore, centralized audit log, document import/export. Security: removed 'style' from DOMPurify. Code quality: shared date-utils.ts, CONTENT_PREVIEW_LENGTH constant. Ready for Phase 4.                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | 2025-12-09 | 2.5     | Strategic Project Planner                       | Phase 4 COMPLETE: All gates passed. Reviews: QA Architect (NEEDS WORK → PASS after fixes), Security Architect (SECURE WITH RECOMMENDATIONS), Code Quality (APPROVED WITH RECOMMENDATIONS). Multi-stage Dockerfile with Alpine (~200MB), non-root user (nextjs:nodejs, UID 1001), dumb-init for signal handling, PostgreSQL 16 with health checks, file-based setup completion flag, comprehensive DOCKER.md documentation, reverse proxy examples (Caddy), backup/restore procedures. Critical fixes: migration dependencies bundled, DATABASE_URL clarified, PostgreSQL port commented out by default, isSetupComplete() deduplicated, setup wizard accessibility improved. Ready for Phase 5.                                                                                                                                                                                               |
 | 2025-12-10 | 2.6     | Strategic Project Planner                       | Phase 5 COMPLETE: All gates passed. Reviews: QA Architect (PASS WITH RECOMMENDATIONS after fixes), Security Architect (SECURE WITH RECOMMENDATIONS), Code Quality (NEEDS WORK → APPROVED after fixes). Multi-tenant MODE detection, workspace slug generation, invitations schema with 256-bit tokens and 24hr expiry, inline email service with CRLF injection prevention, HTML-escaped email templates (XSS prevention), invitation and team tRPC routers, audit logging for all operations, owner/editor/viewer RBAC enforcement, workspace switcher with Storybook stories, team management page, custom confirmation modals, ADR-015 created for RLS evaluation (deferred with documented rationale). Critical fixes: XSS in email templates, session creation after invitation acceptance, native dialogs replaced with custom modals, table accessibility improved. Ready for Phase 6. |
+| 2025-12-10 | 2.7     | Strategic Project Planner                       | Phase 6 DESIGN COMPLETE: ADR-016 created for YouTube Integration architecture. Comprehensive design includes: OAuth 2.0 flow with PKCE and state validation, AES-256-GCM token encryption, 4 new database tables (youtube_channels, youtube_video_cache, video_youtube_links, youtube_quota_usage), Graphile Worker background jobs for sync/refresh, per-workspace quota tracking, 36 implementation tasks across 4 sub-phases. Environment variables added to env.ts and .env.example. Schema design document created. Security checklist and 8 new risk mitigations added. Phase 6 ready for implementation when YouTube features are needed.                                                                                                                                                                                                                                              |
