@@ -81,7 +81,7 @@ export function CategoriesPageClient({
     } else {
       announce('No categories found');
     }
-  }, [isLoading, categories?.length]);
+  }, [isLoading, categories]);
 
   /**
    * Focus trap for delete dialog
