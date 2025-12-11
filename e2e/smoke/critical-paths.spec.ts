@@ -39,7 +39,11 @@ test.describe('Smoke Tests - Critical Paths', () => {
       expect(response.ok()).toBeTruthy();
 
       const body = await response.json();
-      expect(body.result?.data?.status).toBe('ok');
+      // tRPC v11 returns data directly in result.data for queries
+      // Handle both possible response formats
+      const status =
+        body.result?.data?.status ?? body.result?.data?.json?.status;
+      expect(status).toBe('ok');
     });
   });
 
