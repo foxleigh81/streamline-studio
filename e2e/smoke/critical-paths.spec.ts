@@ -111,9 +111,11 @@ test.describe('Smoke Tests - Critical Paths', () => {
       // Verify form elements exist
       await expect(page.getByLabel(/email/i)).toBeVisible();
       await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
-      await expect(
-        page.getByRole('button', { name: /sign in/i })
-      ).toBeVisible();
+
+      // Wait for button to be fully rendered/hydrated before asserting
+      const signInButton = page.getByRole('button', { name: /sign in/i });
+      await signInButton.waitFor({ state: 'visible', timeout: 15000 });
+      await expect(signInButton).toBeVisible();
     });
 
     test('registration page renders form elements', async ({ page }) => {
@@ -124,9 +126,13 @@ test.describe('Smoke Tests - Critical Paths', () => {
       await expect(page.getByLabel(/email/i).first()).toBeVisible();
       await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
       await expect(page.getByLabel(/confirm password/i)).toBeVisible();
-      await expect(
-        page.getByRole('button', { name: /create account/i })
-      ).toBeVisible();
+
+      // Wait for button to be fully rendered/hydrated before asserting
+      const createAccountButton = page.getByRole('button', {
+        name: /create account/i,
+      });
+      await createAccountButton.waitFor({ state: 'visible', timeout: 15000 });
+      await expect(createAccountButton).toBeVisible();
     });
 
     test('login form shows validation errors for empty submission', async ({
