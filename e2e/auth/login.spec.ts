@@ -25,7 +25,7 @@ test.describe('User Login Flow', () => {
 
       // Verify form fields
       await expect(page.getByLabel(/email/i)).toBeVisible();
-      await expect(page.getByLabel(/password/i)).toBeVisible();
+      await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
 
       // Verify submit button
       await expect(
@@ -46,7 +46,9 @@ test.describe('User Login Flow', () => {
   test.describe('Form Validation', () => {
     test('shows error for empty email', async ({ page }) => {
       // Fill password but leave email empty
-      await page.getByLabel(/password/i).fill('testpassword123');
+      await page
+        .getByLabel('Password', { exact: true })
+        .fill('testpassword123');
 
       // Submit form
       await page.getByRole('button', { name: /sign in/i }).click();
@@ -63,7 +65,9 @@ test.describe('User Login Flow', () => {
       await page.getByRole('button', { name: /sign in/i }).click();
 
       // Should show password error
-      await expect(page.getByText(/password is required/i)).toBeVisible();
+      await expect(
+        page.getByText(/password is required/i).first()
+      ).toBeVisible();
     });
 
     test('shows error for both empty fields', async ({ page }) => {
@@ -80,12 +84,12 @@ test.describe('User Login Flow', () => {
     test('shows generic error for invalid credentials', async ({ page }) => {
       // Try to login with non-existent user
       await page.getByLabel(/email/i).fill('nonexistent@example.com');
-      await page.getByLabel(/password/i).fill('wrongpassword');
+      await page.getByLabel('Password', { exact: true }).fill('wrongpassword');
 
       await page.getByRole('button', { name: /sign in/i }).click();
 
       // Should show generic error (prevents account enumeration)
-      await expect(page.getByRole('alert')).toContainText(
+      await expect(page.getByRole('alert').first()).toContainText(
         /invalid email or password/i
       );
     });
@@ -94,12 +98,12 @@ test.describe('User Login Flow', () => {
       page,
     }) => {
       await page.getByLabel(/email/i).fill('nonexistent@example.com');
-      await page.getByLabel(/password/i).fill('wrongpassword');
+      await page.getByLabel('Password', { exact: true }).fill('wrongpassword');
 
       await page.getByRole('button', { name: /sign in/i }).click();
 
       // Error should be in an alert for screen readers
-      const alert = page.getByRole('alert');
+      const alert = page.getByRole('alert').first();
       await expect(alert).toBeVisible();
     });
   });
@@ -110,7 +114,9 @@ test.describe('User Login Flow', () => {
       const uniqueEmail = testData.uniqueEmail();
       await page.goto('/register');
       await page.getByLabel(/email/i).first().fill(uniqueEmail);
-      await page.getByLabel(/^password$/i).fill('testpassword123');
+      await page
+        .getByLabel('Password', { exact: true })
+        .fill('testpassword123');
       await page.getByLabel(/confirm password/i).fill('testpassword123');
       await page.getByRole('button', { name: /create account/i }).click();
 
@@ -123,7 +129,9 @@ test.describe('User Login Flow', () => {
       await page.goto('/login');
 
       await page.getByLabel(/email/i).fill(uniqueEmail);
-      await page.getByLabel(/password/i).fill('testpassword123');
+      await page
+        .getByLabel('Password', { exact: true })
+        .fill('testpassword123');
       await page.getByRole('button', { name: /sign in/i }).click();
 
       // Should redirect to dashboard
@@ -132,7 +140,9 @@ test.describe('User Login Flow', () => {
 
     test('shows loading state during submission', async ({ page }) => {
       await page.getByLabel(/email/i).fill('test@example.com');
-      await page.getByLabel(/password/i).fill('testpassword123');
+      await page
+        .getByLabel('Password', { exact: true })
+        .fill('testpassword123');
 
       const submitButton = page.getByRole('button', { name: /sign in/i });
       await submitButton.click();
@@ -154,7 +164,7 @@ test.describe('User Login Flow', () => {
     test('form fields have proper labels', async ({ page }) => {
       // All inputs should be accessible via their labels
       const emailInput = page.getByLabel(/email/i);
-      const passwordInput = page.getByLabel(/password/i);
+      const passwordInput = page.getByLabel('Password', { exact: true });
 
       await expect(emailInput).toBeVisible();
       await expect(passwordInput).toBeVisible();
@@ -190,14 +200,14 @@ test.describe('User Login Flow', () => {
 
   test.describe('Security', () => {
     test('password field is masked', async ({ page }) => {
-      const passwordInput = page.getByLabel(/password/i);
+      const passwordInput = page.getByLabel('Password', { exact: true });
 
       await expect(passwordInput).toHaveAttribute('type', 'password');
     });
 
     test('form uses proper autocomplete attributes', async ({ page }) => {
       const emailInput = page.getByLabel(/email/i);
-      const passwordInput = page.getByLabel(/password/i);
+      const passwordInput = page.getByLabel('Password', { exact: true });
 
       await expect(emailInput).toHaveAttribute('autocomplete', 'email');
       await expect(passwordInput).toHaveAttribute(
@@ -220,14 +230,16 @@ test.describe('User Login Flow', () => {
 
     test('submits form on Enter key', async ({ page }) => {
       await page.getByLabel(/email/i).fill('test@example.com');
-      await page.getByLabel(/password/i).fill('testpassword');
+      await page.getByLabel('Password', { exact: true }).fill('testpassword');
 
       // Press Enter in password field
-      await page.getByLabel(/password/i).press('Enter');
+      await page.getByLabel('Password', { exact: true }).press('Enter');
 
       // Form should submit (either show error or redirect)
       // Since credentials are invalid, expect error
-      await expect(page.getByRole('alert')).toBeVisible({ timeout: 5000 });
+      await expect(page.getByRole('alert').first()).toBeVisible({
+        timeout: 5000,
+      });
     });
   });
 });

@@ -48,7 +48,9 @@ test.describe('User Registration Flow', () => {
   test.describe('Form Validation', () => {
     test('shows error for empty email', async ({ page }) => {
       // Fill other fields but leave email empty
-      await page.getByLabel(/^password$/i).fill('testpassword123');
+      await page
+        .getByLabel('Password', { exact: true })
+        .fill('testpassword123');
       await page.getByLabel(/confirm password/i).fill('testpassword123');
 
       // Submit form
@@ -60,7 +62,9 @@ test.describe('User Registration Flow', () => {
 
     test('shows error for invalid email format', async ({ page }) => {
       await page.getByLabel(/email/i).first().fill('not-an-email');
-      await page.getByLabel(/^password$/i).fill('testpassword123');
+      await page
+        .getByLabel('Password', { exact: true })
+        .fill('testpassword123');
       await page.getByLabel(/confirm password/i).fill('testpassword123');
 
       await page.getByRole('button', { name: /create account/i }).click();
@@ -73,12 +77,14 @@ test.describe('User Registration Flow', () => {
 
       await page.getByRole('button', { name: /create account/i }).click();
 
-      await expect(page.getByText(/password is required/i)).toBeVisible();
+      await expect(
+        page.getByText(/password is required/i).first()
+      ).toBeVisible();
     });
 
     test('shows error for short password', async ({ page }) => {
       await page.getByLabel(/email/i).first().fill('test@example.com');
-      await page.getByLabel(/^password$/i).fill('short');
+      await page.getByLabel('Password', { exact: true }).fill('short');
       await page.getByLabel(/confirm password/i).fill('short');
 
       await page.getByRole('button', { name: /create account/i }).click();
@@ -88,7 +94,7 @@ test.describe('User Registration Flow', () => {
 
     test('shows error for mismatched passwords', async ({ page }) => {
       await page.getByLabel(/email/i).first().fill('test@example.com');
-      await page.getByLabel(/^password$/i).fill('password123');
+      await page.getByLabel('Password', { exact: true }).fill('password123');
       await page.getByLabel(/confirm password/i).fill('differentpassword');
 
       await page.getByRole('button', { name: /create account/i }).click();
@@ -100,7 +106,9 @@ test.describe('User Registration Flow', () => {
       // Fill required fields only
       const uniqueEmail = testData.uniqueEmail();
       await page.getByLabel(/email/i).first().fill(uniqueEmail);
-      await page.getByLabel(/^password$/i).fill('testpassword123');
+      await page
+        .getByLabel('Password', { exact: true })
+        .fill('testpassword123');
       await page.getByLabel(/confirm password/i).fill('testpassword123');
 
       await page.getByRole('button', { name: /create account/i }).click();
@@ -117,7 +125,9 @@ test.describe('User Registration Flow', () => {
 
       await page.getByLabel(/name/i).fill('Test User');
       await page.getByLabel(/email/i).first().fill(uniqueEmail);
-      await page.getByLabel(/^password$/i).fill('testpassword123');
+      await page
+        .getByLabel('Password', { exact: true })
+        .fill('testpassword123');
       await page.getByLabel(/confirm password/i).fill('testpassword123');
 
       await page.getByRole('button', { name: /create account/i }).click();
@@ -131,7 +141,9 @@ test.describe('User Registration Flow', () => {
 
       await page.getByLabel(/name/i).fill('Test User');
       await page.getByLabel(/email/i).first().fill(uniqueEmail);
-      await page.getByLabel(/^password$/i).fill('testpassword123');
+      await page
+        .getByLabel('Password', { exact: true })
+        .fill('testpassword123');
       await page.getByLabel(/confirm password/i).fill('testpassword123');
 
       // Click and immediately check for loading state
@@ -156,7 +168,9 @@ test.describe('User Registration Flow', () => {
 
       await page.getByLabel(/name/i).fill('Test User');
       await page.getByLabel(/email/i).first().fill(uniqueEmail);
-      await page.getByLabel(/^password$/i).fill('testpassword123');
+      await page
+        .getByLabel('Password', { exact: true })
+        .fill('testpassword123');
       await page.getByLabel(/confirm password/i).fill('testpassword123');
 
       await page.getByRole('button', { name: /create account/i }).click();
@@ -179,7 +193,7 @@ test.describe('User Registration Flow', () => {
     test('form fields have proper labels', async ({ page }) => {
       // All inputs should be accessible via their labels
       const emailInput = page.getByLabel(/email/i).first();
-      const passwordInput = page.getByLabel(/^password$/i);
+      const passwordInput = page.getByLabel('Password', { exact: true });
       const confirmInput = page.getByLabel(/confirm password/i);
 
       await expect(emailInput).toBeVisible();
@@ -213,7 +227,7 @@ test.describe('User Registration Flow', () => {
 
   test.describe('Security', () => {
     test('password field is masked', async ({ page }) => {
-      const passwordInput = page.getByLabel(/^password$/i);
+      const passwordInput = page.getByLabel('Password', { exact: true });
 
       await expect(passwordInput).toHaveAttribute('type', 'password');
     });
@@ -226,7 +240,7 @@ test.describe('User Registration Flow', () => {
 
     test('form uses proper autocomplete attributes', async ({ page }) => {
       const emailInput = page.getByLabel(/email/i).first();
-      const passwordInput = page.getByLabel(/^password$/i);
+      const passwordInput = page.getByLabel('Password', { exact: true });
 
       await expect(emailInput).toHaveAttribute('autocomplete', 'email');
       await expect(passwordInput).toHaveAttribute(

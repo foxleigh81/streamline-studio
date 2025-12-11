@@ -100,7 +100,7 @@ test.describe('Smoke Tests - Critical Paths', () => {
 
       // Verify form elements exist
       await expect(page.getByLabel(/email/i)).toBeVisible();
-      await expect(page.getByLabel(/password/i)).toBeVisible();
+      await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
       await expect(
         page.getByRole('button', { name: /sign in/i })
       ).toBeVisible();
@@ -111,7 +111,7 @@ test.describe('Smoke Tests - Critical Paths', () => {
 
       // Verify form elements exist
       await expect(page.getByLabel(/email/i).first()).toBeVisible();
-      await expect(page.getByLabel(/^password$/i)).toBeVisible();
+      await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
       await expect(page.getByLabel(/confirm password/i)).toBeVisible();
       await expect(
         page.getByRole('button', { name: /create account/i })
@@ -128,7 +128,9 @@ test.describe('Smoke Tests - Critical Paths', () => {
 
       // Should show validation errors
       await expect(page.getByText(/email is required/i)).toBeVisible();
-      await expect(page.getByText(/password is required/i)).toBeVisible();
+      await expect(
+        page.getByText(/password is required/i).first()
+      ).toBeVisible();
     });
 
     test('registration form shows validation errors for empty submission', async ({
@@ -141,7 +143,9 @@ test.describe('Smoke Tests - Critical Paths', () => {
 
       // Should show validation errors
       await expect(page.getByText(/email is required/i)).toBeVisible();
-      await expect(page.getByText(/password is required/i)).toBeVisible();
+      await expect(
+        page.getByText(/password is required/i).first()
+      ).toBeVisible();
     });
   });
 
@@ -159,7 +163,7 @@ test.describe('Smoke Tests - Critical Paths', () => {
 
       // Form inputs should have associated labels
       const emailInput = page.getByLabel(/email/i);
-      const passwordInput = page.getByLabel(/password/i);
+      const passwordInput = page.getByLabel('Password', { exact: true });
 
       await expect(emailInput).toBeVisible();
       await expect(passwordInput).toBeVisible();
@@ -170,7 +174,7 @@ test.describe('Smoke Tests - Critical Paths', () => {
 
       // Form inputs should have associated labels
       const emailInput = page.getByLabel(/email/i).first();
-      const passwordInput = page.getByLabel(/^password$/i);
+      const passwordInput = page.getByLabel('Password', { exact: true });
       const confirmPasswordInput = page.getByLabel(/confirm password/i);
 
       await expect(emailInput).toBeVisible();

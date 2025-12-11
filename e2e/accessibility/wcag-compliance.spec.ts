@@ -157,7 +157,7 @@ test.describe('WCAG 2.1 AA Accessibility Compliance', () => {
       await expect(email).toBeFocused();
 
       await page.keyboard.press('Tab'); // Password
-      const password = page.getByLabel(/password/i);
+      const password = page.getByLabel('Password', { exact: true });
       await expect(password).toBeFocused();
 
       await page.keyboard.press('Tab'); // Submit button
