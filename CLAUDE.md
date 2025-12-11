@@ -139,7 +139,7 @@ ESLint enforces this rule - direct Drizzle queries outside repositories will fai
 
 - **NO Tailwind CSS** - use CSS Modules (`.module.scss`)
 - Theme variables in `/src/themes/default/`
-- Use existing SCSS variables, don't invent new ones
+- Use existing SCSS variables, don't invent new ones. Before writing ANY SCSS check the theme files first to see what variables, mixins and functions are available.
 
 ### 4. Component Architecture
 
