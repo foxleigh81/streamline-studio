@@ -161,7 +161,7 @@ test.describe('Document Conflict Resolution', () => {
         name: /reload|discard/i,
       });
       const forceSaveButton = conflictModal.getByRole('button', {
-        name: /save.*anyway|force save/i,
+        name: /keep my changes/i,
       });
 
       await expect(reloadButton).toBeVisible();
@@ -290,7 +290,7 @@ test.describe('Document Conflict Resolution', () => {
 
       // Click force save button
       const forceSaveButton = conflictModal.getByRole('button', {
-        name: /save.*anyway|force save/i,
+        name: /keep my changes/i,
       });
       await forceSaveButton.waitFor({ state: 'visible' });
       await forceSaveButton.click();
@@ -366,7 +366,7 @@ test.describe('Document Conflict Resolution', () => {
         name: /reload|discard/i,
       });
       const forceSaveButton = conflictModal.getByRole('button', {
-        name: /save.*anyway|force save/i,
+        name: /keep my changes/i,
       });
 
       const isReloadFocused = await reloadButton.evaluate(
