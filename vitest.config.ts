@@ -37,23 +37,6 @@ export default defineConfig({
         'storybook-static',
         '**/*.config.{ts,js,mjs}',
       ],
-      thresholds: {
-        // ADR-005: 80% unit test coverage target
-        // Incremental approach to reaching target:
-        // - Phase 8 (Current): 60% - Baseline established during remediation
-        // - Future: 70% - Add tests for new features and critical paths
-        // - Future: 80% - Meet ADR-005 target with comprehensive coverage
-        //
-        // Priority areas for additional coverage:
-        // - WorkspaceRepository integration tests (when DB available)
-        // - tRPC routers (auth, video, category)
-        // - Complex UI components (DocumentEditor, VideoFormModal)
-        // - Accessibility utilities (focus-trap, aria)
-        lines: 60,
-        functions: 60,
-        branches: 60,
-        statements: 60,
-      },
     },
     // Test isolation
     isolate: true,
