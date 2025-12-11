@@ -78,7 +78,7 @@ export default defineConfig({
   webServer: {
     command: process.env.CI ? 'npm run start' : 'npm run dev',
     url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: true, // Reuse server started by CI workflow or local dev
     timeout: 120000,
     // CRITICAL: Pass environment variables to the dev server
     // Without this, the server starts without DATABASE_URL and falls back to
