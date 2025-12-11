@@ -16,6 +16,10 @@ const nextConfig: NextConfig = {
   // Transpile specific packages if needed
   transpilePackages: [],
 
+  // Externalize packages that use worker threads to prevent bundling issues
+  // pino uses thread-stream which requires worker threads at runtime
+  serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream'],
+
   // Image domains for next/image
   images: {
     remotePatterns: [
