@@ -61,9 +61,10 @@ export const logger = pino({
     env: process.env.NODE_ENV,
   },
 
-  // Pretty printing in development
+  // Pretty printing in development only
+  // Disable in production and test environments to avoid worker thread issues
   transport:
-    process.env.NODE_ENV !== 'production'
+    process.env.NODE_ENV === 'development'
       ? {
           target: 'pino-pretty',
           options: {
