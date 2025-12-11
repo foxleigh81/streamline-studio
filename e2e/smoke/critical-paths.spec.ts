@@ -106,26 +106,50 @@ test.describe('Smoke Tests - Critical Paths', () => {
   test.describe('Authentication Forms', () => {
     test('login page renders form elements', async ({ page }) => {
       await page.goto('/login');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForLoadState('networkidle');
 
-      // Verify form elements exist
-      await expect(page.getByLabel(/email/i)).toBeVisible();
-      await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
+      // Wait for form to be fully hydrated
+      const form = page.locator('form');
+      await form.waitFor({ state: 'visible', timeout: 15000 });
+
+      // Verify form elements exist with explicit waits
+      const emailInput = page.getByLabel(/email/i);
+      await emailInput.waitFor({ state: 'visible' });
+      await expect(emailInput).toBeVisible();
+
+      const passwordInput = page.getByLabel('Password', { exact: true });
+      await passwordInput.waitFor({ state: 'visible' });
+      await expect(passwordInput).toBeVisible();
 
       // Wait for button to be fully rendered/hydrated before asserting
       const signInButton = page.getByRole('button', { name: /sign in/i });
       await signInButton.waitFor({ state: 'visible', timeout: 15000 });
       await expect(signInButton).toBeVisible();
+      await expect(signInButton).toBeEnabled();
     });
 
     test('registration page renders form elements', async ({ page }) => {
       await page.goto('/register');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForLoadState('networkidle');
 
-      // Verify form elements exist
-      await expect(page.getByLabel(/email/i).first()).toBeVisible();
-      await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
-      await expect(page.getByLabel(/confirm password/i)).toBeVisible();
+      // Wait for form to be fully hydrated
+      const form = page.locator('form');
+      await form.waitFor({ state: 'visible', timeout: 15000 });
+
+      // Verify form elements exist with explicit waits
+      const emailInput = page.getByLabel(/email/i).first();
+      await emailInput.waitFor({ state: 'visible' });
+      await expect(emailInput).toBeVisible();
+
+      const passwordInput = page.getByLabel('Password', { exact: true });
+      await passwordInput.waitFor({ state: 'visible' });
+      await expect(passwordInput).toBeVisible();
+
+      const confirmPasswordInput = page.getByLabel(/confirm password/i);
+      await confirmPasswordInput.waitFor({ state: 'visible' });
+      await expect(confirmPasswordInput).toBeVisible();
 
       // Wait for button to be fully rendered/hydrated before asserting
       const createAccountButton = page.getByRole('button', {
@@ -133,44 +157,63 @@ test.describe('Smoke Tests - Critical Paths', () => {
       });
       await createAccountButton.waitFor({ state: 'visible', timeout: 15000 });
       await expect(createAccountButton).toBeVisible();
+      await expect(createAccountButton).toBeEnabled();
     });
 
     test('login form shows validation errors for empty submission', async ({
       page,
     }) => {
       await page.goto('/login');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForLoadState('networkidle');
+
+      // Wait for form to be fully hydrated
+      const form = page.locator('form');
+      await form.waitFor({ state: 'visible', timeout: 15000 });
 
       // Submit empty form
       const submitButton = page.getByRole('button', { name: /sign in/i });
       await submitButton.waitFor({ state: 'visible' });
+      await expect(submitButton).toBeEnabled();
       await submitButton.click();
 
-      // Should show validation errors
-      await expect(page.getByText(/email is required/i)).toBeVisible();
-      await expect(
-        page.getByText(/password is required/i).first()
-      ).toBeVisible();
+      // Wait for validation errors to appear after React state update
+      const emailError = page.getByText(/email is required/i);
+      await emailError.waitFor({ state: 'visible', timeout: 10000 });
+      await expect(emailError).toBeVisible();
+
+      const passwordError = page.getByText(/password is required/i).first();
+      await passwordError.waitFor({ state: 'visible', timeout: 10000 });
+      await expect(passwordError).toBeVisible();
     });
 
     test('registration form shows validation errors for empty submission', async ({
       page,
     }) => {
       await page.goto('/register');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForLoadState('networkidle');
+
+      // Wait for form to be fully hydrated
+      const form = page.locator('form');
+      await form.waitFor({ state: 'visible', timeout: 15000 });
 
       // Submit empty form
       const submitButton = page.getByRole('button', {
         name: /create account/i,
       });
       await submitButton.waitFor({ state: 'visible' });
+      await expect(submitButton).toBeEnabled();
       await submitButton.click();
 
-      // Should show validation errors
-      await expect(page.getByText(/email is required/i)).toBeVisible();
-      await expect(
-        page.getByText(/password is required/i).first()
-      ).toBeVisible();
+      // Wait for validation errors to appear after React state update
+      const emailError = page.getByText(/email is required/i);
+      await emailError.waitFor({ state: 'visible', timeout: 10000 });
+      await expect(emailError).toBeVisible();
+
+      const passwordError = page.getByText(/password is required/i).first();
+      await passwordError.waitFor({ state: 'visible', timeout: 10000 });
+      await expect(passwordError).toBeVisible();
     });
   });
 
@@ -186,48 +229,82 @@ test.describe('Smoke Tests - Critical Paths', () => {
 
     test('login page has accessible form labels', async ({ page }) => {
       await page.goto('/login');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForLoadState('networkidle');
+
+      // Wait for form to be fully hydrated
+      const form = page.locator('form');
+      await form.waitFor({ state: 'visible', timeout: 15000 });
 
       // Form inputs should have associated labels
       const emailInput = page.getByLabel(/email/i);
-      const passwordInput = page.getByLabel('Password', { exact: true });
-
+      await emailInput.waitFor({ state: 'visible' });
       await expect(emailInput).toBeVisible();
+
+      const passwordInput = page.getByLabel('Password', { exact: true });
+      await passwordInput.waitFor({ state: 'visible' });
       await expect(passwordInput).toBeVisible();
     });
 
     test('registration page has accessible form labels', async ({ page }) => {
       await page.goto('/register');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForLoadState('networkidle');
+
+      // Wait for form to be fully hydrated
+      const form = page.locator('form');
+      await form.waitFor({ state: 'visible', timeout: 15000 });
 
       // Form inputs should have associated labels
       const emailInput = page.getByLabel(/email/i).first();
-      const passwordInput = page.getByLabel('Password', { exact: true });
-      const confirmPasswordInput = page.getByLabel(/confirm password/i);
-
+      await emailInput.waitFor({ state: 'visible' });
       await expect(emailInput).toBeVisible();
+
+      const passwordInput = page.getByLabel('Password', { exact: true });
+      await passwordInput.waitFor({ state: 'visible' });
       await expect(passwordInput).toBeVisible();
+
+      const confirmPasswordInput = page.getByLabel(/confirm password/i);
+      await confirmPasswordInput.waitFor({ state: 'visible' });
       await expect(confirmPasswordInput).toBeVisible();
     });
 
     test('buttons are focusable via keyboard', async ({ page }) => {
       await page.goto('/login');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForLoadState('networkidle');
+
+      // Wait for form to be fully hydrated
+      const form = page.locator('form');
+      await form.waitFor({ state: 'visible', timeout: 15000 });
 
       // Start with the first element deterministically
       const emailInput = page.getByLabel(/email/i);
+      await emailInput.waitFor({ state: 'visible' });
       await expect(emailInput).toBeVisible();
+      await expect(emailInput).toBeEnabled();
       await emailInput.focus();
+      // Small delay to ensure focus settles
+      await page.waitForTimeout(100);
       await expect(emailInput).toBeFocused();
 
-      // Verify password input is next in tab order
+      // Verify password input is ready before tabbing
       const passwordInput = page.getByLabel('Password', { exact: true });
+      await passwordInput.waitFor({ state: 'visible' });
+      await expect(passwordInput).toBeEnabled();
+
+      // Tab to password input
       await page.keyboard.press('Tab');
+      // Small delay to allow focus to move
+      await page.waitForTimeout(100);
       await expect(passwordInput).toBeFocused();
 
       // Tab to submit button
-      await page.keyboard.press('Tab');
       const submitButton = page.getByRole('button', { name: /sign in/i });
+      await submitButton.waitFor({ state: 'visible' });
+      await page.keyboard.press('Tab');
+      // Small delay to allow focus to move
+      await page.waitForTimeout(100);
       await expect(submitButton).toBeFocused();
     });
   });
