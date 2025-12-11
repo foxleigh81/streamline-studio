@@ -16,6 +16,7 @@ import { testData } from '../helpers/fixtures';
 async function createTestVideoAndNavigate(page: Page): Promise<string> {
   // Navigate to dashboard (assumes user is logged in)
   await page.goto('/');
+  await page.waitForLoadState('networkidle');
 
   // Create a new video
   const videoTitle = testData.videoTitle();
@@ -24,9 +25,12 @@ async function createTestVideoAndNavigate(page: Page): Promise<string> {
   });
 
   if (await createButton.isVisible()) {
+    await createButton.waitFor({ state: 'visible' });
     await createButton.click();
     await page.getByLabel(/title/i).fill(videoTitle);
-    await page.getByRole('button', { name: /create|save/i }).click();
+    const saveButton = page.getByRole('button', { name: /create|save/i });
+    await saveButton.waitFor({ state: 'visible' });
+    await saveButton.click();
   }
 
   // Wait for video to be created and navigate to script editor
@@ -65,6 +69,7 @@ async function getCurrentVersion(page: Page): Promise<number> {
 async function editDocumentContent(page: Page, content: string): Promise<void> {
   // Find the CodeMirror editor
   const editor = page.locator('.cm-content[contenteditable="true"]');
+  await editor.waitFor({ state: 'visible' });
   await editor.click();
   await editor.fill(content);
 }
@@ -94,10 +99,13 @@ test.describe('Document Conflict Resolution', () => {
       // Register and login in context 1
       const uniqueEmail = testData.uniqueEmail();
       await page1.goto('/register');
+      await page1.waitForLoadState('networkidle');
       await page1.getByLabel(/email/i).first().fill(uniqueEmail);
       await page1.getByLabel(/^password$/i).fill('testpassword123');
       await page1.getByLabel(/confirm password/i).fill('testpassword123');
-      await page1.getByRole('button', { name: /create account/i }).click();
+      const regBtn1 = page1.getByRole('button', { name: /create account/i });
+      await regBtn1.waitFor({ state: 'visible' });
+      await regBtn1.click();
       await page1.waitForURL('/');
 
       // Create a test video and navigate to script editor
@@ -179,10 +187,13 @@ test.describe('Document Conflict Resolution', () => {
       // Setup: Register and create video
       const uniqueEmail = testData.uniqueEmail();
       await page1.goto('/register');
+      await page1.waitForLoadState('networkidle');
       await page1.getByLabel(/email/i).first().fill(uniqueEmail);
       await page1.getByLabel(/^password$/i).fill('testpassword123');
       await page1.getByLabel(/confirm password/i).fill('testpassword123');
-      await page1.getByRole('button', { name: /create account/i }).click();
+      const regBtn2 = page1.getByRole('button', { name: /create account/i });
+      await regBtn2.waitFor({ state: 'visible' });
+      await regBtn2.click();
       await page1.waitForURL('/');
 
       const videoId = await createTestVideoAndNavigate(page1);
@@ -213,6 +224,7 @@ test.describe('Document Conflict Resolution', () => {
       const reloadButton = conflictModal.getByRole('button', {
         name: /reload|discard/i,
       });
+      await reloadButton.waitFor({ state: 'visible' });
       await reloadButton.click();
 
       // Modal should close
@@ -246,10 +258,13 @@ test.describe('Document Conflict Resolution', () => {
       // Setup: Register and create video
       const uniqueEmail = testData.uniqueEmail();
       await page1.goto('/register');
+      await page1.waitForLoadState('networkidle');
       await page1.getByLabel(/email/i).first().fill(uniqueEmail);
       await page1.getByLabel(/^password$/i).fill('testpassword123');
       await page1.getByLabel(/confirm password/i).fill('testpassword123');
-      await page1.getByRole('button', { name: /create account/i }).click();
+      const regBtn3 = page1.getByRole('button', { name: /create account/i });
+      await regBtn3.waitFor({ state: 'visible' });
+      await regBtn3.click();
       await page1.waitForURL('/');
 
       const videoId = await createTestVideoAndNavigate(page1);
@@ -277,6 +292,7 @@ test.describe('Document Conflict Resolution', () => {
       const forceSaveButton = conflictModal.getByRole('button', {
         name: /save.*anyway|force save/i,
       });
+      await forceSaveButton.waitFor({ state: 'visible' });
       await forceSaveButton.click();
 
       // Modal should close
@@ -314,10 +330,13 @@ test.describe('Document Conflict Resolution', () => {
       // Setup: Register and create video
       const uniqueEmail = testData.uniqueEmail();
       await page1.goto('/register');
+      await page1.waitForLoadState('networkidle');
       await page1.getByLabel(/email/i).first().fill(uniqueEmail);
       await page1.getByLabel(/^password$/i).fill('testpassword123');
       await page1.getByLabel(/confirm password/i).fill('testpassword123');
-      await page1.getByRole('button', { name: /create account/i }).click();
+      const regBtn4 = page1.getByRole('button', { name: /create account/i });
+      await regBtn4.waitFor({ state: 'visible' });
+      await regBtn4.click();
       await page1.waitForURL('/');
 
       const videoId = await createTestVideoAndNavigate(page1);

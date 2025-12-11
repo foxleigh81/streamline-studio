@@ -14,6 +14,7 @@ import { testData } from '../helpers/fixtures';
 test.describe('User Registration Flow', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/register');
+    await page.waitForLoadState('networkidle');
   });
 
   test.describe('Page Rendering', () => {
@@ -54,7 +55,11 @@ test.describe('User Registration Flow', () => {
       await page.getByLabel(/confirm password/i).fill('testpassword123');
 
       // Submit form
-      await page.getByRole('button', { name: /create account/i }).click();
+      const submitButton = page.getByRole('button', {
+        name: /create account/i,
+      });
+      await submitButton.waitFor({ state: 'visible' });
+      await submitButton.click();
 
       // Should show email error
       await expect(page.getByText(/email is required/i)).toBeVisible();
@@ -67,7 +72,11 @@ test.describe('User Registration Flow', () => {
         .fill('testpassword123');
       await page.getByLabel(/confirm password/i).fill('testpassword123');
 
-      await page.getByRole('button', { name: /create account/i }).click();
+      const submitButton = page.getByRole('button', {
+        name: /create account/i,
+      });
+      await submitButton.waitFor({ state: 'visible' });
+      await submitButton.click();
 
       await expect(page.getByText(/invalid email/i)).toBeVisible();
     });
@@ -75,7 +84,11 @@ test.describe('User Registration Flow', () => {
     test('shows error for empty password', async ({ page }) => {
       await page.getByLabel(/email/i).first().fill('test@example.com');
 
-      await page.getByRole('button', { name: /create account/i }).click();
+      const submitButton = page.getByRole('button', {
+        name: /create account/i,
+      });
+      await submitButton.waitFor({ state: 'visible' });
+      await submitButton.click();
 
       await expect(
         page.getByText(/password is required/i).first()
@@ -87,7 +100,11 @@ test.describe('User Registration Flow', () => {
       await page.getByLabel('Password', { exact: true }).fill('short');
       await page.getByLabel(/confirm password/i).fill('short');
 
-      await page.getByRole('button', { name: /create account/i }).click();
+      const submitButton = page.getByRole('button', {
+        name: /create account/i,
+      });
+      await submitButton.waitFor({ state: 'visible' });
+      await submitButton.click();
 
       await expect(page.getByText(/at least 8 characters/i)).toBeVisible();
     });
@@ -97,7 +114,11 @@ test.describe('User Registration Flow', () => {
       await page.getByLabel('Password', { exact: true }).fill('password123');
       await page.getByLabel(/confirm password/i).fill('differentpassword');
 
-      await page.getByRole('button', { name: /create account/i }).click();
+      const submitButton = page.getByRole('button', {
+        name: /create account/i,
+      });
+      await submitButton.waitFor({ state: 'visible' });
+      await submitButton.click();
 
       await expect(page.getByText(/passwords do not match/i)).toBeVisible();
     });
@@ -111,7 +132,11 @@ test.describe('User Registration Flow', () => {
         .fill('testpassword123');
       await page.getByLabel(/confirm password/i).fill('testpassword123');
 
-      await page.getByRole('button', { name: /create account/i }).click();
+      const submitButton = page.getByRole('button', {
+        name: /create account/i,
+      });
+      await submitButton.waitFor({ state: 'visible' });
+      await submitButton.click();
 
       // Should either redirect to dashboard or show success
       // Not require name field
@@ -183,7 +208,9 @@ test.describe('User Registration Flow', () => {
 
   test.describe('Navigation', () => {
     test('can navigate to login page', async ({ page }) => {
-      await page.getByRole('link', { name: /sign in/i }).click();
+      const signInLink = page.getByRole('link', { name: /sign in/i });
+      await signInLink.waitFor({ state: 'visible' });
+      await signInLink.click();
 
       await expect(page).toHaveURL('/login');
     });
@@ -202,8 +229,12 @@ test.describe('User Registration Flow', () => {
     });
 
     test('form can be navigated with keyboard', async ({ page }) => {
-      // Tab through form fields
-      await page.keyboard.press('Tab'); // Name field
+      // Explicitly focus the first form element for deterministic behavior
+      const nameInput = page.getByLabel(/name/i);
+      await nameInput.waitFor({ state: 'visible' });
+      await nameInput.focus();
+
+      // Tab through form fields from the known starting point
       await page.keyboard.press('Tab'); // Email field
       await page.keyboard.press('Tab'); // Password field
       await page.keyboard.press('Tab'); // Confirm password field
@@ -217,7 +248,11 @@ test.describe('User Registration Flow', () => {
 
     test('error messages are announced to screen readers', async ({ page }) => {
       // Submit empty form to trigger errors
-      await page.getByRole('button', { name: /create account/i }).click();
+      const submitButton = page.getByRole('button', {
+        name: /create account/i,
+      });
+      await submitButton.waitFor({ state: 'visible' });
+      await submitButton.click();
 
       // Error messages should have role="alert"
       const alerts = page.getByRole('alert');

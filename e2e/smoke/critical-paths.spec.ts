@@ -15,6 +15,7 @@ test.describe('Smoke Tests - Critical Paths', () => {
   test.describe('Application Health', () => {
     test('homepage loads successfully', async ({ page }) => {
       await page.goto('/');
+      await page.waitForLoadState('networkidle');
 
       // Verify page title
       await expect(page).toHaveTitle(/Streamline Studio/);
@@ -45,22 +46,26 @@ test.describe('Smoke Tests - Critical Paths', () => {
   test.describe('Navigation', () => {
     test('can navigate to login page', async ({ page }) => {
       await page.goto('/');
+      await page.waitForLoadState('networkidle');
 
       // Find and click the sign in link
       const signInLink = page.getByRole('link', { name: /sign in/i });
 
       if (await signInLink.isVisible()) {
+        await signInLink.waitFor({ state: 'visible' });
         await signInLink.click();
         await expect(page).toHaveURL('/login');
       } else {
         // Navigate directly if link not visible
         await page.goto('/login');
+        await page.waitForLoadState('networkidle');
         await expect(page).toHaveURL('/login');
       }
     });
 
     test('can navigate to registration page', async ({ page }) => {
       await page.goto('/');
+      await page.waitForLoadState('networkidle');
 
       // Find and click the register link
       const registerLink = page.getByRole('link', {
@@ -68,17 +73,20 @@ test.describe('Smoke Tests - Critical Paths', () => {
       });
 
       if (await registerLink.isVisible()) {
+        await registerLink.waitFor({ state: 'visible' });
         await registerLink.click();
         await expect(page).toHaveURL('/register');
       } else {
         // Navigate directly if link not visible
         await page.goto('/register');
+        await page.waitForLoadState('networkidle');
         await expect(page).toHaveURL('/register');
       }
     });
 
     test('login page has link to registration', async ({ page }) => {
       await page.goto('/login');
+      await page.waitForLoadState('networkidle');
 
       const registerLink = page.getByRole('link', {
         name: /create one|register|sign up/i,
@@ -88,6 +96,7 @@ test.describe('Smoke Tests - Critical Paths', () => {
 
     test('registration page has link to login', async ({ page }) => {
       await page.goto('/register');
+      await page.waitForLoadState('networkidle');
 
       const loginLink = page.getByRole('link', { name: /sign in|login/i });
       await expect(loginLink).toBeVisible();
@@ -97,6 +106,7 @@ test.describe('Smoke Tests - Critical Paths', () => {
   test.describe('Authentication Forms', () => {
     test('login page renders form elements', async ({ page }) => {
       await page.goto('/login');
+      await page.waitForLoadState('networkidle');
 
       // Verify form elements exist
       await expect(page.getByLabel(/email/i)).toBeVisible();
@@ -108,6 +118,7 @@ test.describe('Smoke Tests - Critical Paths', () => {
 
     test('registration page renders form elements', async ({ page }) => {
       await page.goto('/register');
+      await page.waitForLoadState('networkidle');
 
       // Verify form elements exist
       await expect(page.getByLabel(/email/i).first()).toBeVisible();
@@ -122,9 +133,12 @@ test.describe('Smoke Tests - Critical Paths', () => {
       page,
     }) => {
       await page.goto('/login');
+      await page.waitForLoadState('networkidle');
 
       // Submit empty form
-      await page.getByRole('button', { name: /sign in/i }).click();
+      const submitButton = page.getByRole('button', { name: /sign in/i });
+      await submitButton.waitFor({ state: 'visible' });
+      await submitButton.click();
 
       // Should show validation errors
       await expect(page.getByText(/email is required/i)).toBeVisible();
@@ -137,9 +151,14 @@ test.describe('Smoke Tests - Critical Paths', () => {
       page,
     }) => {
       await page.goto('/register');
+      await page.waitForLoadState('networkidle');
 
       // Submit empty form
-      await page.getByRole('button', { name: /create account/i }).click();
+      const submitButton = page.getByRole('button', {
+        name: /create account/i,
+      });
+      await submitButton.waitFor({ state: 'visible' });
+      await submitButton.click();
 
       // Should show validation errors
       await expect(page.getByText(/email is required/i)).toBeVisible();
@@ -152,6 +171,7 @@ test.describe('Smoke Tests - Critical Paths', () => {
   test.describe('Accessibility Basics', () => {
     test('homepage has proper heading structure', async ({ page }) => {
       await page.goto('/');
+      await page.waitForLoadState('networkidle');
 
       // Should have an h1
       const h1 = page.getByRole('heading', { level: 1 });
@@ -160,6 +180,7 @@ test.describe('Smoke Tests - Critical Paths', () => {
 
     test('login page has accessible form labels', async ({ page }) => {
       await page.goto('/login');
+      await page.waitForLoadState('networkidle');
 
       // Form inputs should have associated labels
       const emailInput = page.getByLabel(/email/i);
@@ -171,6 +192,7 @@ test.describe('Smoke Tests - Critical Paths', () => {
 
     test('registration page has accessible form labels', async ({ page }) => {
       await page.goto('/register');
+      await page.waitForLoadState('networkidle');
 
       // Form inputs should have associated labels
       const emailInput = page.getByLabel(/email/i).first();
@@ -184,12 +206,15 @@ test.describe('Smoke Tests - Critical Paths', () => {
 
     test('buttons are focusable via keyboard', async ({ page }) => {
       await page.goto('/login');
+      await page.waitForLoadState('networkidle');
 
-      // Tab through to find the submit button
+      // Explicitly focus the first form element for deterministic behavior
+      const emailInput = page.getByLabel(/email/i);
+      await emailInput.waitFor({ state: 'visible' });
+      await emailInput.focus();
+
+      // Tab through the form from the known starting point
       const submitButton = page.getByRole('button', { name: /sign in/i });
-
-      // Tab through the form
-      await page.keyboard.press('Tab'); // Email
       await page.keyboard.press('Tab'); // Password
       await page.keyboard.press('Tab'); // Submit button
 
@@ -223,6 +248,7 @@ test.describe('Smoke Tests - Critical Paths', () => {
     test('homepage loads within acceptable time', async ({ page }) => {
       const startTime = Date.now();
       await page.goto('/');
+      await page.waitForLoadState('networkidle');
       const loadTime = Date.now() - startTime;
 
       // Page should load in under 5 seconds
@@ -232,6 +258,7 @@ test.describe('Smoke Tests - Critical Paths', () => {
     test('login page loads within acceptable time', async ({ page }) => {
       const startTime = Date.now();
       await page.goto('/login');
+      await page.waitForLoadState('networkidle');
       const loadTime = Date.now() - startTime;
 
       // Page should load in under 5 seconds

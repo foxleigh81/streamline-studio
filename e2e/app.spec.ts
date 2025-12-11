@@ -11,6 +11,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Application', () => {
   test('homepage loads successfully', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
 
     // Verify page title
     await expect(page).toHaveTitle('Streamline Studio');

@@ -18,6 +18,7 @@ test.describe('Rate Limiting', () => {
       page,
     }) => {
       await page.goto('/login');
+      await page.waitForLoadState('networkidle');
 
       const email = testData.uniqueEmail();
       const password = 'wrongpassword';
@@ -26,7 +27,9 @@ test.describe('Rate Limiting', () => {
       for (let i = 1; i <= 5; i++) {
         await page.getByLabel(/email/i).fill(email);
         await page.getByLabel(/password/i).fill(password);
-        await page.getByRole('button', { name: /sign in/i }).click();
+        const submitButton = page.getByRole('button', { name: /sign in/i });
+        await submitButton.waitFor({ state: 'visible' });
+        await submitButton.click();
 
         // Wait for error message
         await expect(page.getByRole('alert')).toBeVisible({ timeout: 5000 });
@@ -46,7 +49,9 @@ test.describe('Rate Limiting', () => {
       await page.getByLabel(/email/i).fill(email);
       await page.getByLabel(/password/i).clear();
       await page.getByLabel(/password/i).fill(password);
-      await page.getByRole('button', { name: /sign in/i }).click();
+      const submit6 = page.getByRole('button', { name: /sign in/i });
+      await submit6.waitFor({ state: 'visible' });
+      await submit6.click();
 
       // Should show rate limit error
       await expect(page.getByRole('alert')).toBeVisible({ timeout: 5000 });
@@ -63,10 +68,15 @@ test.describe('Rate Limiting', () => {
 
       // Register user first
       await page.goto('/register');
+      await page.waitForLoadState('networkidle');
       await page.getByLabel(/email/i).first().fill(validEmail);
       await page.getByLabel(/^password$/i).fill(validPassword);
       await page.getByLabel(/confirm password/i).fill(validPassword);
-      await page.getByRole('button', { name: /create account/i }).click();
+      const createButton = page.getByRole('button', {
+        name: /create account/i,
+      });
+      await createButton.waitFor({ state: 'visible' });
+      await createButton.click();
 
       // Wait for registration to complete
       await expect(page).toHaveURL('/', { timeout: 10000 });
@@ -76,13 +86,16 @@ test.describe('Rate Limiting', () => {
 
       // Try different email - should have separate rate limit
       await page.goto('/login');
+      await page.waitForLoadState('networkidle');
       const differentEmail = testData.uniqueEmail();
 
       // Exhaust rate limit for first email
       for (let i = 1; i <= 5; i++) {
         await page.getByLabel(/email/i).fill(differentEmail);
         await page.getByLabel(/password/i).fill('wrongpassword');
-        await page.getByRole('button', { name: /sign in/i }).click();
+        const signInBtn = page.getByRole('button', { name: /sign in/i });
+        await signInBtn.waitFor({ state: 'visible' });
+        await signInBtn.click();
         await expect(page.getByRole('alert')).toBeVisible();
         await page.getByLabel(/email/i).clear();
         await page.getByLabel(/password/i).clear();
@@ -91,7 +104,9 @@ test.describe('Rate Limiting', () => {
       // Should be rate limited for first email
       await page.getByLabel(/email/i).fill(differentEmail);
       await page.getByLabel(/password/i).fill('wrongpassword');
-      await page.getByRole('button', { name: /sign in/i }).click();
+      const rateLimitBtn = page.getByRole('button', { name: /sign in/i });
+      await rateLimitBtn.waitFor({ state: 'visible' });
+      await rateLimitBtn.click();
       await expect(page.getByRole('alert')).toContainText(/too many/i);
 
       // Clear form
@@ -101,7 +116,9 @@ test.describe('Rate Limiting', () => {
       // But second email should still work (different rate limit key)
       await page.getByLabel(/email/i).fill(validEmail);
       await page.getByLabel(/password/i).fill(validPassword);
-      await page.getByRole('button', { name: /sign in/i }).click();
+      const validLoginBtn = page.getByRole('button', { name: /sign in/i });
+      await validLoginBtn.waitFor({ state: 'visible' });
+      await validLoginBtn.click();
 
       // Should succeed (or at least not show rate limit error)
       await page.waitForLoadState('networkidle');
@@ -121,6 +138,7 @@ test.describe('Rate Limiting', () => {
       page,
     }) => {
       await page.goto('/login');
+      await page.waitForLoadState('networkidle');
 
       const email = testData.uniqueEmail();
       const password = 'testpassword';
@@ -129,7 +147,9 @@ test.describe('Rate Limiting', () => {
       for (let i = 1; i <= 6; i++) {
         await page.getByLabel(/email/i).fill(email);
         await page.getByLabel(/password/i).fill(password);
-        await page.getByRole('button', { name: /sign in/i }).click();
+        const btn = page.getByRole('button', { name: /sign in/i });
+        await btn.waitFor({ state: 'visible' });
+        await btn.click();
 
         await expect(page.getByRole('alert')).toBeVisible({ timeout: 5000 });
 
@@ -156,6 +176,7 @@ test.describe('Rate Limiting', () => {
   test.describe('Registration Rate Limiting', () => {
     test('should rate limit registration attempts', async ({ page }) => {
       await page.goto('/register');
+      await page.waitForLoadState('networkidle');
 
       // Attempt multiple registrations with same email
       const email = testData.uniqueEmail();
@@ -165,7 +186,9 @@ test.describe('Rate Limiting', () => {
       await page.getByLabel(/email/i).first().fill(email);
       await page.getByLabel(/^password$/i).fill(password);
       await page.getByLabel(/confirm password/i).fill(password);
-      await page.getByRole('button', { name: /create account/i }).click();
+      const firstBtn = page.getByRole('button', { name: /create account/i });
+      await firstBtn.waitFor({ state: 'visible' });
+      await firstBtn.click();
 
       // Wait for response (success or generic message)
       await page.waitForLoadState('networkidle');
@@ -173,20 +196,26 @@ test.describe('Rate Limiting', () => {
       // Try registering again immediately with different emails
       for (let i = 1; i <= 3; i++) {
         await page.goto('/register');
+        await page.waitForLoadState('networkidle');
         await page.getByLabel(/email/i).first().fill(testData.uniqueEmail());
         await page.getByLabel(/^password$/i).fill(password);
         await page.getByLabel(/confirm password/i).fill(password);
-        await page.getByRole('button', { name: /create account/i }).click();
+        const regBtn = page.getByRole('button', { name: /create account/i });
+        await regBtn.waitFor({ state: 'visible' });
+        await regBtn.click();
 
         await page.waitForLoadState('networkidle');
       }
 
       // 4th attempt should be rate limited
       await page.goto('/register');
+      await page.waitForLoadState('networkidle');
       await page.getByLabel(/email/i).first().fill(testData.uniqueEmail());
       await page.getByLabel(/^password$/i).fill(password);
       await page.getByLabel(/confirm password/i).fill(password);
-      await page.getByRole('button', { name: /create account/i }).click();
+      const limitBtn = page.getByRole('button', { name: /create account/i });
+      await limitBtn.waitFor({ state: 'visible' });
+      await limitBtn.click();
 
       // Should show rate limit error (registration limit is 3 per hour)
       await expect(page.getByRole('alert')).toBeVisible({ timeout: 5000 });
@@ -204,10 +233,13 @@ test.describe('Rate Limiting', () => {
       const password = 'testpassword123';
 
       await page.goto('/register');
+      await page.waitForLoadState('networkidle');
       await page.getByLabel(/email/i).first().fill(realEmail);
       await page.getByLabel(/^password$/i).fill(password);
       await page.getByLabel(/confirm password/i).fill(password);
-      await page.getByRole('button', { name: /create account/i }).click();
+      const regBtn = page.getByRole('button', { name: /create account/i });
+      await regBtn.waitFor({ state: 'visible' });
+      await regBtn.click();
       await expect(page).toHaveURL('/', { timeout: 10000 });
 
       // Logout
@@ -215,10 +247,13 @@ test.describe('Rate Limiting', () => {
 
       // Try to brute force real account
       await page.goto('/login');
+      await page.waitForLoadState('networkidle');
       for (let i = 1; i <= 6; i++) {
         await page.getByLabel(/email/i).fill(realEmail);
         await page.getByLabel(/password/i).fill('wrongpassword');
-        await page.getByRole('button', { name: /sign in/i }).click();
+        const signInBtn = page.getByRole('button', { name: /sign in/i });
+        await signInBtn.waitFor({ state: 'visible' });
+        await signInBtn.click();
         await expect(page.getByRole('alert')).toBeVisible();
 
         if (i < 6) {
@@ -239,7 +274,9 @@ test.describe('Rate Limiting', () => {
       for (let i = 1; i <= 6; i++) {
         await page.getByLabel(/email/i).fill(fakeEmail);
         await page.getByLabel(/password/i).fill('wrongpassword');
-        await page.getByRole('button', { name: /sign in/i }).click();
+        const fakeBtn = page.getByRole('button', { name: /sign in/i });
+        await fakeBtn.waitFor({ state: 'visible' });
+        await fakeBtn.click();
         await expect(page.getByRole('alert')).toBeVisible();
 
         if (i < 6) {
