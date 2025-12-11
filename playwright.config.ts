@@ -27,6 +27,10 @@ export default defineConfig({
     ['list'],
   ],
 
+  // Increased timeouts for CI environment
+  timeout: 60000,
+  expect: { timeout: 10000 },
+
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'retain-on-failure',
@@ -68,9 +72,9 @@ export default defineConfig({
         },
       ],
 
-  // Local dev server
+  // Local dev server (dev mode) / Production server (CI)
   webServer: {
-    command: 'npm run dev',
+    command: process.env.CI ? 'npm run start' : 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
