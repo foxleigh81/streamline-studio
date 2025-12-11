@@ -1,14 +1,37 @@
-# Project Management - Code Review Remediation
+# Project Management
 
-**Project:** Streamline Studio Code Review Remediation
-**Start Date:** December 10, 2025
-**End Date:** December 10, 2025
+**Current Project:** High Priority CI Fixes
+**Start Date:** December 11, 2025
 **Coordinator:** Project Orchestrator
-**Status:** ✅ COMPLETE - ALL 9 PHASES FINISHED
+**Status:** 🔴 IN PROGRESS - CRITICAL ISSUES
 
-## Project Overview
+**Previous Project:** Code Review Remediation (✅ COMPLETE - December 10, 2025)
 
-This project coordinated the remediation of 53+ issues identified across eight specialized code review reports. The application has been successfully upgraded from B+ (8.2/10) "conditionally production-ready" to **A (9.0/10) "production-ready"**.
+## Current Project Overview
+
+Two critical CI pipeline issues have been identified and FIXED:
+
+1. ✅ **Database "root" User Error** - E2E tests failed with `FATAL: role "root" does not exist`
+   - Root cause: `playwright.config.ts` webServer wasn't receiving DATABASE_URL
+   - Fix: Added `env` property to pass DATABASE_URL, SESSION_SECRET, MODE to webServer
+
+2. ✅ **E2E Test Performance** - Tests took 1.5+ hours
+   - Root cause: Running 5 browsers with 1 worker and 2 retries in CI
+   - Fix: CI now runs only Chromium with 2 workers and 1 retry (~13x faster)
+
+**Status:** Implementation complete, ready for CI validation.
+
+See:
+
+- `/project-management/tasks/high-priority-ci-fixes.md` - Problem statement
+- `/project-management/decisions/ci-fixes-root-cause-analysis.md` - Root cause analysis
+- `/project-management/tasks/ci-fixes-implementation-summary.md` - Implementation details
+
+---
+
+## Previous Project: Code Review Remediation (COMPLETE)
+
+Successfully remediated 53+ issues identified across eight specialized code review reports. The application was upgraded from B+ (8.2/10) "conditionally production-ready" to **A (9.0/10) "production-ready"**.
 
 ## Completed Phases
 
