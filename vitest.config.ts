@@ -60,10 +60,15 @@ export default defineConfig({
     // Timeout for async operations
     testTimeout: 10000,
     // Pool for parallel execution
+    // Database tests share a single test database and use resetTestDatabase()
+    // which truncates all tables. To avoid race conditions, we run tests
+    // sequentially by limiting to a single thread.
+    // This is a tradeoff: slower test execution for reliable database tests.
     pool: 'threads',
     poolOptions: {
       threads: {
-        singleThread: false,
+        singleThread: true,
+        isolate: true,
       },
     },
   },
