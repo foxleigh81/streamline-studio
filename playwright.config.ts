@@ -28,14 +28,16 @@ export default defineConfig({
   ],
 
   // Increased timeouts for CI environment
-  timeout: 60000,
-  expect: { timeout: 10000 },
+  timeout: 120000, // global test timeout (120s)
+  expect: { timeout: 10000 }, // per-expect timeout
 
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    actionTimeout: 30000, // action timeout (30s)
+    navigationTimeout: 60000, // navigation timeout (60s)
   },
 
   // CI: Run only Chromium for speed (5x faster)

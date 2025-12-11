@@ -54,9 +54,9 @@ jobs:
           - 5432:5432
         options: >-
           --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-interval 5s
+          --health-timeout 2s
+          --health-retries 10
 
     steps:
       - name: Checkout code
@@ -133,9 +133,9 @@ jobs:
           - 5432:5432
         options: >-
           --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-interval 5s
+          --health-timeout 2s
+          --health-retries 10
 
     steps:
       - name: Checkout code
@@ -158,6 +158,20 @@ jobs:
 
       - name: Build Next.js application
         run: npm run build
+
+      - name: Wait for API health
+        run: |
+          echo "Waiting for API to become healthy..."
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3000/api/health >/dev/null 2>&1; then
+              echo "API is healthy!"
+              exit 0
+            fi
+            echo "Waiting for API ($i/30)..."
+            sleep 2
+          done
+          echo "API did not become healthy in time"
+          exit 1
 
       - name: Run E2E tests
         run: npm run test:e2e
