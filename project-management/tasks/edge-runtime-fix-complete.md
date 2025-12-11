@@ -92,6 +92,7 @@ if (setupComplete) {
    ```
 
 3. **Build**: ✅ PASSED
+
    ```
    npm run build
    ```
