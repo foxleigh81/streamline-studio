@@ -159,22 +159,43 @@ jobs:
       - name: Build Next.js application
         run: npm run build
 
+      - name: Start Next.js server
+        run: |
+          npm run start &> next.log &
+          echo $! > .next.pid
+          sleep 2
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/streamline_test
+          MODE: single-tenant
+          SESSION_SECRET: test-secret-for-ci-only-do-not-use-in-production
+
       - name: Wait for API health
         run: |
           echo "Waiting for API to become healthy..."
-          for i in $(seq 1 30); do
+          for i in $(seq 1 60); do
             if curl -fsS http://localhost:3000/api/health >/dev/null 2>&1; then
               echo "API is healthy!"
               exit 0
             fi
-            echo "Waiting for API ($i/30)..."
+            echo "Waiting for API ($i/60)..."
             sleep 2
           done
           echo "API did not become healthy in time"
+          cat next.log || true
           exit 1
 
       - name: Run E2E tests
         run: npm run test:e2e
+
+      - name: Stop Next.js server
+        if: always()
+        run: |
+          if [ -f .next.pid ]; then
+            kill $(cat .next.pid) || true
+            rm -f .next.pid
+          fi
+          echo "=== Server logs ==="
+          tail -n 100 next.log || true
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
