@@ -66,7 +66,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <h2 className="sr-only">Sign In</h2>
+      <h2>Sign In</h2>
 
       {formError && (
         <div className={`${styles.alert} ${styles.alertError}`} role="alert">

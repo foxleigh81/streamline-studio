@@ -219,9 +219,9 @@ test.describe('Smoke Tests - Critical Paths', () => {
       await page.keyboard.press('Tab');
       await expect(passwordInput).toBeFocused();
 
-      // Verify submit button is next in tab order
-      const submitButton = page.getByRole('button', { name: /sign in/i });
+      // Tab to submit button
       await page.keyboard.press('Tab');
+      const submitButton = page.getByRole('button', { name: /sign in/i });
       await expect(submitButton).toBeFocused();
     });
   });

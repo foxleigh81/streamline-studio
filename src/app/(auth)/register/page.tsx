@@ -81,7 +81,7 @@ export default function RegisterPage() {
 
   return (
     <>
-      <h2 className="sr-only">Create Account</h2>
+      <h2>Create Account</h2>
 
       {formError && (
         <div className={`${styles.alert} ${styles.alertError}`} role="alert">
