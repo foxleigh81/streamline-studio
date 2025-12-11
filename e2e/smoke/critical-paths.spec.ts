@@ -208,16 +208,20 @@ test.describe('Smoke Tests - Critical Paths', () => {
       await page.goto('/login');
       await page.waitForLoadState('networkidle');
 
-      // Explicitly focus the first form element for deterministic behavior
+      // Start with the first element deterministically
       const emailInput = page.getByLabel(/email/i);
-      await emailInput.waitFor({ state: 'visible' });
+      await expect(emailInput).toBeVisible();
       await emailInput.focus();
+      await expect(emailInput).toBeFocused();
 
-      // Tab through the form from the known starting point
+      // Verify password input is next in tab order
+      const passwordInput = page.getByLabel('Password', { exact: true });
+      await page.keyboard.press('Tab');
+      await expect(passwordInput).toBeFocused();
+
+      // Verify submit button is next in tab order
       const submitButton = page.getByRole('button', { name: /sign in/i });
-      await page.keyboard.press('Tab'); // Password
-      await page.keyboard.press('Tab'); // Submit button
-
+      await page.keyboard.press('Tab');
       await expect(submitButton).toBeFocused();
     });
   });
