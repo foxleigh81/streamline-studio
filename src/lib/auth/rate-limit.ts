@@ -38,27 +38,45 @@ interface RateLimitRecord {
 }
 
 /**
+ * Check if E2E test mode is enabled
+ * In E2E test mode, rate limits are dramatically increased to prevent
+ * test interference while still exercising the rate limiting code paths.
+ */
+const isE2ETestMode = process.env.E2E_TEST_MODE === 'true';
+
+/**
  * Rate limit configurations for different endpoints
  * @see ADR-007: Rate Limiting Configuration
+ *
+ * In E2E test mode, limits are increased 100x to prevent test interference
+ * while still exercising the rate limiting code paths.
  */
 export const RATE_LIMITS = {
   login: {
-    limit: 5,
+    limit: isE2ETestMode ? 500 : 5,
     windowMs: 60 * 1000, // 1 minute
   },
   registration: {
-    limit: 3,
+    limit: isE2ETestMode ? 300 : 3,
     windowMs: 60 * 60 * 1000, // 1 hour
   },
   passwordReset: {
-    limit: 3,
+    limit: isE2ETestMode ? 300 : 3,
     windowMs: 60 * 60 * 1000, // 1 hour
   },
   general: {
-    limit: 100,
+    limit: isE2ETestMode ? 10000 : 100,
     windowMs: 60 * 1000, // 1 minute
   },
 } as const;
+
+// Log when E2E test mode is active (development aid)
+if (isE2ETestMode) {
+  logger.warn(
+    'E2E_TEST_MODE is enabled - rate limits are dramatically increased. ' +
+      'This should ONLY be used in controlled testing environments.'
+  );
+}
 
 /**
  * Redis client (singleton)

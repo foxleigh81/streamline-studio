@@ -96,6 +96,8 @@ export default defineConfig({
       ...(process.env.DATA_DIR && { DATA_DIR: process.env.DATA_DIR }),
       ...(process.env.NODE_ENV && { NODE_ENV: process.env.NODE_ENV }),
       ...(process.env.PORT && { PORT: process.env.PORT }),
+      // Enable E2E test mode to increase rate limits
+      E2E_TEST_MODE: 'true',
     },
   },
 

@@ -54,6 +54,13 @@ const serverEnvSchema = z.object({
     .transform((val) => val === 'true')
     .default('false'),
 
+  // E2E Test Mode - dramatically increases rate limits to prevent test interference
+  // ONLY use in controlled E2E testing environments, never in production
+  E2E_TEST_MODE: z
+    .string()
+    .transform((val) => val === 'true')
+    .default('false'),
+
   // Data directory for setup flag
   DATA_DIR: z.string().default('/data'),
 
