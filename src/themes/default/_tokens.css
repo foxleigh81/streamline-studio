@@ -89,8 +89,11 @@
     --color-muted-foreground: var(--palette-grey-500);
 
     /* Destructive / Error */
-    --color-destructive: hsl(0 84% 60%);
-    --color-destructive-hover: hsl(0 84% 50%);
+    /* WCAG AA requires 4.5:1 contrast for small text on white background */
+    /* hsl(0 84% 60%) = #ef4343 = 3.78:1 contrast - FAILS */
+    /* hsl(0 84% 45%) = #d41515 = 5.58:1 contrast - PASSES */
+    --color-destructive: hsl(0 84% 45%);
+    --color-destructive-hover: hsl(0 84% 38%);
     --color-destructive-foreground: var(--palette-white);
 
     /* Success */

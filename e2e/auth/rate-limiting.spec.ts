@@ -4,6 +4,10 @@
  * Tests that rate limiting properly blocks excessive login attempts.
  * This is a critical security requirement from ADR-014.
  *
+ * NOTE: These tests are skipped when E2E_TEST_MODE is enabled because
+ * rate limits are increased 100x to prevent blocking other E2E tests.
+ * Rate limiting functionality is verified by unit tests instead.
+ *
  * @see /docs/adrs/005-testing-strategy.md
  * @see /docs/adrs/007-api-and-auth.md
  * @see /docs/adrs/014-security-architecture.md
@@ -12,7 +16,16 @@
 import { test, expect } from '@playwright/test';
 import { testData } from '../helpers/fixtures';
 
+// Skip all rate limiting tests when E2E_TEST_MODE is enabled
+// Rate limits are increased 100x in E2E mode to prevent blocking other tests
+const isE2ETestMode = process.env.E2E_TEST_MODE === 'true';
+
 test.describe('Rate Limiting', () => {
+  // Skip entire suite in E2E test mode
+  test.skip(
+    isE2ETestMode,
+    'Skipped in E2E_TEST_MODE - rate limits are relaxed'
+  );
   test.describe('Login Rate Limiting', () => {
     test('should block 6th login attempt within 60 seconds', async ({
       page,

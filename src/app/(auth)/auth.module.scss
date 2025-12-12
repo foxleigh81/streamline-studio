@@ -71,10 +71,12 @@
 
   a {
     color: var(--color-primary);
-    text-decoration: none;
+    // WCAG requires links in text blocks to be distinguishable
+    // by more than color alone - underline provides this
+    text-decoration: underline;
 
     &:hover {
-      text-decoration: underline;
+      text-decoration: none;
     }
 
     &:focus-visible {

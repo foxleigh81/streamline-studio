@@ -263,12 +263,16 @@ test.describe('WCAG 2.1 AA Accessibility Compliance', () => {
   });
 
   test.describe('Color Contrast', () => {
+    // WCAG 2.1 AA color contrast testing
+    // Using wcag2aa tags to test AA compliance only (not AAA)
+    // cat.color includes color-contrast-enhanced (AAA) which is too strict
     test('homepage meets color contrast requirements', async ({ page }) => {
       await page.goto('/');
       await page.waitForLoadState('networkidle');
 
       const results = await new AxeBuilder({ page })
-        .withTags(['cat.color'])
+        .withTags(wcagTags)
+        .withRules(['color-contrast'])
         .analyze();
 
       if (results.violations.length > 0) {
@@ -286,7 +290,8 @@ test.describe('WCAG 2.1 AA Accessibility Compliance', () => {
       await page.waitForLoadState('networkidle');
 
       const results = await new AxeBuilder({ page })
-        .withTags(['cat.color'])
+        .withTags(wcagTags)
+        .withRules(['color-contrast'])
         .analyze();
 
       if (results.violations.length > 0) {
