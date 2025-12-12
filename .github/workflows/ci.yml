@@ -164,31 +164,57 @@ jobs:
         run: |
           mkdir -p /tmp/streamline-data
           echo '{"completed":true,"timestamp":"2024-01-01T00:00:00.000Z","version":"1.0"}' > /tmp/streamline-data/.setup-complete
+          echo "Setup flag created:"
+          cat /tmp/streamline-data/.setup-complete
+
+      - name: Create .env.production for Next.js
+        run: |
+          cat > .env.production << 'EOF'
+          DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/streamline_test
+          MODE=single-tenant
+          SESSION_SECRET=test-secret-for-ci-only-do-not-use-in-production
+          DATA_DIR=/tmp/streamline-data
+          NODE_ENV=production
+          EOF
+          # Remove leading whitespace from HEREDOC
+          sed -i 's/^[[:space:]]*//' .env.production
+          echo "Created .env.production:"
+          cat .env.production
 
       - name: Start Next.js server
         run: |
-          npm run start &> next.log &
+          # Export explicitly to ensure inheritance by backgrounded process
+          export DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/streamline_test"
+          export MODE="single-tenant"
+          export SESSION_SECRET="test-secret-for-ci-only-do-not-use-in-production"
+          export DATA_DIR="/tmp/streamline-data"
+          export NODE_ENV="production"
+
+          echo "Starting server with DATA_DIR=$DATA_DIR"
+          echo "Verifying setup flag: $(cat /tmp/streamline-data/.setup-complete 2>&1 || echo 'NOT FOUND')"
+
+          npm run start > next.log 2>&1 &
           echo $! > .next.pid
-          sleep 2
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/streamline_test
-          MODE: single-tenant
-          SESSION_SECRET: test-secret-for-ci-only-do-not-use-in-production
-          DATA_DIR: /tmp/streamline-data
+          sleep 3
 
       - name: Wait for API health
         run: |
           echo "Waiting for API to become healthy..."
+          echo "DATA_DIR should be: /tmp/streamline-data"
+          echo "Setup flag exists: $(ls -la /tmp/streamline-data/.setup-complete 2>&1 || echo 'NOT FOUND')"
           for i in $(seq 1 60); do
             if curl -fsS http://localhost:3000/api/health >/dev/null 2>&1; then
               echo "API is healthy!"
+              curl -s http://localhost:3000/api/health | head -c 200
+              echo ""
               exit 0
             fi
             echo "Waiting for API ($i/60)..."
             sleep 2
           done
           echo "API did not become healthy in time"
-          cat next.log || true
+          echo "=== Last 100 lines of server logs ==="
+          tail -n 100 next.log || true
           exit 1
 
       - name: Run E2E tests
