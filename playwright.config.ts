@@ -79,9 +79,9 @@ export default defineConfig({
     command: process.env.CI ? 'npm run start' : 'npm run dev',
     url: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
     // Reuse existing server if:
-    // - Not in CI (CI always starts fresh)
-    // - Not explicitly disabled via PLAYWRIGHT_NO_REUSE env var
-    reuseExistingServer: !process.env.CI && !process.env.PLAYWRIGHT_NO_REUSE,
+    // - In CI (CI workflow manages the server lifecycle)
+    // - Locally when not explicitly disabled via PLAYWRIGHT_NO_REUSE env var
+    reuseExistingServer: !!process.env.CI || !process.env.PLAYWRIGHT_NO_REUSE,
     timeout: 120000,
     // CRITICAL: Pass environment variables to the dev server
     // Without this, the server starts without DATABASE_URL and falls back to
