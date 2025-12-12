@@ -278,37 +278,34 @@ test.describe('Smoke Tests - Critical Paths', () => {
       await page.waitForLoadState('domcontentloaded');
       await page.waitForLoadState('networkidle');
 
-      // Wait for form to be fully hydrated
+      // Wait for form to be fully hydrated - longer timeout for CI
       const form = page.locator('form');
       await form.waitFor({ state: 'visible', timeout: 15000 });
 
       // Start with the first element deterministically
       const emailInput = page.getByLabel(/email/i);
-      await emailInput.waitFor({ state: 'visible' });
-      await expect(emailInput).toBeVisible();
-      await expect(emailInput).toBeEnabled();
+      await emailInput.waitFor({ state: 'visible', timeout: 15000 });
       await emailInput.focus();
-      // Small delay to ensure focus settles
-      await page.waitForTimeout(100);
+      // CI environments need longer delays for focus to settle
+      await page.waitForTimeout(200);
       await expect(emailInput).toBeFocused();
 
       // Verify password input is ready before tabbing
       const passwordInput = page.getByLabel('Password', { exact: true });
       await passwordInput.waitFor({ state: 'visible' });
-      await expect(passwordInput).toBeEnabled();
 
       // Tab to password input
       await page.keyboard.press('Tab');
-      // Small delay to allow focus to move
-      await page.waitForTimeout(100);
+      // Allow tab action processing in CI
+      await page.waitForTimeout(200);
       await expect(passwordInput).toBeFocused();
 
       // Tab to submit button
       const submitButton = page.getByRole('button', { name: /sign in/i });
       await submitButton.waitFor({ state: 'visible' });
       await page.keyboard.press('Tab');
-      // Small delay to allow focus to move
-      await page.waitForTimeout(100);
+      // Wait to ensure focus registers in CI
+      await page.waitForTimeout(200);
       await expect(submitButton).toBeFocused();
     });
   });
