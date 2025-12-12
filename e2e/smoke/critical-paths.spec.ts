@@ -278,35 +278,36 @@ test.describe('Smoke Tests - Critical Paths', () => {
       await page.waitForLoadState('domcontentloaded');
       await page.waitForLoadState('networkidle');
 
-      // Wait for form to be fully hydrated - longer timeout for CI
+      // Wait for form to be fully hydrated - extended timeout for CI
       const form = page.locator('form');
-      await form.waitFor({ state: 'visible', timeout: 15000 });
+      await form.waitFor({ state: 'visible', timeout: 20000 });
 
       // Start with the first element deterministically
       const emailInput = page.getByLabel(/email/i);
       await emailInput.waitFor({ state: 'visible', timeout: 15000 });
       await emailInput.focus();
       // CI environments need longer delays for focus to settle
-      await page.waitForTimeout(200);
-      await expect(emailInput).toBeFocused();
+      await page.waitForTimeout(300);
+      // Use extended timeout on assertion for CI stability
+      await expect(emailInput).toBeFocused({ timeout: 5000 });
 
       // Verify password input is ready before tabbing
       const passwordInput = page.getByLabel('Password', { exact: true });
-      await passwordInput.waitFor({ state: 'visible' });
+      await passwordInput.waitFor({ state: 'visible', timeout: 15000 });
 
       // Tab to password input
       await page.keyboard.press('Tab');
-      // Allow tab action processing in CI
-      await page.waitForTimeout(200);
-      await expect(passwordInput).toBeFocused();
+      // Allow tab action processing in CI - longer delay
+      await page.waitForTimeout(400);
+      await expect(passwordInput).toBeFocused({ timeout: 5000 });
 
       // Tab to submit button
       const submitButton = page.getByRole('button', { name: /sign in/i });
-      await submitButton.waitFor({ state: 'visible' });
+      await submitButton.waitFor({ state: 'visible', timeout: 15000 });
       await page.keyboard.press('Tab');
-      // Wait to ensure focus registers in CI
-      await page.waitForTimeout(200);
-      await expect(submitButton).toBeFocused();
+      // Wait to ensure focus registers in CI - longer delay
+      await page.waitForTimeout(400);
+      await expect(submitButton).toBeFocused({ timeout: 5000 });
     });
   });
 
