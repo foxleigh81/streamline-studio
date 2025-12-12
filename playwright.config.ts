@@ -78,21 +78,24 @@ export default defineConfig({
   webServer: {
     command: process.env.CI ? 'npm run start' : 'npm run dev',
     url: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
-    // Reuse existing server if:
-    // - In CI (CI workflow manages the server lifecycle)
-    // - Locally when not explicitly disabled via PLAYWRIGHT_NO_REUSE env var
-    reuseExistingServer: !!process.env.CI || !process.env.PLAYWRIGHT_NO_REUSE,
+    // Let Playwright manage the server in CI for proper env var inheritance
+    // Locally, reuse existing server unless explicitly disabled via PLAYWRIGHT_NO_REUSE
+    reuseExistingServer: !process.env.CI && !process.env.PLAYWRIGHT_NO_REUSE,
     timeout: 120000,
-    // CRITICAL: Pass environment variables to the dev server
-    // Without this, the server starts without DATABASE_URL and falls back to
-    // libpq defaults (using system USER as database username, causing "role 'root' does not exist")
+    // CRITICAL: Pass environment variables to the server
+    // DO NOT pass empty strings - Zod treats '' differently from undefined
+    // Only pass defined values so Zod defaults can apply
     env: {
-      DATABASE_URL: process.env.DATABASE_URL ?? '',
-      SESSION_SECRET: process.env.SESSION_SECRET ?? '',
-      MODE: process.env.MODE ?? '',
-      DATA_DIR: process.env.DATA_DIR ?? '',
-      // Only pass PORT if it's explicitly set and non-empty
-      ...(process.env.PORT ? { PORT: process.env.PORT } : {}),
+      ...(process.env.DATABASE_URL && {
+        DATABASE_URL: process.env.DATABASE_URL,
+      }),
+      ...(process.env.SESSION_SECRET && {
+        SESSION_SECRET: process.env.SESSION_SECRET,
+      }),
+      ...(process.env.MODE && { MODE: process.env.MODE }),
+      ...(process.env.DATA_DIR && { DATA_DIR: process.env.DATA_DIR }),
+      ...(process.env.NODE_ENV && { NODE_ENV: process.env.NODE_ENV }),
+      ...(process.env.PORT && { PORT: process.env.PORT }),
     },
   },
 
