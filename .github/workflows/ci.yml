@@ -122,6 +122,7 @@ jobs:
       PGPORT: 5432
       MODE: single-tenant
       SESSION_SECRET: test-secret-for-ci-only-do-not-use-in-production
+      DATA_DIR: /tmp/streamline-data
     services:
       postgres:
         image: postgres:16
@@ -159,6 +160,11 @@ jobs:
       - name: Build Next.js application
         run: npm run build
 
+      - name: Create setup flag for E2E tests
+        run: |
+          mkdir -p /tmp/streamline-data
+          echo '{"completed":true,"timestamp":"2024-01-01T00:00:00.000Z","version":"1.0"}' > /tmp/streamline-data/.setup-complete
+
       - name: Start Next.js server
         run: |
           npm run start &> next.log &
@@ -168,6 +174,7 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/streamline_test
           MODE: single-tenant
           SESSION_SECRET: test-secret-for-ci-only-do-not-use-in-production
+          DATA_DIR: /tmp/streamline-data
 
       - name: Wait for API health
         run: |

@@ -32,7 +32,7 @@ export default defineConfig({
   expect: { timeout: 10000 }, // per-expect timeout
 
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -77,8 +77,11 @@ export default defineConfig({
   // Local dev server (dev mode) / Production server (CI)
   webServer: {
     command: process.env.CI ? 'npm run start' : 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: true, // Reuse server started by CI workflow or local dev
+    url: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
+    // Reuse existing server if:
+    // - Not in CI (CI always starts fresh)
+    // - Not explicitly disabled via PLAYWRIGHT_NO_REUSE env var
+    reuseExistingServer: !process.env.CI && !process.env.PLAYWRIGHT_NO_REUSE,
     timeout: 120000,
     // CRITICAL: Pass environment variables to the dev server
     // Without this, the server starts without DATABASE_URL and falls back to
@@ -87,6 +90,9 @@ export default defineConfig({
       DATABASE_URL: process.env.DATABASE_URL ?? '',
       SESSION_SECRET: process.env.SESSION_SECRET ?? '',
       MODE: process.env.MODE ?? '',
+      DATA_DIR: process.env.DATA_DIR ?? '',
+      // Only pass PORT if it's explicitly set and non-empty
+      ...(process.env.PORT ? { PORT: process.env.PORT } : {}),
     },
   },
 
