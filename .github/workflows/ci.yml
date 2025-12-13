@@ -174,6 +174,17 @@ jobs:
           DATA_DIR: /tmp/streamline-data
         run: npm run build
 
+      - name: Copy static assets for standalone server
+        run: |
+          echo "Copying static assets to standalone folder..."
+          echo "Next.js standalone output does NOT include static assets by default."
+          echo "Without this step, client-side JavaScript won't be served and React won't hydrate."
+          cp -r .next/static .next/standalone/.next/static
+          cp -r public .next/standalone/public
+          echo "Static assets copied successfully:"
+          ls -la .next/standalone/.next/static
+          ls -la .next/standalone/public
+
       - name: Verify setup flag exists
         run: |
           echo "Verifying setup flag exists before running tests..."

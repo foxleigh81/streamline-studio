@@ -4,26 +4,42 @@
 
 57 of 88 E2E tests fail in CI. All auth-related tests timeout waiting for form elements because pages redirect to `/setup`.
 
-## Root Cause Identified (CORRECTED)
+## Root Causes Identified (MULTIPLE ISSUES)
 
-**Previous theory was WRONG.** The "static rendering bakes redirect into HTML" theory was incorrect.
+### Issue 1: Missing .env file for standalone server (FIXED in Attempt 6)
 
-**The ACTUAL root cause:**
+1. Playwright config sources `.next/standalone/.env` before starting server
+2. CI was not creating this file
+3. Without it, DATA_DIR defaults to `/data` → setup flag not found → redirect to /setup
 
-1. Playwright config (line 81) runs: `bash -c "set -a && source .next/standalone/.env && set +a && node .next/standalone/server.js"`
-2. This command **sources `.next/standalone/.env`** before starting the server
-3. **CI does not create this file** - the step was removed as "unnecessary"
-4. Without the .env file being sourced, DATA_DIR is undefined
-5. DATA_DIR defaults to `/data` (not `/tmp/streamline-data`)
-6. The setup flag at `/tmp/streamline-data/.setup-complete` is not found
-7. `isSetupComplete()` returns false → redirect to `/setup`
+### Issue 2: Missing static assets for standalone server (FIXED in Attempt 7)
 
-**Why the static rendering theory was wrong:**
+**After fixing Issue 1, a NEW failure pattern emerged:**
 
-- Server Components with `redirect()` execute at **REQUEST time**, not build time
+- Tests that just check page structure PASS (pages load correctly)
+- Tests that require JavaScript interaction FAIL (form submissions, validation errors)
+
+**Root cause:** Next.js standalone output does NOT include static assets automatically.
+According to Next.js docs, you MUST copy:
+
+- `.next/static` → `.next/standalone/.next/static`
+- `public` → `.next/standalone/public`
+
+Without this, client-side JavaScript bundles aren't served, so React can't hydrate and interactive features don't work.
+
+**Evidence from CI logs:**
+
+```
+✓ renders login form with all required fields (PASS - just checks DOM)
+✓ login page is accessible (PASS - just checks DOM)
+✘ shows error for empty email (FAIL - requires JS click + React state)
+✘ login form with errors is accessible (FAIL - requires JS interaction)
+```
+
+### Previous theories that were WRONG:
+
+- "Static rendering bakes redirects into HTML" - Server Components execute at REQUEST time
 - The "(static)" designation only means the HTML **shell** is pre-rendered
-- The redirect logic in layouts runs every request via Server Components
-- Lead Developer analysis: "The `redirect()` function from `next/navigation` does NOT bake a redirect into static HTML"
 
 ## Failed Attempts
 
@@ -67,7 +83,7 @@
 - **Result**: FAILED - Static rendering theory was wrong
 - **Status**: Implemented but ineffective
 
-### Attempt 6: Restore .env file creation for standalone server (ACTUAL FIX)
+### Attempt 6: Restore .env file creation for standalone server (PARTIAL FIX)
 
 - **File**: `.github/workflows/ci.yml`
 - **Changes**:
@@ -77,34 +93,43 @@
   - Playwright command sources `.next/standalone/.env` before starting server
   - Without this file, DATA_DIR is undefined and defaults to `/data`
   - Server can't find setup flag → redirects to /setup
-- **Result**: IMPLEMENTED - Ready for CI test
-- **Status**: Committed
+- **Result**: PARTIAL SUCCESS - Fixed redirect issue, but revealed NEW issue with missing static assets
+- **Status**: Committed but incomplete
+
+### Attempt 7: Copy static assets for standalone server (ACTUAL FIX)
+
+- **File**: `.github/workflows/ci.yml`
+- **Changes**:
+  1. Added "Copy static assets for standalone server" step AFTER build
+  2. Copies `.next/static` to `.next/standalone/.next/static`
+  3. Copies `public` to `.next/standalone/public`
+- **Rationale**:
+  - Next.js standalone output does NOT include static assets by default
+  - Without static assets, client-side JS bundles aren't served
+  - React can't hydrate, so interactive features (forms, buttons) don't work
+  - This is documented in Next.js: https://nextjs.org/docs/pages/api-reference/config/next-config-js/output
+- **Result**: IMPLEMENTING NOW
+- **Status**: In progress
 
 ## Current State
 
-- **Root cause correctly identified**: Missing `.next/standalone/.env` file
-- **Fix**: Add step to create the .env file that Playwright expects
-- **Key insight**: The env vars in `webServer.env` are unreliable with standalone builds - the bash sourcing approach is correct but the file must exist
+- **Issue 1 (redirect)**: FIXED - .env file is created with correct DATA_DIR
+- **Issue 2 (no JS)**: FIXING - Adding static assets copy step
+- **Combined fix**: Both steps needed for tests to pass
 
 ## Why This Fix Will Work
 
-1. **Playwright sources .env**: The command `source .next/standalone/.env` requires the file to exist
-2. **DATA_DIR propagates**: After sourcing, DATA_DIR=/tmp/streamline-data is in the environment
-3. **Setup flag found**: Server checks `/tmp/streamline-data/.setup-complete` and finds it
-4. **No redirect**: `isSetupComplete()` returns true, pages render normally
-
-## What Was Wrong Before
-
-- Removed the .env injection step thinking it was "unnecessary"
-- Kept the Playwright command that depends on it - MISMATCH
-- Conflated `webServer.env` (unreliable) with sourced .env file (reliable)
+1. **Env vars propagate**: .env file created and sourced by Playwright command
+2. **Setup flag found**: DATA_DIR=/tmp/streamline-data → flag exists → no redirect
+3. **JS bundles served**: Static assets copied → React hydrates → forms work
+4. **Full interactivity**: Client-side validation, form submission, state updates all work
 
 ## Next Steps
 
-- [x] Identify correct root cause
-- [x] Update tracking document
-- [x] Add .env creation step to CI workflow
-- [ ] Commit changes
-- [ ] Push to CI
+- [x] Identify Issue 1 (missing .env file)
+- [x] Fix Issue 1 (add .env creation step)
+- [x] Identify Issue 2 (missing static assets)
+- [x] Fix Issue 2 (add static assets copy step)
+- [ ] Commit and push changes
 - [ ] Monitor CI run
 - [ ] Verify all 88 E2E tests pass
