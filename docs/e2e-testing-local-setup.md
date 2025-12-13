@@ -147,9 +147,9 @@ npx playwright test e2e/smoke --project=chromium
 
 - Uses PostgreSQL service container with user `postgres`
 - Database: `streamline_test`
-- Runs production build (`npm run build && npm run start`)
+- Runs **standalone production build** (not `npm run start`)
 - Only runs Chromium browser (performance optimization)
-- DATA_DIR not needed (uses in-memory setup flag)
+- **Requires special standalone server configuration** (see below)
 
 ### Local Environment
 
@@ -159,9 +159,76 @@ npx playwright test e2e/smoke --project=chromium
 - Runs all browsers by default (Chromium, Firefox, WebKit, Mobile)
 - **Requires DATA_DIR=.data** (critical difference)
 
+## CI Standalone Server Configuration
+
+The CI workflow uses Next.js standalone output for E2E tests. This requires specific configuration that differs from local development.
+
+### Why Standalone Mode?
+
+In CI, we use the standalone build (`output: 'standalone'` in `next.config.ts`) because it creates a minimal, self-contained server that closely matches production deployments.
+
+### Critical CI Requirements
+
+The Playwright config uses this command in CI:
+
+```bash
+bash -c "set -a && source .next/standalone/.env && set +a && node .next/standalone/server.js"
+```
+
+This means CI **must** provide:
+
+#### 1. Create `.next/standalone/.env` File
+
+The standalone server sources this file before starting. Without it, environment variables like `DATA_DIR` won't be available.
+
+```yaml
+# In .github/workflows/ci.yml
+- name: Configure standalone server environment
+  run: |
+    echo "DATA_DIR=/tmp/streamline-data" >> .next/standalone/.env
+    echo "DATABASE_URL=postgresql://..." >> .next/standalone/.env
+    echo "SESSION_SECRET=..." >> .next/standalone/.env
+    echo "MODE=single-tenant" >> .next/standalone/.env
+    echo "E2E_TEST_MODE=true" >> .next/standalone/.env
+    echo "NODE_ENV=production" >> .next/standalone/.env
+```
+
+#### 2. Copy Static Assets to Standalone Folder
+
+Next.js standalone output does **NOT** include static assets by default. Without copying these, client-side JavaScript won't be served and React won't hydrate.
+
+```yaml
+# In .github/workflows/ci.yml
+- name: Copy static assets for standalone server
+  run: |
+    cp -r .next/static .next/standalone/.next/static
+    cp -r public .next/standalone/public
+```
+
+#### 3. Create Setup Completion Flag
+
+The setup flag must exist before tests run:
+
+```yaml
+# In .github/workflows/ci.yml
+- name: Create setup flag
+  run: |
+    mkdir -p /tmp/streamline-data
+    echo '{"completed":true,"timestamp":"...","version":"1.0"}' > /tmp/streamline-data/.setup-complete
+```
+
+### Common CI Failure Patterns
+
+| Symptom                           | Cause                                   | Fix                                                    |
+| --------------------------------- | --------------------------------------- | ------------------------------------------------------ |
+| All pages redirect to `/setup`    | Missing `.env` file or wrong `DATA_DIR` | Create `.next/standalone/.env` with correct `DATA_DIR` |
+| Page loads but forms don't work   | Missing static assets                   | Copy `.next/static` and `public` to standalone folder  |
+| "email is required" never appears | React not hydrating (no JS)             | Same as above - copy static assets                     |
+| Timeout waiting for navigation    | Server not starting                     | Check `.env` file exists and is valid                  |
+
 ## Troubleshooting
 
-### Tests redirect to /setup page
+### Tests redirect to /setup page (Local)
 
 **Cause**: Missing or incorrect `DATA_DIR` configuration.
 
@@ -173,6 +240,38 @@ export DATA_DIR=.data
 
 # Or use the helper script which sets this automatically
 ./scripts/run-e2e-local.sh --smoke
+```
+
+### Tests redirect to /setup page (CI)
+
+**Cause**: The `.next/standalone/.env` file is missing or doesn't contain `DATA_DIR`.
+
+**Fix**: Ensure the CI workflow has a step to create the `.env` file AFTER build:
+
+```yaml
+- name: Configure standalone server environment
+  run: |
+    echo "DATA_DIR=/tmp/streamline-data" >> .next/standalone/.env
+    # ... other env vars
+```
+
+### Forms render but interactions don't work (CI)
+
+**Cause**: Static assets not copied to standalone folder. React can't hydrate without JavaScript bundles.
+
+**Symptoms**:
+
+- Tests that check page structure PASS
+- Tests that click buttons or submit forms FAIL
+- "Timeout waiting for locator" errors
+
+**Fix**: Add a step AFTER build to copy static assets:
+
+```yaml
+- name: Copy static assets for standalone server
+  run: |
+    cp -r .next/static .next/standalone/.next/static
+    cp -r public .next/standalone/public
 ```
 
 ### Port 3000 already in use
