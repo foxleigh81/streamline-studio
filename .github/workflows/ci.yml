@@ -158,32 +158,31 @@ jobs:
       - name: Run database migrations
         run: npm run db:migrate
 
-      - name: Create setup flag for E2E tests
+      - name: Create setup flag BEFORE build
         run: |
           mkdir -p /tmp/streamline-data
           echo '{"completed":true,"timestamp":"2024-01-01T00:00:00.000Z","version":"1.0"}' > /tmp/streamline-data/.setup-complete
-          echo "Setup flag created at $DATA_DIR/.setup-complete:"
+          echo "Setup flag created at /tmp/streamline-data/.setup-complete:"
           cat /tmp/streamline-data/.setup-complete
+          echo "This MUST happen before build so pages don't bake in redirect to /setup"
 
       - name: Build Next.js application
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/streamline_test
+          MODE: single-tenant
+          SESSION_SECRET: test-secret-for-ci-only-do-not-use-in-production
+          DATA_DIR: /tmp/streamline-data
         run: npm run build
 
-      - name: Configure standalone environment
+      - name: Verify setup flag exists
         run: |
-          echo "Injecting ALL required env vars into standalone .env..."
-          # Create/overwrite standalone .env with all required variables
-          cat > .next/standalone/.env << 'EOF'
-          DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/streamline_test
-          SESSION_SECRET=test-secret-for-ci-only-do-not-use-in-production
-          MODE=single-tenant
-          DATA_DIR=/tmp/streamline-data
-          NODE_ENV=production
-          E2E_TEST_MODE=true
-          EOF
-          # Remove leading whitespace from heredoc
-          sed -i 's/^[[:space:]]*//' .next/standalone/.env
-          echo "Standalone .env contents:"
-          cat .next/standalone/.env
+          echo "Verifying setup flag exists before running tests..."
+          if [ ! -f /tmp/streamline-data/.setup-complete ]; then
+            echo "ERROR: Setup flag not found!"
+            exit 1
+          fi
+          echo "Setup flag confirmed:"
+          cat /tmp/streamline-data/.setup-complete
 
       - name: Run E2E tests
         env:
