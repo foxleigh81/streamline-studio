@@ -168,6 +168,14 @@ jobs:
           echo "Setup flag created:"
           cat /tmp/streamline-data/.setup-complete
 
+      - name: Configure standalone environment
+        run: |
+          echo "Injecting DATA_DIR into standalone .env..."
+          echo "DATA_DIR=/tmp/streamline-data" >> .next/standalone/.env
+          echo "E2E_TEST_MODE=true" >> .next/standalone/.env
+          echo "Standalone .env contents:"
+          cat .next/standalone/.env
+
       - name: Run E2E tests
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/streamline_test

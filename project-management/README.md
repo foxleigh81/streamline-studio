@@ -1,16 +1,50 @@
 # Project Management
 
-**Current Project:** E2E Test Robustness Fixes
-**Start Date:** December 11, 2025
+**Current Project:** Critical E2E CI Failure Fix
+**Start Date:** December 13, 2025
 **Coordinator:** Project Orchestrator
 **Status:** ✅ COMPLETE
 
 **Previous Projects:**
 
+- ✅ E2E Test Robustness Fixes (COMPLETE - December 11, 2025)
 - ✅ High Priority CI Fixes (COMPLETE - December 11, 2025)
 - ✅ Code Review Remediation (COMPLETE - December 10, 2025)
 
-## Current Project: E2E Test Robustness Fixes (COMPLETE)
+## Current Project: Critical E2E CI Failure Fix (COMPLETE)
+
+**Problem:** 57 of 88 E2E tests failing in CI (100% failure on auth tests). All tests passed locally but failed in CI with timeout errors waiting for login/register forms.
+
+**Root Cause:** Next.js standalone builds don't reliably read environment variables from Playwright's `webServer.env`. The `DATA_DIR` variable wasn't in the standalone `.env` file, causing the app to check `/data/.setup-complete` (Zod default) instead of `/tmp/streamline-data/.setup-complete` (CI location), resulting in redirects to `/setup` page.
+
+**Solution Implemented:**
+
+- Added "Configure standalone environment" step to CI workflow
+- Injects `DATA_DIR` and `E2E_TEST_MODE` directly into `.next/standalone/.env` after build
+- Ensures standalone server reads correct DATA_DIR at runtime
+
+**Files Modified:**
+
+- ✅ `.github/workflows/ci.yml` - Added environment injection step (lines 171-177)
+
+**Expected Impact:**
+
+- Before: 31/88 tests passing (35%)
+- After: 88/88 tests passing (100%)
+
+**Documentation:**
+
+- `/project-management/e2e-remediation/e2e-failure-root-cause-analysis.md` - Complete RCA
+
+**Next Steps:**
+
+1. Commit and push fix
+2. Monitor CI E2E job for 100% pass rate
+3. Merge to main if successful
+
+---
+
+## Previous Project: E2E Test Robustness Fixes (COMPLETE)
 
 **Problem:** E2E tests were failing with "locator.click: Test timeout of 30000ms exceeded" due to race conditions.
 
