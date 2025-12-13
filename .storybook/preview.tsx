@@ -1,8 +1,15 @@
 import type { Preview } from '@storybook/react';
-import React from 'react';
+import * as React from 'react';
 
 // Import theme CSS
 import '../src/themes/default/index.css';
+
+// Make React available globally for test-runner
+// This fixes "React is not defined" errors in Storybook tests
+if (typeof window !== 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).React = React;
+}
 
 /**
  * Storybook Preview Configuration

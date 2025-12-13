@@ -174,9 +174,10 @@ export const OpenModal: Story = {
     // Click to open modal
     await userEvent.click(openButton);
 
-    // Wait for modal to appear
+    // Radix UI Dialog renders in a portal outside the canvas
+    const body = within(document.body);
     await waitFor(() => {
-      const dialog = canvas.getByRole('dialog');
+      const dialog = body.getByRole('dialog');
       expect(dialog).toBeInTheDocument();
     });
   },
@@ -194,18 +195,19 @@ export const FormValidation: Story = {
     const openButton = canvas.getByRole('button', { name: /create video/i });
     await userEvent.click(openButton);
 
-    // Wait for modal
+    // Radix UI Dialog renders in a portal outside the canvas
+    const body = within(document.body);
     await waitFor(() => {
-      expect(canvas.getByRole('dialog')).toBeInTheDocument();
+      expect(body.getByRole('dialog')).toBeInTheDocument();
     });
 
     // Try to submit without filling title
-    const submitButton = canvas.getByRole('button', { name: /^create$/i });
+    const submitButton = body.getByRole('button', { name: /^create$/i });
     await userEvent.click(submitButton);
 
     // Wait for error message
     await waitFor(() => {
-      const errorMessage = canvas.getByText(/title is required/i);
+      const errorMessage = body.getByText(/title is required/i);
       expect(errorMessage).toBeInTheDocument();
     });
   },
@@ -223,13 +225,14 @@ export const FillForm: Story = {
     const openButton = canvas.getByRole('button', { name: /create video/i });
     await userEvent.click(openButton);
 
-    // Wait for modal
+    // Radix UI Dialog renders in a portal outside the canvas
+    const body = within(document.body);
     await waitFor(() => {
-      expect(canvas.getByRole('dialog')).toBeInTheDocument();
+      expect(body.getByRole('dialog')).toBeInTheDocument();
     });
 
     // Fill title
-    const titleInput = canvas.getByLabelText(/title/i);
+    const titleInput = body.getByLabelText(/title/i);
     await userEvent.type(titleInput, 'My New Video');
 
     // Verify value
@@ -249,18 +252,19 @@ export const CloseWithCancel: Story = {
     const openButton = canvas.getByRole('button', { name: /create video/i });
     await userEvent.click(openButton);
 
-    // Wait for modal
+    // Radix UI Dialog renders in a portal outside the canvas
+    const body = within(document.body);
     await waitFor(() => {
-      expect(canvas.getByRole('dialog')).toBeInTheDocument();
+      expect(body.getByRole('dialog')).toBeInTheDocument();
     });
 
     // Click cancel
-    const cancelButton = canvas.getByRole('button', { name: /cancel/i });
+    const cancelButton = body.getByRole('button', { name: /cancel/i });
     await userEvent.click(cancelButton);
 
     // Modal should close
     await waitFor(() => {
-      expect(canvas.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(body.queryByRole('dialog')).not.toBeInTheDocument();
     });
   },
 };

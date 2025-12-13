@@ -13,7 +13,7 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 // eslint-disable-next-line no-restricted-imports -- Invitation operations require direct queries for public token validation (not workspace-scoped)
 import { eq, and, gt, isNull } from 'drizzle-orm';
-import { router, publicProcedure, ownerProcedure } from '../trpc';
+import { router, publicProcedure, ownerProcedure } from '../procedures';
 import {
   invitations,
   users,
@@ -25,9 +25,15 @@ import {
   calculateInvitationExpiry,
   isInvitationExpired,
   hasExceededAttempts,
+  compareTokensConstantTime,
 } from '@/lib/invitation';
 import { sendInvitationEmail } from '@/lib/email';
-import { hashPassword, generateSessionToken, createSession } from '@/lib/auth';
+import { hashPassword } from '@/lib/auth/password';
+import {
+  generateSessionToken,
+  createSession,
+  createSessionCookie,
+} from '@/lib/auth/session';
 import { workspaceRoleSchema } from '@/lib/schemas/workspace';
 
 /**
@@ -251,6 +257,7 @@ export const invitationRouter = router({
           id: invitations.id,
           email: invitations.email,
           role: invitations.role,
+          token: invitations.token,
           expiresAt: invitations.expiresAt,
           attempts: invitations.attempts,
           acceptedAt: invitations.acceptedAt,
@@ -261,6 +268,14 @@ export const invitationRouter = router({
         .limit(1);
 
       if (!invitation) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Invalid invitation token',
+        });
+      }
+
+      // Additional constant-time token validation to prevent timing attacks
+      if (!compareTokensConstantTime(invitation.token, input.token)) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'Invalid invitation token',
@@ -327,6 +342,14 @@ export const invitationRouter = router({
           .limit(1);
 
         if (!invitation) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Invalid invitation token',
+          });
+        }
+
+        // Additional constant-time token validation to prevent timing attacks
+        if (!compareTokensConstantTime(invitation.token, token)) {
           throw new TRPCError({
             code: 'NOT_FOUND',
             message: 'Invalid invitation token',
@@ -433,6 +456,10 @@ export const invitationRouter = router({
         const sessionToken = generateSessionToken();
         await createSession(userId, sessionToken);
 
+        // Set session cookie (HttpOnly, Secure, SameSite)
+        const cookie = createSessionCookie(sessionToken);
+        ctx.headers.set('Set-Cookie', cookie);
+
         // Log invitation acceptance in audit log
         await tx.insert(auditLog).values({
           workspaceId: invitation.workspaceId,
@@ -449,7 +476,8 @@ export const invitationRouter = router({
         return {
           success: true,
           message: 'Invitation accepted successfully',
-          sessionToken,
+          // Note: sessionToken is NOT returned in response for security
+          // Cookie is set via Set-Cookie header instead
         };
       });
     }),

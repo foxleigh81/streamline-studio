@@ -95,9 +95,7 @@ describe('Auth Router', () => {
       const result = validatePassword('short');
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain(
-        'Password must be at least 8 characters long'
-      );
+      expect(result.errors).toContain('Password must be at least 8 characters');
     });
 
     it('accepts passwords meeting requirements', async () => {
@@ -363,6 +361,7 @@ describe('Auth Router', () => {
 
   describe('Client IP Extraction', () => {
     it('extracts IP from X-Forwarded-For header', async () => {
+      vi.stubEnv('TRUSTED_PROXY', 'true');
       const { getClientIp } = await import('@/lib/auth/rate-limit');
 
       const headers = new Headers();
@@ -374,6 +373,7 @@ describe('Auth Router', () => {
     });
 
     it('extracts IP from X-Real-IP header', async () => {
+      vi.stubEnv('TRUSTED_PROXY', 'true');
       const { getClientIp } = await import('@/lib/auth/rate-limit');
 
       const headers = new Headers();

@@ -44,6 +44,15 @@
   color: var(--color-muted-foreground);
 }
 
+// Page-specific headings (h2) in auth pages
+.pageHeading {
+  margin: 0 0 var(--spacing-6) 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-foreground);
+  text-align: center;
+}
+
 .form {
   display: flex;
   flex-direction: column;
@@ -62,10 +71,12 @@
 
   a {
     color: var(--color-primary);
-    text-decoration: none;
+    // WCAG requires links in text blocks to be distinguishable
+    // by more than color alone - underline provides this
+    text-decoration: underline;
 
     &:hover {
-      text-decoration: underline;
+      text-decoration: none;
     }
 
     &:focus-visible {

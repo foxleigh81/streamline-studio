@@ -122,9 +122,10 @@ export const OpenDialog: Story = {
     // Click to open dialog
     await userEvent.click(openButton);
 
-    // Wait for dialog to appear
+    // Radix UI AlertDialog renders in a portal outside the canvas
+    const body = within(document.body);
     await waitFor(() => {
-      const dialog = canvas.getByRole('dialog');
+      const dialog = body.getByRole('dialog');
       expect(dialog).toBeInTheDocument();
     });
   },
@@ -142,18 +143,19 @@ export const CloseWithCancel: Story = {
     const openButton = canvas.getByRole('button', { name: /delete video/i });
     await userEvent.click(openButton);
 
-    // Wait for dialog
+    // Radix UI AlertDialog renders in a portal outside the canvas
+    const body = within(document.body);
     await waitFor(() => {
-      expect(canvas.getByRole('dialog')).toBeInTheDocument();
+      expect(body.getByRole('dialog')).toBeInTheDocument();
     });
 
     // Click cancel
-    const cancelButton = canvas.getByRole('button', { name: /cancel/i });
+    const cancelButton = body.getByRole('button', { name: /cancel/i });
     await userEvent.click(cancelButton);
 
     // Dialog should close
     await waitFor(() => {
-      expect(canvas.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(body.queryByRole('dialog')).not.toBeInTheDocument();
     });
   },
 };
@@ -170,18 +172,19 @@ export const CloseWithX: Story = {
     const openButton = canvas.getByRole('button', { name: /delete video/i });
     await userEvent.click(openButton);
 
-    // Wait for dialog
+    // Radix UI AlertDialog renders in a portal outside the canvas
+    const body = within(document.body);
     await waitFor(() => {
-      expect(canvas.getByRole('dialog')).toBeInTheDocument();
+      expect(body.getByRole('dialog')).toBeInTheDocument();
     });
 
     // Click X button
-    const closeButton = canvas.getByRole('button', { name: /close/i });
+    const closeButton = body.getByRole('button', { name: /close/i });
     await userEvent.click(closeButton);
 
     // Dialog should close
     await waitFor(() => {
-      expect(canvas.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(body.queryByRole('dialog')).not.toBeInTheDocument();
     });
   },
 };
@@ -198,9 +201,10 @@ export const KeyboardClose: Story = {
     const openButton = canvas.getByRole('button', { name: /delete video/i });
     await userEvent.click(openButton);
 
-    // Wait for dialog
+    // Radix UI AlertDialog renders in a portal outside the canvas
+    const body = within(document.body);
     await waitFor(() => {
-      expect(canvas.getByRole('dialog')).toBeInTheDocument();
+      expect(body.getByRole('dialog')).toBeInTheDocument();
     });
 
     // Press Escape
@@ -208,7 +212,7 @@ export const KeyboardClose: Story = {
 
     // Dialog should close
     await waitFor(() => {
-      expect(canvas.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(body.queryByRole('dialog')).not.toBeInTheDocument();
     });
   },
 };

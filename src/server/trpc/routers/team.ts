@@ -12,7 +12,7 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 // eslint-disable-next-line no-restricted-imports -- Team operations require direct queries for membership validation and role checks
 import { eq, and } from 'drizzle-orm';
-import { router, workspaceProcedure, ownerProcedure } from '../trpc';
+import { router, workspaceProcedure, ownerProcedure } from '../procedures';
 import { workspaceUsers, users } from '@/server/db/schema';
 import { workspaceRoleSchema } from '@/lib/schemas/workspace';
 

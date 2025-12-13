@@ -10,7 +10,7 @@
 
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { router, workspaceProcedure, editorProcedure } from '../trpc';
+import { router, workspaceProcedure, editorProcedure } from '../procedures';
 import type { VideoStatus, DocumentType } from '@/server/db/schema';
 import {
   logVideoStatusChange,
@@ -102,20 +102,11 @@ export const videoRouter = router({
       const { repository } = ctx;
       const { cursor, limit, status, categoryId, orderBy, orderDir } = input;
 
-      // If filtering by category, we need to join with video_categories
-      // For now, implement basic filtering without category
-      // TODO: Add category filtering in repository layer
-      if (categoryId) {
-        throw new TRPCError({
-          code: 'NOT_IMPLEMENTED',
-          message: 'Category filtering not yet implemented',
-        });
-      }
-
       const videos = await repository.getVideos({
         cursor,
         limit: limit + 1, // Fetch one extra to determine if there's a next page
-        status,
+        ...(status && { status }),
+        ...(categoryId && { categoryId }),
         orderBy,
         orderDir,
       });

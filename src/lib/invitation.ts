@@ -7,7 +7,7 @@
  * @see /docs/adrs/014-security-architecture.md
  */
 
-import { randomBytes } from 'crypto';
+import { randomBytes, timingSafeEqual } from 'crypto';
 
 /**
  * Generate a secure 256-bit invitation token
@@ -54,4 +54,38 @@ export function hasExceededAttempts(
   maxAttempts: number = 3
 ): boolean {
   return attempts >= maxAttempts;
+}
+
+/**
+ * Compare two invitation tokens using constant-time comparison
+ *
+ * This prevents timing attacks where an attacker could determine
+ * parts of a valid token by measuring response times.
+ *
+ * @param tokenA - First token to compare
+ * @param tokenB - Second token to compare
+ * @returns true if tokens match, false otherwise
+ */
+export function compareTokensConstantTime(
+  tokenA: string,
+  tokenB: string
+): boolean {
+  // Ensure both tokens are the same length (64 characters)
+  // This is a fast check and doesn't leak timing information about correctness
+  if (tokenA.length !== 64 || tokenB.length !== 64) {
+    return false;
+  }
+
+  try {
+    // Convert hex strings to buffers
+    const bufferA = Buffer.from(tokenA, 'hex');
+    const bufferB = Buffer.from(tokenB, 'hex');
+
+    // Use Node.js crypto.timingSafeEqual for constant-time comparison
+    // This function takes the same amount of time regardless of where the difference is
+    return timingSafeEqual(bufferA, bufferB);
+  } catch {
+    // If conversion fails (invalid hex), return false
+    return false;
+  }
 }

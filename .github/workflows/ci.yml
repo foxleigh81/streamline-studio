@@ -35,6 +35,14 @@ jobs:
   # Unit and integration tests
   test:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/streamline_test
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      MODE: single-tenant
+      SESSION_SECRET: test-secret-for-ci-only-do-not-use-in-production
     services:
       postgres:
         image: postgres:16
@@ -45,10 +53,10 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 2s
+          --health-retries 10
 
     steps:
       - name: Checkout code
@@ -64,15 +72,9 @@ jobs:
         run: npm ci
 
       - name: Run database migrations
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/streamline_test
         run: npm run db:migrate
 
       - name: Run unit and integration tests with coverage
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/streamline_test
-          MODE: single-tenant
-          SESSION_SECRET: test-secret-for-ci-only-do-not-use-in-production
         run: npm run test:coverage
 
       - name: Upload coverage to Codecov
@@ -100,6 +102,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
       - name: Build Storybook
         run: npm run build-storybook
 
@@ -109,6 +114,16 @@ jobs:
   # E2E tests
   e2e:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/streamline_test
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      MODE: single-tenant
+      SESSION_SECRET: test-secret-for-ci-only-do-not-use-in-production
+      DATA_DIR: /tmp/streamline-data
+      E2E_TEST_MODE: 'true'
     services:
       postgres:
         image: postgres:16
@@ -119,10 +134,10 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 2s
+          --health-retries 10
 
     steps:
       - name: Checkout code
@@ -141,22 +156,68 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run database migrations
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/streamline_test
         run: npm run db:migrate
+
+      - name: Create setup flag BEFORE build
+        run: |
+          mkdir -p /tmp/streamline-data
+          echo '{"completed":true,"timestamp":"2024-01-01T00:00:00.000Z","version":"1.0"}' > /tmp/streamline-data/.setup-complete
+          echo "Setup flag created at /tmp/streamline-data/.setup-complete:"
+          cat /tmp/streamline-data/.setup-complete
+          echo "This MUST happen before build so pages don't bake in redirect to /setup"
 
       - name: Build Next.js application
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/streamline_test
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/streamline_test
           MODE: single-tenant
           SESSION_SECRET: test-secret-for-ci-only-do-not-use-in-production
+          DATA_DIR: /tmp/streamline-data
         run: npm run build
+
+      - name: Copy static assets for standalone server
+        run: |
+          echo "Copying static assets to standalone folder..."
+          echo "Next.js standalone output does NOT include static assets by default."
+          echo "Without this step, client-side JavaScript won't be served and React won't hydrate."
+          cp -r .next/static .next/standalone/.next/static
+          cp -r public .next/standalone/public
+          echo "Static assets copied successfully:"
+          ls -la .next/standalone/.next/static
+          ls -la .next/standalone/public
+
+      - name: Verify setup flag exists
+        run: |
+          echo "Verifying setup flag exists before running tests..."
+          if [ ! -f /tmp/streamline-data/.setup-complete ]; then
+            echo "ERROR: Setup flag not found!"
+            exit 1
+          fi
+          echo "Setup flag confirmed:"
+          cat /tmp/streamline-data/.setup-complete
+
+      - name: Configure standalone server environment
+        run: |
+          echo "Creating .next/standalone/.env for Playwright to source..."
+          echo "DATA_DIR=/tmp/streamline-data" >> .next/standalone/.env
+          echo "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/streamline_test" >> .next/standalone/.env
+          echo "SESSION_SECRET=test-secret-for-ci-only-do-not-use-in-production" >> .next/standalone/.env
+          echo "MODE=single-tenant" >> .next/standalone/.env
+          echo "E2E_TEST_MODE=true" >> .next/standalone/.env
+          echo "NODE_ENV=production" >> .next/standalone/.env
+          echo ""
+          echo "Created .next/standalone/.env with contents:"
+          cat .next/standalone/.env
+          echo ""
+          echo "This file is sourced by Playwright before starting the standalone server"
 
       - name: Run E2E tests
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/streamline_test
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/streamline_test
           MODE: single-tenant
           SESSION_SECRET: test-secret-for-ci-only-do-not-use-in-production
+          DATA_DIR: /tmp/streamline-data
+          NODE_ENV: production
+          E2E_TEST_MODE: 'true'
         run: npm run test:e2e
 
       - name: Upload Playwright report
@@ -223,7 +284,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/streamline_test
           MODE: single-tenant
-          SESSION_SECRET: test-secret-for-ci-only
+          SESSION_SECRET: test-secret-for-ci-only-do-not-use-in-production
         run: npm run build
 
       - name: Check build output

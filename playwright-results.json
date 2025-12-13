@@ -1,0 +1,851 @@
+{
+  "config": {
+    "configFile": "/Users/foxleigh81/dev/internal/streamline-studio/playwright.config.ts",
+    "rootDir": "/Users/foxleigh81/dev/internal/streamline-studio/e2e",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 4
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "playwright-report"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "playwright-results.json"
+        }
+      ],
+      ["list", null]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/Users/foxleigh81/dev/internal/streamline-studio/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/foxleigh81/dev/internal/streamline-studio/e2e",
+        "testIgnore": [],
+        "testMatch": ["**/*.@(spec|test).?(c|m)[jt]s?(x)"],
+        "timeout": 120000
+      },
+      {
+        "outputDir": "/Users/foxleigh81/dev/internal/streamline-studio/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/Users/foxleigh81/dev/internal/streamline-studio/e2e",
+        "testIgnore": [],
+        "testMatch": ["**/*.@(spec|test).?(c|m)[jt]s?(x)"],
+        "timeout": 120000
+      },
+      {
+        "outputDir": "/Users/foxleigh81/dev/internal/streamline-studio/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/Users/foxleigh81/dev/internal/streamline-studio/e2e",
+        "testIgnore": [],
+        "testMatch": ["**/*.@(spec|test).?(c|m)[jt]s?(x)"],
+        "timeout": 120000
+      },
+      {
+        "outputDir": "/Users/foxleigh81/dev/internal/streamline-studio/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "mobile-chrome",
+        "name": "mobile-chrome",
+        "testDir": "/Users/foxleigh81/dev/internal/streamline-studio/e2e",
+        "testIgnore": [],
+        "testMatch": ["**/*.@(spec|test).?(c|m)[jt]s?(x)"],
+        "timeout": 120000
+      },
+      {
+        "outputDir": "/Users/foxleigh81/dev/internal/streamline-studio/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "mobile-safari",
+        "name": "mobile-safari",
+        "testDir": "/Users/foxleigh81/dev/internal/streamline-studio/e2e",
+        "testIgnore": [],
+        "testMatch": ["**/*.@(spec|test).?(c|m)[jt]s?(x)"],
+        "timeout": 120000
+      }
+    ],
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.57.0",
+    "workers": 4,
+    "webServer": {
+      "command": "npm run dev",
+      "url": "http://localhost:3000",
+      "reuseExistingServer": false,
+      "timeout": 120000,
+      "env": {
+        "DATABASE_URL": "postgresql://streamline:supersecurepassword5679@localhost:5432/streamline_test",
+        "SESSION_SECRET": "test-secret-for-local-e2e-tests-only-32chars",
+        "MODE": "single-tenant",
+        "DATA_DIR": ".data"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "smoke/critical-paths.spec.ts",
+      "file": "smoke/critical-paths.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Smoke Tests - Critical Paths",
+          "file": "smoke/critical-paths.spec.ts",
+          "line": 14,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Application Health",
+              "file": "smoke/critical-paths.spec.ts",
+              "line": 15,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "homepage loads successfully",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 120000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 1527,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-12-12T11:05:34.942Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9e2f0c978b797c963d64-73b9bff3eeb4eb1a82a8",
+                  "file": "smoke/critical-paths.spec.ts",
+                  "line": 16,
+                  "column": 9
+                },
+                {
+                  "title": "health endpoint returns ok",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 120000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 1,
+                          "parallelIndex": 1,
+                          "status": "passed",
+                          "duration": 1085,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-12-12T11:05:34.943Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9e2f0c978b797c963d64-d05729840faf4d0d0520",
+                  "file": "smoke/critical-paths.spec.ts",
+                  "line": 27,
+                  "column": 9
+                },
+                {
+                  "title": "tRPC health endpoint is reachable",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 120000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 2,
+                          "status": "passed",
+                          "duration": 1344,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-12-12T11:05:34.946Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9e2f0c978b797c963d64-8c2196cceec3850fd1ae",
+                  "file": "smoke/critical-paths.spec.ts",
+                  "line": 36,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Navigation",
+              "file": "smoke/critical-paths.spec.ts",
+              "line": 50,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "can navigate to login page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 120000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 3,
+                          "parallelIndex": 3,
+                          "status": "passed",
+                          "duration": 3212,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-12-12T11:05:34.945Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9e2f0c978b797c963d64-851a71cbf5c687414e4a",
+                  "file": "smoke/critical-paths.spec.ts",
+                  "line": 51,
+                  "column": 9
+                },
+                {
+                  "title": "can navigate to registration page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 120000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 1,
+                          "parallelIndex": 1,
+                          "status": "passed",
+                          "duration": 2374,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-12-12T11:05:36.046Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9e2f0c978b797c963d64-2971fd0aec114caa4988",
+                  "file": "smoke/critical-paths.spec.ts",
+                  "line": 70,
+                  "column": 9
+                },
+                {
+                  "title": "login page has link to registration",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 120000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 2,
+                          "status": "passed",
+                          "duration": 2024,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-12-12T11:05:36.307Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9e2f0c978b797c963d64-15a1c555b6a8473b623a",
+                  "file": "smoke/critical-paths.spec.ts",
+                  "line": 91,
+                  "column": 9
+                },
+                {
+                  "title": "registration page has link to login",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 120000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 1692,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-12-12T11:05:36.813Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9e2f0c978b797c963d64-3643f024e0d30acdedde",
+                  "file": "smoke/critical-paths.spec.ts",
+                  "line": 101,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Authentication Forms",
+              "file": "smoke/critical-paths.spec.ts",
+              "line": 110,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "login page renders form elements",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 120000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 3,
+                          "parallelIndex": 3,
+                          "status": "passed",
+                          "duration": 1132,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-12-12T11:05:38.498Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9e2f0c978b797c963d64-3d5fd27ebb223f37b6e2",
+                  "file": "smoke/critical-paths.spec.ts",
+                  "line": 111,
+                  "column": 9
+                },
+                {
+                  "title": "registration page renders form elements",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 120000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 2,
+                          "status": "passed",
+                          "duration": 1173,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-12-12T11:05:38.510Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9e2f0c978b797c963d64-6bfb198dbb526d41492d",
+                  "file": "smoke/critical-paths.spec.ts",
+                  "line": 136,
+                  "column": 9
+                },
+                {
+                  "title": "login form shows validation errors for empty submission",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 120000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 1234,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-12-12T11:05:38.513Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9e2f0c978b797c963d64-5ca8b9e0c62c2320e602",
+                  "file": "smoke/critical-paths.spec.ts",
+                  "line": 167,
+                  "column": 9
+                },
+                {
+                  "title": "registration form shows validation errors for empty submission",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 120000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 1,
+                          "parallelIndex": 1,
+                          "status": "passed",
+                          "duration": 1203,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-12-12T11:05:38.618Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9e2f0c978b797c963d64-071fe51a469ac201b39f",
+                  "file": "smoke/critical-paths.spec.ts",
+                  "line": 194,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Accessibility Basics",
+              "file": "smoke/critical-paths.spec.ts",
+              "line": 224,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "homepage has proper heading structure",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 120000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 3,
+                          "parallelIndex": 3,
+                          "status": "passed",
+                          "duration": 1085,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-12-12T11:05:39.636Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9e2f0c978b797c963d64-ea068a7e05404ebc468a",
+                  "file": "smoke/critical-paths.spec.ts",
+                  "line": 225,
+                  "column": 9
+                },
+                {
+                  "title": "login page has accessible form labels",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 120000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 2,
+                          "status": "passed",
+                          "duration": 1050,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-12-12T11:05:39.692Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9e2f0c978b797c963d64-02d3d1a15c24c23c3f07",
+                  "file": "smoke/critical-paths.spec.ts",
+                  "line": 234,
+                  "column": 9
+                },
+                {
+                  "title": "registration page has accessible form labels",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 120000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 1038,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-12-12T11:05:39.753Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9e2f0c978b797c963d64-ced33bca9f6b1c5a9b39",
+                  "file": "smoke/critical-paths.spec.ts",
+                  "line": 253,
+                  "column": 9
+                },
+                {
+                  "title": "buttons are focusable via keyboard",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 120000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 1,
+                          "parallelIndex": 1,
+                          "status": "passed",
+                          "duration": 2201,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-12-12T11:05:39.827Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9e2f0c978b797c963d64-d97425271fea7c62eff7",
+                  "file": "smoke/critical-paths.spec.ts",
+                  "line": 276,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Error Handling",
+              "file": "smoke/critical-paths.spec.ts",
+              "line": 314,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "404 page handles non-existent routes gracefully",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 120000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 3,
+                          "parallelIndex": 3,
+                          "status": "passed",
+                          "duration": 1461,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-12-12T11:05:40.730Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9e2f0c978b797c963d64-1b4beedbf6ba6b689c29",
+                  "file": "smoke/critical-paths.spec.ts",
+                  "line": 315,
+                  "column": 9
+                },
+                {
+                  "title": "invalid API requests return proper error responses",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 120000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 2,
+                          "status": "passed",
+                          "duration": 85,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-12-12T11:05:40.749Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9e2f0c978b797c963d64-bd107f93dd0b609bd159",
+                  "file": "smoke/critical-paths.spec.ts",
+                  "line": 325,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Performance Basics",
+              "file": "smoke/critical-paths.spec.ts",
+              "line": 336,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "homepage loads within acceptable time",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 120000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 1498,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-12-12T11:05:40.797Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9e2f0c978b797c963d64-e20edd4a3bb8e6aa3211",
+                  "file": "smoke/critical-paths.spec.ts",
+                  "line": 337,
+                  "column": 9
+                },
+                {
+                  "title": "login page loads within acceptable time",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 120000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 2,
+                          "status": "passed",
+                          "duration": 1462,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-12-12T11:05:40.842Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9e2f0c978b797c963d64-ba9f364394f3cae4822a",
+                  "file": "smoke/critical-paths.spec.ts",
+                  "line": 347,
+                  "column": 9
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-12-12T11:05:31.329Z",
+    "duration": 11046.653,
+    "expected": 19,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

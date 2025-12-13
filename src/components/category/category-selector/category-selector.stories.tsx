@@ -197,8 +197,9 @@ export const OpenDropdown: Story = {
     // Click to open dropdown
     await userEvent.click(trigger);
 
-    // Verify dropdown items are visible
-    const items = canvas.getAllByRole('menuitemcheckbox');
+    // Radix UI portals render outside the canvas, so we need to query the document body
+    const body = within(document.body);
+    const items = body.getAllByRole('menuitemcheckbox');
     await expect(items.length).toBeGreaterThan(0);
   },
 };
@@ -217,8 +218,9 @@ export const SelectCategory: Story = {
     // Open dropdown
     await userEvent.click(trigger);
 
-    // Select first category
-    const firstItem = canvas.getAllByRole('menuitemcheckbox')[0];
+    // Radix UI portals render outside the canvas, so we need to query the document body
+    const body = within(document.body);
+    const firstItem = body.getAllByRole('menuitemcheckbox')[0];
     if (firstItem) {
       await userEvent.click(firstItem);
     }
