@@ -170,9 +170,18 @@ jobs:
 
       - name: Configure standalone environment
         run: |
-          echo "Injecting DATA_DIR into standalone .env..."
-          echo "DATA_DIR=/tmp/streamline-data" >> .next/standalone/.env
-          echo "E2E_TEST_MODE=true" >> .next/standalone/.env
+          echo "Injecting ALL required env vars into standalone .env..."
+          # Create/overwrite standalone .env with all required variables
+          cat > .next/standalone/.env << 'EOF'
+          DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/streamline_test
+          SESSION_SECRET=test-secret-for-ci-only-do-not-use-in-production
+          MODE=single-tenant
+          DATA_DIR=/tmp/streamline-data
+          NODE_ENV=production
+          E2E_TEST_MODE=true
+          EOF
+          # Remove leading whitespace from heredoc
+          sed -i 's/^[[:space:]]*//' .next/standalone/.env
           echo "Standalone .env contents:"
           cat .next/standalone/.env
 

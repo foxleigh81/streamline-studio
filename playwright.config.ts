@@ -75,8 +75,11 @@ export default defineConfig({
       ],
 
   // Local dev server (dev mode) / Production server (CI)
+  // In CI, source the .env file before starting the standalone server
   webServer: {
-    command: process.env.CI ? 'npm run start' : 'npm run dev',
+    command: process.env.CI
+      ? 'bash -c "set -a && source .next/standalone/.env && set +a && node .next/standalone/server.js"'
+      : 'npm run dev',
     url: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
     // Let Playwright manage the server in CI for proper env var inheritance
     // Locally, reuse existing server unless explicitly disabled via PLAYWRIGHT_NO_REUSE
