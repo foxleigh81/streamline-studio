@@ -4,17 +4,26 @@
 
 57 of 88 E2E tests fail in CI. All auth-related tests timeout waiting for form elements because pages redirect to `/setup`.
 
-## Root Cause Identified
+## Root Cause Identified (CORRECTED)
 
-Next.js statically pre-renders `/login`, `/register`, `/setup` pages at build time. During build, the setup flag doesn't exist, so the redirect to `/setup` is baked into the static HTML.
+**Previous theory was WRONG.** The "static rendering bakes redirect into HTML" theory was incorrect.
 
-Build output shows:
+**The ACTUAL root cause:**
 
-```
-├ ○ /login      (○ = static, prerendered at build time)
-├ ○ /register
-├ ○ /setup
-```
+1. Playwright config (line 81) runs: `bash -c "set -a && source .next/standalone/.env && set +a && node .next/standalone/server.js"`
+2. This command **sources `.next/standalone/.env`** before starting the server
+3. **CI does not create this file** - the step was removed as "unnecessary"
+4. Without the .env file being sourced, DATA_DIR is undefined
+5. DATA_DIR defaults to `/data` (not `/tmp/streamline-data`)
+6. The setup flag at `/tmp/streamline-data/.setup-complete` is not found
+7. `isSetupComplete()` returns false → redirect to `/setup`
+
+**Why the static rendering theory was wrong:**
+
+- Server Components with `redirect()` execute at **REQUEST time**, not build time
+- The "(static)" designation only means the HTML **shell** is pre-rendered
+- The redirect logic in layouts runs every request via Server Components
+- Lead Developer analysis: "The `redirect()` function from `next/navigation` does NOT bake a redirect into static HTML"
 
 ## Failed Attempts
 
@@ -46,44 +55,55 @@ Build output shows:
 - **Result**: NOT TESTED - Correctly identified as changing app behavior to fix tests (wrong approach)
 - **Status**: Reverted
 
-### Attempt 5: Move setup flag creation before build (FINAL FIX)
+### Attempt 5: Move setup flag creation before build (WRONG THEORY)
 
 - **File**: `.github/workflows/ci.yml`
 - **Changes**:
   1. Moved "Create setup flag" step BEFORE "Build Next.js application"
   2. Added DATA_DIR env var to build step
-  3. Added all build-time env vars (DATABASE_URL, MODE, SESSION_SECRET) for consistency
-  4. Replaced "Configure standalone environment" with "Verify setup flag exists"
-  5. Removed standalone .env injection (not needed - env vars passed at runtime)
+  3. Removed standalone .env injection
+- **Rationale** (INCORRECT):
+  - Based on wrong theory that static rendering bakes redirects into HTML
+- **Result**: FAILED - Static rendering theory was wrong
+- **Status**: Implemented but ineffective
+
+### Attempt 6: Restore .env file creation for standalone server (ACTUAL FIX)
+
+- **File**: `.github/workflows/ci.yml`
+- **Changes**:
+  1. Added "Configure standalone server environment" step AFTER build, BEFORE tests
+  2. Creates `.next/standalone/.env` with: DATA_DIR, DATABASE_URL, SESSION_SECRET, MODE, E2E_TEST_MODE, NODE_ENV
 - **Rationale**:
-  - Next.js statically renders pages at build time
-  - Setup flag MUST exist during build so `isSetupComplete()` returns true
-  - This prevents redirect to /setup from being baked into static HTML
-  - DATA_DIR must be available during build so the check can find the flag
-- **Result**: COMMITTED - Ready for CI test
-- **Status**: Implemented
+  - Playwright command sources `.next/standalone/.env` before starting server
+  - Without this file, DATA_DIR is undefined and defaults to `/data`
+  - Server can't find setup flag → redirects to /setup
+- **Result**: IMPLEMENTED - Ready for CI test
+- **Status**: Committed
 
 ## Current State
 
-- Fix implemented in `.github/workflows/ci.yml`
-- Ready to commit and push
+- **Root cause correctly identified**: Missing `.next/standalone/.env` file
+- **Fix**: Add step to create the .env file that Playwright expects
+- **Key insight**: The env vars in `webServer.env` are unreliable with standalone builds - the bash sourcing approach is correct but the file must exist
 
-## Why This Fix Works
+## Why This Fix Will Work
 
-1. **Build Time**: Setup flag exists → `isSetupComplete()` returns true → No redirect in static HTML
-2. **Runtime**: Setup flag still exists → Auth pages render normally
-3. **No Behavior Change**: Application code unchanged, only CI workflow order
+1. **Playwright sources .env**: The command `source .next/standalone/.env` requires the file to exist
+2. **DATA_DIR propagates**: After sourcing, DATA_DIR=/tmp/streamline-data is in the environment
+3. **Setup flag found**: Server checks `/tmp/streamline-data/.setup-complete` and finds it
+4. **No redirect**: `isSetupComplete()` returns true, pages render normally
 
-## What Was Removed
+## What Was Wrong Before
 
-- Standalone .env injection step (lines 171-187) - unnecessary because:
-  - Env vars are passed directly to `npm run test:e2e` command
-  - Standalone server reads from process.env, not .env files
+- Removed the .env injection step thinking it was "unnecessary"
+- Kept the Playwright command that depends on it - MISMATCH
+- Conflated `webServer.env` (unreliable) with sourced .env file (reliable)
 
 ## Next Steps
 
-- [x] Implement fix
+- [x] Identify correct root cause
 - [x] Update tracking document
+- [x] Add .env creation step to CI workflow
 - [ ] Commit changes
 - [ ] Push to CI
 - [ ] Monitor CI run

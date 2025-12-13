@@ -184,6 +184,21 @@ jobs:
           echo "Setup flag confirmed:"
           cat /tmp/streamline-data/.setup-complete
 
+      - name: Configure standalone server environment
+        run: |
+          echo "Creating .next/standalone/.env for Playwright to source..."
+          echo "DATA_DIR=/tmp/streamline-data" >> .next/standalone/.env
+          echo "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/streamline_test" >> .next/standalone/.env
+          echo "SESSION_SECRET=test-secret-for-ci-only-do-not-use-in-production" >> .next/standalone/.env
+          echo "MODE=single-tenant" >> .next/standalone/.env
+          echo "E2E_TEST_MODE=true" >> .next/standalone/.env
+          echo "NODE_ENV=production" >> .next/standalone/.env
+          echo ""
+          echo "Created .next/standalone/.env with contents:"
+          cat .next/standalone/.env
+          echo ""
+          echo "This file is sourced by Playwright before starting the standalone server"
+
       - name: Run E2E tests
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/streamline_test
