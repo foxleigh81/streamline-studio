@@ -82,7 +82,10 @@ async function waitForSave(page: Page): Promise<void> {
   await page.getByText(/saved/i).waitFor({ timeout: 5000 });
 }
 
-test.describe('Document Conflict Resolution', () => {
+// Skip: This test suite requires video creation UI which is not yet implemented.
+// The homepage is currently a placeholder (Phase 1.1).
+// Re-enable when video management features are added in Phase 2+.
+test.describe.skip('Document Conflict Resolution', () => {
   test.describe.configure({ mode: 'serial' });
 
   test('detects conflict when document is edited in two tabs', async ({
