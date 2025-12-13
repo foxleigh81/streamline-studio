@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Video } from 'lucide-react';
 import { trpc } from '@/lib/trpc/client';
 import { VideoCard } from '@/components/video/video-card';
 import { VideoFormModal } from '@/components/video/video-form-modal';
 import type { VideoFormData } from '@/components/video/video-form-modal';
 import { Button } from '@/components/ui/button';
 import { useParams } from 'next/navigation';
+import { announce } from '@/lib/accessibility/aria';
 import styles from './videos-page.module.scss';
 
 /**
@@ -60,14 +62,30 @@ export default function VideosPage() {
   };
 
   /**
-   * Get category details for a video
+   * Get category details for a video (currently unused)
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getCategoriesForVideo = (categoryIds: string[]) => {
     return categories.filter((cat) => categoryIds.includes(cat.id));
   };
 
   const videos = videosData?.videos ?? [];
   const hasVideos = videos.length > 0;
+
+  /**
+   * Announce loading state changes to screen readers
+   */
+  useEffect(() => {
+    if (isLoadingVideos) {
+      announce('Loading videos...');
+    } else if (videos.length > 0) {
+      announce(
+        `Loaded ${videos.length} video${videos.length === 1 ? '' : 's'}`
+      );
+    } else {
+      announce('No videos found');
+    }
+  }, [isLoadingVideos, videos.length]);
 
   return (
     <div className={styles.container}>
@@ -94,7 +112,7 @@ export default function VideosPage() {
       {!isLoadingVideos && !hasVideos && (
         <div className={styles.emptyState}>
           <div className={styles.emptyIcon} aria-hidden="true">
-            🎬
+            <Video size={48} strokeWidth={1.5} />
           </div>
           <h2 className={styles.emptyTitle}>No videos yet</h2>
           <p className={styles.emptyDescription}>
@@ -118,7 +136,7 @@ export default function VideosPage() {
               status={video.status}
               dueDate={video.dueDate}
               description={video.description}
-              categories={getCategoriesForVideo(video.categoryIds ?? [])}
+              categories={[]}
             />
           ))}
         </div>

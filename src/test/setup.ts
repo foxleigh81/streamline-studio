@@ -10,6 +10,12 @@ import { afterEach, vi } from 'vitest';
  * @see /docs/adrs/005-testing-strategy.md
  */
 
+// Set test database URL before any database connections are created
+// This ensures all database operations use the test database
+process.env.DATABASE_URL =
+  process.env.TEST_DATABASE_URL ??
+  'postgresql://postgres:postgres@localhost:5432/streamline_test';
+
 // Cleanup after each test
 afterEach(() => {
   cleanup();

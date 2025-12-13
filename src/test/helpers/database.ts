@@ -12,7 +12,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
 import { Pool } from 'pg';
 import * as schema from '@/server/db/schema';
-import { hashPassword } from '@/lib/auth';
+import { hashPassword } from '@/lib/auth/password';
 
 // Test database URL - defaults to a test database
 const TEST_DATABASE_URL =
@@ -141,7 +141,7 @@ export async function createTestWorkspace(
     .insert(schema.workspaces)
     .values({
       name: options.name ?? 'Test Workspace',
-      slug: options.slug ?? `test-${Date.now()}`,
+      slug: options.slug ?? `test-${crypto.randomUUID()}`,
       mode: options.mode ?? 'single-tenant',
     })
     .returning();
@@ -169,7 +169,7 @@ export async function createTestUser(options: {
   const [user] = await db
     .insert(schema.users)
     .values({
-      email: options.email ?? `test-${Date.now()}@example.com`,
+      email: options.email ?? `test-${crypto.randomUUID()}@example.com`,
       passwordHash,
       name: options.name ?? 'Test User',
     })
@@ -304,7 +304,7 @@ export async function createTestDocument(
  */
 export async function createTestSession(userId: string, token?: string) {
   const db = await getTestDatabase();
-  const sessionToken = token ?? `test-session-${Date.now()}`;
+  const sessionToken = token ?? `test-session-${crypto.randomUUID()}`;
 
   const [session] = await db
     .insert(schema.sessions)

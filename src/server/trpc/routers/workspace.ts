@@ -11,7 +11,7 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 // eslint-disable-next-line no-restricted-imports -- Workspace operations require direct queries for workspace access validation
 import { eq, and } from 'drizzle-orm';
-import { router, protectedProcedure } from '../trpc';
+import { router, protectedProcedure } from '../procedures';
 import { workspaces, workspaceUsers } from '@/server/db/schema';
 import { serverEnv } from '@/lib/env';
 

@@ -35,8 +35,13 @@ services:
       - DATA_DIR=/data
       - TRUSTED_PROXY=${TRUSTED_PROXY:-false}
       - NODE_ENV=production
+      # Redis for distributed rate limiting
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - RATE_LIMIT_FAIL_CLOSED=${RATE_LIMIT_FAIL_CLOSED:-false}
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     volumes:
       - appdata:/data
@@ -81,6 +86,28 @@ services:
     # ports:
     #   - '5432:5432'
 
+  # ---------------------------------------------------------------------------
+  # Redis
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: streamline-redis
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    # SECURITY WARNING: Exposing Redis to the host can be a security risk!
+    # Only enable this for local development when you need direct access.
+    #
+    # To enable: Uncomment the lines below
+    # ports:
+    #   - '6379:6379'
+
 # -----------------------------------------------------------------------------
 # Volumes
 # -----------------------------------------------------------------------------
@@ -88,6 +115,10 @@ volumes:
   # PostgreSQL data persistence
   pgdata:
     name: streamline-pgdata
+
+  # Redis data persistence
+  redisdata:
+    name: streamline-redisdata
 
   # Application data (setup flag, etc.)
   appdata:

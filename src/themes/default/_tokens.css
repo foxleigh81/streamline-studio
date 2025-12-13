@@ -67,10 +67,10 @@
     --color-foreground-muted: var(--palette-grey-500);
     --color-foreground-subtle: var(--palette-grey-400);
 
-    /* Primary (YouTube Red) */
-    --color-primary: var(--palette-red-500);
-    --color-primary-hover: var(--palette-red-600);
-    --color-primary-active: var(--palette-red-700);
+    /* Primary (YouTube Red) - Adjusted for WCAG AA contrast */
+    --color-primary: var(--palette-red-600);
+    --color-primary-hover: var(--palette-red-700);
+    --color-primary-active: var(--palette-red-800);
     --color-primary-foreground: var(--palette-white);
 
     /* Secondary */
@@ -89,8 +89,11 @@
     --color-muted-foreground: var(--palette-grey-500);
 
     /* Destructive / Error */
-    --color-destructive: hsl(0 84% 60%);
-    --color-destructive-hover: hsl(0 84% 50%);
+    /* WCAG AA requires 4.5:1 contrast for small text on white background */
+    /* hsl(0 84% 60%) = #ef4343 = 3.78:1 contrast - FAILS */
+    /* hsl(0 84% 45%) = #d41515 = 5.58:1 contrast - PASSES */
+    --color-destructive: hsl(0 84% 45%);
+    --color-destructive-hover: hsl(0 84% 38%);
     --color-destructive-foreground: var(--palette-white);
 
     /* Success */

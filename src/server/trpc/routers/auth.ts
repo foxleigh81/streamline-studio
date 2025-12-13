@@ -11,24 +11,28 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
-import { router, publicProcedure, protectedProcedure } from '../trpc';
+import { router, publicProcedure, protectedProcedure } from '../procedures';
 import { users, workspaces, workspaceUsers } from '@/server/db/schema';
 import {
   validatePassword,
   hashPassword,
   verifyPassword,
+} from '@/lib/auth/password';
+import {
   generateSessionToken,
   createSession,
   invalidateSessionByToken,
   createSessionCookie,
   createBlankSessionCookie,
   parseSessionToken,
+} from '@/lib/auth/session';
+import {
   checkRateLimit,
   getClientIp,
   createLoginRateLimitKey,
   createRegistrationRateLimitKey,
   RATE_LIMITS,
-} from '@/lib/auth';
+} from '@/lib/auth/rate-limit';
 import { serverEnv } from '@/lib/env';
 
 /**

@@ -110,13 +110,17 @@ export const ClickToSelect: Story = {
     expect(colorButtons[0]).toHaveAttribute('aria-checked', 'true');
 
     // Click on a different color (index 5)
-    await userEvent.click(colorButtons[5]);
+    const targetButton = colorButtons[5];
+    if (!targetButton) {
+      throw new Error('Target color button not found');
+    }
+    await userEvent.click(targetButton);
 
     // Wait for state update
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     // Verify new selection
-    expect(colorButtons[5]).toHaveAttribute('aria-checked', 'true');
+    expect(targetButton).toHaveAttribute('aria-checked', 'true');
   },
 };
 
@@ -132,8 +136,12 @@ export const KeyboardNavigation: Story = {
     const colorButtons = canvas.getAllByRole('radio');
 
     // Focus first button
-    colorButtons[0].focus();
-    expect(colorButtons[0]).toHaveFocus();
+    const firstButton = colorButtons[0];
+    if (!firstButton) {
+      throw new Error('First color button not found');
+    }
+    firstButton.focus();
+    expect(firstButton).toHaveFocus();
 
     // Navigate right with arrow key
     await userEvent.keyboard('{ArrowRight}');

@@ -40,6 +40,42 @@ export const PRESET_COLORS = [
 ] as const;
 
 /**
+ * Semantic color names for screen reader accessibility
+ * Maps hex codes to human-readable color names
+ */
+export const COLOR_NAMES: Record<string, string> = {
+  // Neutrals
+  '#6B7280': 'Slate Gray',
+  '#374151': 'Charcoal Gray',
+  '#1F2937': 'Deep Charcoal',
+
+  // Blues
+  '#3B82F6': 'Bright Blue',
+  '#2563EB': 'Royal Blue',
+  '#1E40AF': 'Deep Navy',
+
+  // Greens
+  '#22C55E': 'Emerald Green',
+  '#16A34A': 'Forest Green',
+  '#14B8A6': 'Teal',
+
+  // Yellows
+  '#F59E0B': 'Amber',
+  '#EAB308': 'Golden Yellow',
+  '#CA8A04': 'Dark Gold',
+
+  // Oranges/Reds
+  '#F97316': 'Tangerine Orange',
+  '#EF4444': 'Coral Red',
+  '#DC2626': 'Crimson Red',
+
+  // Purples/Pinks
+  '#8B5CF6': 'Lavender Purple',
+  '#7C3AED': 'Deep Purple',
+  '#EC4899': 'Rose Pink',
+};
+
+/**
  * Color picker component props
  */
 export interface ColorPickerProps {
@@ -131,6 +167,7 @@ export function ColorPicker({
       >
         {PRESET_COLORS.map((color, index) => {
           const isSelected = value === color;
+          const colorName = COLOR_NAMES[color] || color;
           const buttonClasses = [
             styles.colorButton,
             isSelected ? styles.selected : '',
@@ -149,7 +186,7 @@ export function ColorPicker({
               onFocus={() => setFocusedIndex(index)}
               role="radio"
               aria-checked={isSelected}
-              aria-label={`Color ${color}`}
+              aria-label={`${colorName} (${color})`}
               tabIndex={isSelected ? 0 : -1}
             >
               {isSelected && (

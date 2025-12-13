@@ -41,12 +41,8 @@ export default function InvitePage() {
 
   // Accept invitation mutation
   const acceptMutation = trpc.invitation.accept.useMutation({
-    onSuccess: (data) => {
-      // Set the session cookie
-      if (data.sessionToken) {
-        document.cookie = `session=${data.sessionToken}; path=/; max-age=${30 * 24 * 60 * 60}; samesite=lax${process.env.NODE_ENV === 'production' ? '; secure' : ''}`;
-      }
-
+    onSuccess: () => {
+      // Session cookie is set server-side via HTTP-only cookie (secure)
       // Redirect to workspace after successful acceptance
       if (invitation?.workspaceSlug) {
         router.push(`/w/${invitation.workspaceSlug}/videos`);

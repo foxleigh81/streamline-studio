@@ -80,8 +80,8 @@ export const Failed: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // Verify failed text is displayed
-    const failedText = canvas.getByText('Failed to save');
+    // Verify failed text is displayed (using regex to match partial text)
+    const failedText = canvas.getByText(/failed to save/i);
     await expect(failedText).toBeInTheDocument();
   },
 };

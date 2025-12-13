@@ -7,6 +7,9 @@ import { CreateWorkspaceModal } from './create-workspace-modal';
  * Create Workspace Modal Component Story
  *
  * Modal for creating a new workspace in multi-tenant mode.
+ *
+ * Note: This component requires Next.js App Router, so automated tests are skipped.
+ * Manual testing should be done in the actual Next.js application.
  */
 const meta: Meta<typeof CreateWorkspaceModal> = {
   title: 'Workspace/CreateWorkspaceModal',
@@ -14,7 +17,7 @@ const meta: Meta<typeof CreateWorkspaceModal> = {
   parameters: {
     layout: 'centered',
   },
-  tags: ['autodocs'],
+  tags: ['autodocs', 'skip-test'],
 };
 
 export default meta;

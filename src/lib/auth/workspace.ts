@@ -30,7 +30,7 @@ export interface UserValidationResult {
   user: {
     id: string;
     email: string;
-    username: string;
+    name: string | null;
   } | null;
 }
 

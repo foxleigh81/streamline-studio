@@ -3,6 +3,7 @@
 import { type MouseEvent } from 'react';
 import Link from 'next/link';
 import type { VideoStatus } from '@/server/db/schema';
+import { STATUS_COLORS, STATUS_LABELS } from '@/lib/constants/status';
 import styles from './video-card.module.scss';
 
 /**
@@ -28,34 +29,6 @@ export interface VideoCardProps {
   /** Optional className for custom styling */
   className?: string;
 }
-
-/**
- * Status badge color mapping
- */
-const statusColors: Record<VideoStatus, string> = {
-  idea: '#6B7280', // Gray
-  scripting: '#3B82F6', // Blue
-  filming: '#8B5CF6', // Purple
-  editing: '#F59E0B', // Amber
-  review: '#EC4899', // Pink
-  scheduled: '#14B8A6', // Teal
-  published: '#22C55E', // Green
-  archived: '#6B7280', // Gray
-};
-
-/**
- * Status display labels
- */
-const statusLabels: Record<VideoStatus, string> = {
-  idea: 'Idea',
-  scripting: 'Scripting',
-  filming: 'Filming',
-  editing: 'Editing',
-  review: 'Review',
-  scheduled: 'Scheduled',
-  published: 'Published',
-  archived: 'Archived',
-};
 
 /**
  * VideoCard Component
@@ -115,10 +88,10 @@ export function VideoCard({
       <div className={styles.header}>
         <span
           className={styles.statusBadge}
-          style={{ backgroundColor: statusColors[status] }}
-          aria-label={`Status: ${statusLabels[status]}`}
+          style={{ backgroundColor: STATUS_COLORS[status] }}
+          aria-label={`Status: ${STATUS_LABELS[status]}`}
         >
-          {statusLabels[status]}
+          {STATUS_LABELS[status]}
         </span>
         {formattedDueDate && (
           <span

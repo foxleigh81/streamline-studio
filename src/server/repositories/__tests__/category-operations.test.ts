@@ -278,7 +278,7 @@ describe('WorkspaceRepository - Category Operations', () => {
 
         await expect(
           repo1.setVideoCategories(videoId, [otherCategory.id])
-        ).rejects.toThrow('Category');
+        ).rejects.toThrow('Categories not found or access denied');
       });
     });
 

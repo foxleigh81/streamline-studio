@@ -12,7 +12,7 @@
 
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { router, workspaceProcedure, editorProcedure } from '../trpc';
+import { router, workspaceProcedure, editorProcedure } from '../procedures';
 import type { DocumentType } from '@/server/db/schema';
 
 /**

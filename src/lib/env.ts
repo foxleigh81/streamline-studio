@@ -44,6 +44,23 @@ const serverEnvSchema = z.object({
     .transform((val) => val === 'true')
     .default('false'),
 
+  // Redis (optional in development, recommended for production)
+  REDIS_URL: z.string().url().optional(),
+
+  // Rate limiting behavior when Redis is unavailable
+  // 'true' = fail closed (deny requests), 'false' = fail open (allow requests)
+  RATE_LIMIT_FAIL_CLOSED: z
+    .string()
+    .transform((val) => val === 'true')
+    .default('false'),
+
+  // E2E Test Mode - dramatically increases rate limits to prevent test interference
+  // ONLY use in controlled E2E testing environments, never in production
+  E2E_TEST_MODE: z
+    .string()
+    .transform((val) => val === 'true')
+    .default('false'),
+
   // Data directory for setup flag
   DATA_DIR: z.string().default('/data'),
 
@@ -100,21 +117,7 @@ const clientEnvSchema = z.object({
  * Call this at application startup.
  */
 function validateServerEnv() {
-  // In development, provide helpful defaults
-  const envWithDefaults =
-    process.env.NODE_ENV === 'development'
-      ? {
-          ...process.env,
-          DATABASE_URL:
-            process.env.DATABASE_URL ??
-            'postgresql://streamline:password@localhost:5432/streamline',
-          SESSION_SECRET:
-            process.env.SESSION_SECRET ??
-            'development-secret-change-in-production-32chars',
-        }
-      : process.env;
-
-  const result = serverEnvSchema.safeParse(envWithDefaults);
+  const result = serverEnvSchema.safeParse(process.env);
 
   if (!result.success) {
     const errors = result.error.flatten().fieldErrors;
@@ -122,9 +125,27 @@ function validateServerEnv() {
       .map(([key, messages]) => `  ${key}: ${messages?.join(', ')}`)
       .join('\n');
 
-    throw new Error(
-      `Environment validation failed:\n${errorMessages}\n\nSee .env.example for required variables.`
+    console.error('\n❌ Environment validation failed:');
+    console.error(errorMessages);
+    console.error('\nRequired environment variables are missing or invalid.');
+    console.error('');
+    console.error('For local development:');
+    console.error('  1. Copy .env.example to .env');
+    console.error('     cp .env.example .env');
+    console.error('  2. Fill in the required values');
+    console.error('  3. Generate secrets:');
+    console.error('     openssl rand -base64 24  # For POSTGRES_PASSWORD');
+    console.error('     openssl rand -base64 32  # For SESSION_SECRET');
+    console.error('');
+    console.error('For production:');
+    console.error(
+      '  Ensure all required environment variables are set in your deployment.'
     );
+    console.error('');
+    console.error('See .env.example for complete documentation.');
+    console.error('');
+
+    throw new Error('Environment validation failed. See error messages above.');
   }
 
   return result.data;

@@ -37,8 +37,6 @@ export interface DocumentEditorProps {
   onImport?: (file: File) => Promise<void>;
   /** Optional: Whether import/export features are enabled */
   enableImportExport?: boolean;
-  /** Optional: Whether to show revision history panel */
-  enableRevisionHistory?: boolean;
   /** Document type label (e.g., "Script", "Description") */
   documentType?: string;
   /** Whether the editor is read-only */
@@ -84,7 +82,6 @@ export function DocumentEditor({
   onExport,
   onImport,
   enableImportExport = false,
-  enableRevisionHistory: _enableRevisionHistory = false,
   documentType = 'Document',
   readOnly = false,
   debounceMs = 2000,

@@ -12,6 +12,7 @@ import React, { type ReactNode } from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { httpBatchLink } from '@trpc/client';
+import superjson from 'superjson';
 import { trpc } from '../client';
 
 // Mock fetch for tRPC HTTP calls
@@ -59,6 +60,7 @@ describe('tRPC Client', () => {
         links: [
           httpBatchLink({
             url: '/api/trpc',
+            transformer: superjson,
           }),
         ],
       });
@@ -72,6 +74,7 @@ describe('tRPC Client', () => {
         links: [
           httpBatchLink({
             url: customUrl,
+            transformer: superjson,
           }),
         ],
       });
@@ -86,6 +89,7 @@ describe('tRPC Client', () => {
         links: [
           httpBatchLink({
             url: '/api/trpc',
+            transformer: superjson,
           }),
         ],
       });
@@ -116,6 +120,7 @@ describe('tRPC Client', () => {
         links: [
           httpBatchLink({
             url: '/api/trpc',
+            transformer: superjson,
           }),
         ],
       });
@@ -151,6 +156,7 @@ describe('tRPC Client', () => {
         links: [
           httpBatchLink({
             url: '/api/trpc',
+            transformer: superjson,
           }),
         ],
       });
@@ -187,9 +193,12 @@ describe('tRPC Client', () => {
         links: [
           httpBatchLink({
             url: '/api/trpc',
+            transformer: superjson,
             fetch: (url, options) => {
               // Verify credentials are included
-              expect(options?.credentials).toBe('include');
+              if (options && 'credentials' in options) {
+                expect(options.credentials).toBe('include');
+              }
               return fetch(url, options);
             },
           }),
@@ -206,6 +215,7 @@ describe('tRPC Client', () => {
         links: [
           httpBatchLink({
             url: '/api/trpc',
+            transformer: superjson,
             headers: () => customHeaders,
           }),
         ],
@@ -219,6 +229,7 @@ describe('tRPC Client', () => {
         links: [
           httpBatchLink({
             url: '/api/trpc',
+            transformer: superjson,
             headers: async () => {
               // Simulate async header retrieval (e.g., from cookies/storage)
               return { 'X-Workspace-Id': 'workspace-123' };
@@ -237,6 +248,7 @@ describe('tRPC Client', () => {
         links: [
           httpBatchLink({
             url: '/api/trpc',
+            transformer: superjson,
             maxURLLength: 2048, // Enable batching with URL length limit
           }),
         ],
@@ -252,6 +264,7 @@ describe('tRPC Client', () => {
         links: [
           httpBatchLink({
             url: '/api/trpc',
+            transformer: superjson,
           }),
         ],
       });

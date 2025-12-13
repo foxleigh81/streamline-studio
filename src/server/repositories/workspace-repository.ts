@@ -7,7 +7,7 @@
  * @see /docs/adrs/008-multi-tenancy-strategy.md
  */
 
-import { eq, and, desc, asc, gt, type SQL } from 'drizzle-orm';
+import { eq, and, desc, asc, gt, inArray, type SQL } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   videos,
@@ -43,6 +43,7 @@ export interface PaginationOptions {
  */
 export interface VideoListOptions extends PaginationOptions {
   status?: VideoStatus;
+  categoryId?: string;
   orderBy?: 'createdAt' | 'updatedAt' | 'dueDate' | 'title';
   orderDir?: 'asc' | 'desc';
 }
@@ -143,6 +144,36 @@ export class WorkspaceRepository {
     }
 
     const orderFn = options?.orderDir === 'asc' ? asc : desc;
+
+    // If filtering by category, join with video_categories table
+    if (options?.categoryId) {
+      return this.db
+        .selectDistinct({
+          id: videos.id,
+          workspaceId: videos.workspaceId,
+          title: videos.title,
+          description: videos.description,
+          status: videos.status,
+          dueDate: videos.dueDate,
+          publishDate: videos.publishDate,
+          youtubeVideoId: videos.youtubeVideoId,
+          thumbnailUrl: videos.thumbnailUrl,
+          createdAt: videos.createdAt,
+          updatedAt: videos.updatedAt,
+          createdBy: videos.createdBy,
+        })
+        .from(videos)
+        .innerJoin(
+          videoCategories,
+          and(
+            eq(videoCategories.videoId, videos.id),
+            eq(videoCategories.categoryId, options.categoryId)
+          )
+        )
+        .where(and(...conditions))
+        .orderBy(orderFn(orderColumn))
+        .limit(limit);
+    }
 
     return this.db
       .select()
@@ -530,11 +561,25 @@ export class WorkspaceRepository {
       throw new Error('Video not found or access denied');
     }
 
-    // Verify all categories belong to this workspace
-    for (const categoryId of categoryIds) {
-      const category = await this.getCategory(categoryId);
-      if (!category) {
-        throw new Error(`Category ${categoryId} not found or access denied`);
+    // Verify all categories belong to this workspace using a single batch query
+    if (categoryIds.length > 0) {
+      const existingCategories = await this.db
+        .select({ id: categories.id })
+        .from(categories)
+        .where(
+          and(
+            eq(categories.workspaceId, this.workspaceId),
+            inArray(categories.id, categoryIds)
+          )
+        );
+
+      // Check if all requested categories were found
+      if (existingCategories.length !== categoryIds.length) {
+        const foundIds = existingCategories.map((c) => c.id);
+        const missingIds = categoryIds.filter((id) => !foundIds.includes(id));
+        throw new Error(
+          `Categories not found or access denied: ${missingIds.join(', ')}`
+        );
       }
     }
 

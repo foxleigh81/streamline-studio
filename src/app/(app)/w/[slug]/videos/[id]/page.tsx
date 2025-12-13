@@ -6,36 +6,10 @@ import { trpc } from '@/lib/trpc/client';
 import { VideoFormModal } from '@/components/video/video-form-modal';
 import type { VideoFormData } from '@/components/video/video-form-modal';
 import { VideoDeleteDialog } from '@/components/video/video-delete-dialog';
+import { DocumentEditor } from '@/components/document/document-editor/document-editor';
 import { Button } from '@/components/ui/button';
+import { STATUS_COLORS, STATUS_LABELS } from '@/lib/constants/status';
 import styles from './video-detail-page.module.scss';
-
-/**
- * Status badge color mapping
- */
-const statusColors: Record<string, string> = {
-  idea: '#6B7280',
-  scripting: '#3B82F6',
-  filming: '#8B5CF6',
-  editing: '#F59E0B',
-  review: '#EC4899',
-  scheduled: '#14B8A6',
-  published: '#22C55E',
-  archived: '#6B7280',
-};
-
-/**
- * Status display labels
- */
-const statusLabels: Record<string, string> = {
-  idea: 'Idea',
-  scripting: 'Scripting',
-  filming: 'Filming',
-  editing: 'Editing',
-  review: 'Review',
-  scheduled: 'Scheduled',
-  published: 'Published',
-  archived: 'Archived',
-};
 
 /**
  * Video Detail Page
@@ -68,6 +42,27 @@ export default function VideoDetailPage() {
     orderDir: 'asc',
   });
 
+  // Fetch documents for each type
+  const { data: scriptDoc } = trpc.document.getByVideo.useQuery({
+    videoId,
+    type: 'script',
+  });
+
+  const { data: descriptionDoc } = trpc.document.getByVideo.useQuery({
+    videoId,
+    type: 'description',
+  });
+
+  const { data: notesDoc } = trpc.document.getByVideo.useQuery({
+    videoId,
+    type: 'notes',
+  });
+
+  const { data: thumbnailIdeasDoc } = trpc.document.getByVideo.useQuery({
+    videoId,
+    type: 'thumbnail_ideas',
+  });
+
   // Update video mutation
   const updateVideoMutation = trpc.video.update.useMutation({
     onSuccess: () => {
@@ -83,6 +78,12 @@ export default function VideoDetailPage() {
     },
   });
 
+  // Document update mutation
+  const updateDocumentMutation = trpc.document.update.useMutation();
+
+  // tRPC utils for refetching
+  const utils = trpc.useUtils();
+
   /**
    * Handle video update
    */
@@ -90,9 +91,9 @@ export default function VideoDetailPage() {
     await updateVideoMutation.mutateAsync({
       id: videoId,
       title: data.title,
-      description: data.description ?? null,
+      description: data.description ?? undefined,
       status: data.status,
-      dueDate: data.dueDate || null,
+      dueDate: data.dueDate || undefined,
       categoryIds: data.categoryIds,
     });
   };
@@ -105,12 +106,42 @@ export default function VideoDetailPage() {
   };
 
   /**
+   * Handle document save
+   */
+  const handleDocumentSave = async (
+    documentId: string,
+    content: string,
+    version: number
+  ) => {
+    const result = await updateDocumentMutation.mutateAsync({
+      id: documentId,
+      content,
+      expectedVersion: version,
+    });
+    return { version: result.version };
+  };
+
+  /**
+   * Handle document reload
+   */
+  const handleDocumentReload = async (
+    videoId: string,
+    type: 'script' | 'description' | 'notes' | 'thumbnail_ideas'
+  ) => {
+    const result = await utils.document.getByVideo.fetch({ videoId, type });
+    return {
+      content: result.content,
+      version: result.version,
+    };
+  };
+
+  /**
    * Format date for display
    */
-  const formatDate = (date: string | null): string => {
+  const formatDate = (date: string | Date | null): string => {
     if (!date) return 'Not set';
     try {
-      const d = new Date(date);
+      const d = typeof date === 'string' ? new Date(date) : date;
       return d.toLocaleDateString('en-US', {
         month: 'long',
         day: 'numeric',
@@ -164,9 +195,9 @@ export default function VideoDetailPage() {
           <h1 className={styles.title}>{video.title}</h1>
           <span
             className={styles.statusBadge}
-            style={{ backgroundColor: statusColors[video.status] }}
+            style={{ backgroundColor: STATUS_COLORS[video.status] }}
           >
-            {statusLabels[video.status]}
+            {STATUS_LABELS[video.status]}
           </span>
         </div>
         <div className={styles.actions}>
@@ -242,38 +273,70 @@ export default function VideoDetailPage() {
 
       {/* Document Tabs */}
       <div className={styles.tabs}>
-        <div className={styles.tabList} role="tablist">
+        <div
+          className={styles.tabList}
+          role="tablist"
+          aria-label="Video document tabs"
+          onKeyDown={(e) => {
+            const tabs = ['script', 'description', 'notes', 'thumbnail_ideas'];
+            const currentIndex = tabs.indexOf(activeTab);
+
+            if (e.key === 'ArrowRight') {
+              e.preventDefault();
+              const nextIndex = (currentIndex + 1) % tabs.length;
+              setActiveTab(tabs[nextIndex] as typeof activeTab);
+            } else if (e.key === 'ArrowLeft') {
+              e.preventDefault();
+              const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+              setActiveTab(tabs[prevIndex] as typeof activeTab);
+            } else if (e.key === 'Home') {
+              e.preventDefault();
+              setActiveTab('script');
+            } else if (e.key === 'End') {
+              e.preventDefault();
+              setActiveTab('thumbnail_ideas');
+            }
+          }}
+        >
           <button
+            id="script-tab"
             role="tab"
             aria-selected={activeTab === 'script'}
             aria-controls="script-panel"
+            tabIndex={activeTab === 'script' ? 0 : -1}
             className={`${styles.tab} ${activeTab === 'script' ? styles.tabActive : ''}`}
             onClick={() => setActiveTab('script')}
           >
             Script
           </button>
           <button
+            id="description-tab"
             role="tab"
             aria-selected={activeTab === 'description'}
             aria-controls="description-panel"
+            tabIndex={activeTab === 'description' ? 0 : -1}
             className={`${styles.tab} ${activeTab === 'description' ? styles.tabActive : ''}`}
             onClick={() => setActiveTab('description')}
           >
             Description
           </button>
           <button
+            id="notes-tab"
             role="tab"
             aria-selected={activeTab === 'notes'}
             aria-controls="notes-panel"
+            tabIndex={activeTab === 'notes' ? 0 : -1}
             className={`${styles.tab} ${activeTab === 'notes' ? styles.tabActive : ''}`}
             onClick={() => setActiveTab('notes')}
           >
             Notes
           </button>
           <button
+            id="thumbnail-tab"
             role="tab"
             aria-selected={activeTab === 'thumbnail_ideas'}
             aria-controls="thumbnail-panel"
+            tabIndex={activeTab === 'thumbnail_ideas' ? 0 : -1}
             className={`${styles.tab} ${activeTab === 'thumbnail_ideas' ? styles.tabActive : ''}`}
             onClick={() => setActiveTab('thumbnail_ideas')}
           >
@@ -289,9 +352,20 @@ export default function VideoDetailPage() {
             hidden={activeTab !== 'script'}
             className={styles.tabPanel}
           >
-            <p className={styles.placeholder}>
-              Document editor coming in Phase 2B...
-            </p>
+            {scriptDoc ? (
+              <DocumentEditor
+                documentId={scriptDoc.id}
+                initialContent={scriptDoc.content}
+                initialVersion={scriptDoc.version}
+                onSave={(content, version) =>
+                  handleDocumentSave(scriptDoc.id, content, version)
+                }
+                onReloadDocument={() => handleDocumentReload(videoId, 'script')}
+                documentType="Script"
+              />
+            ) : (
+              <p className={styles.placeholder}>Loading script...</p>
+            )}
           </div>
 
           <div
@@ -301,9 +375,22 @@ export default function VideoDetailPage() {
             hidden={activeTab !== 'description'}
             className={styles.tabPanel}
           >
-            <p className={styles.placeholder}>
-              Document editor coming in Phase 2B...
-            </p>
+            {descriptionDoc ? (
+              <DocumentEditor
+                documentId={descriptionDoc.id}
+                initialContent={descriptionDoc.content}
+                initialVersion={descriptionDoc.version}
+                onSave={(content, version) =>
+                  handleDocumentSave(descriptionDoc.id, content, version)
+                }
+                onReloadDocument={() =>
+                  handleDocumentReload(videoId, 'description')
+                }
+                documentType="Description"
+              />
+            ) : (
+              <p className={styles.placeholder}>Loading description...</p>
+            )}
           </div>
 
           <div
@@ -313,9 +400,20 @@ export default function VideoDetailPage() {
             hidden={activeTab !== 'notes'}
             className={styles.tabPanel}
           >
-            <p className={styles.placeholder}>
-              Document editor coming in Phase 2B...
-            </p>
+            {notesDoc ? (
+              <DocumentEditor
+                documentId={notesDoc.id}
+                initialContent={notesDoc.content}
+                initialVersion={notesDoc.version}
+                onSave={(content, version) =>
+                  handleDocumentSave(notesDoc.id, content, version)
+                }
+                onReloadDocument={() => handleDocumentReload(videoId, 'notes')}
+                documentType="Notes"
+              />
+            ) : (
+              <p className={styles.placeholder}>Loading notes...</p>
+            )}
           </div>
 
           <div
@@ -325,9 +423,22 @@ export default function VideoDetailPage() {
             hidden={activeTab !== 'thumbnail_ideas'}
             className={styles.tabPanel}
           >
-            <p className={styles.placeholder}>
-              Document editor coming in Phase 2B...
-            </p>
+            {thumbnailIdeasDoc ? (
+              <DocumentEditor
+                documentId={thumbnailIdeasDoc.id}
+                initialContent={thumbnailIdeasDoc.content}
+                initialVersion={thumbnailIdeasDoc.version}
+                onSave={(content, version) =>
+                  handleDocumentSave(thumbnailIdeasDoc.id, content, version)
+                }
+                onReloadDocument={() =>
+                  handleDocumentReload(videoId, 'thumbnail_ideas')
+                }
+                documentType="Thumbnail Ideas"
+              />
+            ) : (
+              <p className={styles.placeholder}>Loading thumbnail ideas...</p>
+            )}
           </div>
         </div>
       </div>

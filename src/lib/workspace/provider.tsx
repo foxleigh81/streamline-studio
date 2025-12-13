@@ -54,12 +54,10 @@ export function WorkspaceProvider({
   initialWorkspace = null,
   initialRole = null,
 }: WorkspaceProviderProps): React.ReactNode {
-  // Note: setWorkspace and setRole are preserved for future use when
-  // we implement workspace switching via tRPC queries
-  const [workspace, _setWorkspace] = useState<WorkspaceData | null>(
-    initialWorkspace
-  );
-  const [role, _setRole] = useState<WorkspaceRole | null>(initialRole);
+  // Workspace and role are set from server props and don't change client-side
+  // Workspace switching is handled via page navigation (see switchWorkspace below)
+  const workspace = initialWorkspace;
+  const role = initialRole;
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

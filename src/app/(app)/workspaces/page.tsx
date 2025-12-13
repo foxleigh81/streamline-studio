@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { trpc } from '@/lib/trpc/client';
 import styles from './workspaces-page.module.scss';
 
+// Force dynamic rendering (this page uses tRPC client hooks)
+export const dynamic = 'force-dynamic';
+
 /**
  * Workspaces Selector Page
  *

@@ -1,11 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { trpc } from '@/lib/trpc/client';
 import { MemberList } from '@/components/team/member-list';
 import { InviteForm } from '@/components/team/invite-form';
 import { LiveRegion } from '@/components/ui/live-region';
+import { announce } from '@/lib/accessibility/aria';
 import styles from './team-page.module.scss';
 
 /**
@@ -143,6 +144,21 @@ export default function TeamPage() {
 
   const isOwner = workspace?.role === 'owner';
   const isLoading = isLoadingMembers || !workspace;
+
+  /**
+   * Announce loading state changes to screen readers
+   */
+  useEffect(() => {
+    if (isLoading) {
+      announce('Loading team members...');
+    } else if (members.length > 0) {
+      announce(
+        `Loaded ${members.length} team member${members.length === 1 ? '' : 's'}`
+      );
+    } else {
+      announce('No team members found');
+    }
+  }, [isLoading, members.length]);
 
   return (
     <div className={styles.container}>

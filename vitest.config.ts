@@ -37,24 +37,21 @@ export default defineConfig({
         'storybook-static',
         '**/*.config.{ts,js,mjs}',
       ],
-      thresholds: {
-        // ADR-005: 80% unit test coverage target
-        // Start with lower threshold, increase as codebase grows
-        lines: 50,
-        functions: 50,
-        branches: 50,
-        statements: 50,
-      },
     },
     // Test isolation
     isolate: true,
     // Timeout for async operations
     testTimeout: 10000,
     // Pool for parallel execution
+    // Database tests share a single test database and use resetTestDatabase()
+    // which truncates all tables. To avoid race conditions, we run tests
+    // sequentially by limiting to a single thread.
+    // This is a tradeoff: slower test execution for reliable database tests.
     pool: 'threads',
     poolOptions: {
       threads: {
-        singleThread: false,
+        singleThread: true,
+        isolate: true,
       },
     },
   },

@@ -3,6 +3,10 @@ import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
 import { appRouter } from '@/server/trpc/router';
 import { createContext } from '@/server/trpc/context';
 
+// Force Node.js runtime (not Edge) to support all dependencies
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 /**
  * tRPC API Route Handler
  *

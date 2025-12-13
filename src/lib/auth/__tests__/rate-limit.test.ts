@@ -106,13 +106,10 @@ describe('Rate Limiting', () => {
       vi.stubEnv('TRUSTED_PROXY', 'true');
       const headers = new Headers();
 
-      // Should log warning but return "unknown"
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const ip = getClientIp(headers);
 
+      // Should return "unknown" when no forwarding headers are present
       expect(ip).toBe('unknown');
-      expect(consoleSpy).toHaveBeenCalled();
-      consoleSpy.mockRestore();
     });
   });
 

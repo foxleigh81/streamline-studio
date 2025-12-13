@@ -45,11 +45,14 @@ export function announce(
 
 /**
  * Generate a unique ID for ARIA relationships
+ *
+ * Uses timestamp + random to ensure uniqueness across SSR and client renders.
+ * This avoids hydration mismatches that occur with global counters.
  */
-let idCounter = 0;
 export function generateId(prefix: string = 'aria'): string {
-  idCounter += 1;
-  return `${prefix}-${idCounter}-${Date.now()}`;
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).slice(2, 9);
+  return `${prefix}-${timestamp}-${random}`;
 }
 
 /**

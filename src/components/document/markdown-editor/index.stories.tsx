@@ -172,6 +172,10 @@ function InteractiveEditor() {
 }
 
 export const Interactive: Story = {
+  args: {
+    initialContent:
+      '# Interactive Editor\n\nEdit this content and see the changes tracked below.',
+  },
   render: () => <InteractiveEditor />,
 };
 
