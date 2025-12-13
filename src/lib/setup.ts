@@ -19,11 +19,20 @@ import { createLogger } from './logger';
 const logger = createLogger('setup');
 
 /**
- * Path to the setup completion flag file
+ * Get the data directory path
+ * Read at runtime to support environment variable changes after build
+ */
+function getDataDir(): string {
+  return process.env.DATA_DIR || '/data';
+}
+
+/**
+ * Get the path to the setup completion flag file
  * Stored outside database to persist across database resets
  */
-const DATA_DIR = process.env.DATA_DIR || '/data';
-const SETUP_FLAG_PATH = join(DATA_DIR, '.setup-complete');
+function getSetupFlagPath(): string {
+  return join(getDataDir(), '.setup-complete');
+}
 
 /**
  * Check if initial setup has been completed (synchronous)
@@ -32,7 +41,7 @@ const SETUP_FLAG_PATH = join(DATA_DIR, '.setup-complete');
  */
 export function isSetupCompleteSync(): boolean {
   try {
-    return existsSync(SETUP_FLAG_PATH);
+    return existsSync(getSetupFlagPath());
   } catch (error) {
     logger.error({ error }, 'Error checking setup status');
     // If we can't read the file, assume setup is not complete
@@ -58,10 +67,13 @@ export async function isSetupComplete(): Promise<boolean> {
  * @throws Error if file cannot be created
  */
 export async function markSetupComplete(): Promise<void> {
+  const dataDir = getDataDir();
+  const flagPath = getSetupFlagPath();
+
   try {
     // Ensure data directory exists
-    if (!existsSync(DATA_DIR)) {
-      await mkdir(DATA_DIR, { recursive: true });
+    if (!existsSync(dataDir)) {
+      await mkdir(dataDir, { recursive: true });
     }
 
     // Write setup completion flag with timestamp
@@ -71,15 +83,11 @@ export async function markSetupComplete(): Promise<void> {
       version: '1.0',
     };
 
-    await writeFile(
-      SETUP_FLAG_PATH,
-      JSON.stringify(completionData, null, 2),
-      'utf-8'
-    );
+    await writeFile(flagPath, JSON.stringify(completionData, null, 2), 'utf-8');
 
     // Set file to read-only to prevent accidental deletion
     // 0o444 = r--r--r-- (read-only for all users)
-    await chmod(SETUP_FLAG_PATH, 0o444);
+    await chmod(flagPath, 0o444);
 
     logger.info(
       { timestamp: completionData.timestamp },
@@ -101,12 +109,14 @@ export async function getSetupDetails(): Promise<{
   timestamp: string;
   version: string;
 } | null> {
+  const flagPath = getSetupFlagPath();
+
   try {
-    if (!existsSync(SETUP_FLAG_PATH)) {
+    if (!existsSync(flagPath)) {
       return null;
     }
 
-    const content = await readFile(SETUP_FLAG_PATH, 'utf-8');
+    const content = await readFile(flagPath, 'utf-8');
     return JSON.parse(content);
   } catch (error) {
     logger.error({ error }, 'Error reading setup details');
