@@ -158,15 +158,15 @@ jobs:
       - name: Run database migrations
         run: npm run db:migrate
 
-      - name: Build Next.js application
-        run: npm run build
-
       - name: Create setup flag for E2E tests
         run: |
           mkdir -p /tmp/streamline-data
           echo '{"completed":true,"timestamp":"2024-01-01T00:00:00.000Z","version":"1.0"}' > /tmp/streamline-data/.setup-complete
-          echo "Setup flag created:"
+          echo "Setup flag created at $DATA_DIR/.setup-complete:"
           cat /tmp/streamline-data/.setup-complete
+
+      - name: Build Next.js application
+        run: npm run build
 
       - name: Configure standalone environment
         run: |
