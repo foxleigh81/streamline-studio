@@ -64,6 +64,10 @@ export const RATE_LIMITS = {
     limit: isE2ETestMode ? 300 : 3,
     windowMs: 60 * 60 * 1000, // 1 hour
   },
+  passwordChange: {
+    limit: isE2ETestMode ? 500 : 5,
+    windowMs: 60 * 60 * 1000, // 1 hour
+  },
   general: {
     limit: isE2ETestMode ? 10000 : 100,
     windowMs: 60 * 1000, // 1 minute
@@ -315,6 +319,16 @@ export function createRegistrationRateLimitKey(ip: string): string {
  */
 export function createPasswordResetRateLimitKey(email: string): string {
   return `password-reset:${email.toLowerCase()}`;
+}
+
+/**
+ * Creates a rate limit key for password change
+ *
+ * @param userId - User ID
+ * @returns Rate limit key
+ */
+export function createPasswordChangeRateLimitKey(userId: string): string {
+  return `password-change:${userId}`;
 }
 
 /**

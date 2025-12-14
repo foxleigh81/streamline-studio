@@ -5,6 +5,10 @@ import { THEME_INIT_SCRIPT } from '@/lib/theme';
 export const metadata: Metadata = {
   title: 'Streamline Studio',
   description: 'YouTube Content Planner - Plan and manage your video content',
+  icons: {
+    icon: '/streamline-studio-icon.png',
+    apple: '/streamline-studio-icon.png',
+  },
 };
 
 /**
