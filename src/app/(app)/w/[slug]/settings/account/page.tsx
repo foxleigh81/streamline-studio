@@ -5,6 +5,8 @@ import { trpc } from '@/lib/trpc/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
+import { PASSWORD_POLICY } from '@/lib/constants/password';
+import { COMMON_PASSWORDS } from '@/lib/auth/common-passwords';
 import styles from './page.module.scss';
 
 /**
@@ -110,8 +112,24 @@ export default function AccountSettingsPage() {
       return;
     }
 
-    if (newPassword.length < 8) {
-      setPasswordError('New password must be at least 8 characters');
+    if (newPassword.length < PASSWORD_POLICY.minLength) {
+      setPasswordError(
+        `New password must be at least ${PASSWORD_POLICY.minLength} characters`
+      );
+      return;
+    }
+
+    if (newPassword.length > PASSWORD_POLICY.maxLength) {
+      setPasswordError(
+        `New password must be less than ${PASSWORD_POLICY.maxLength} characters`
+      );
+      return;
+    }
+
+    if (COMMON_PASSWORDS.has(newPassword.toLowerCase())) {
+      setPasswordError(
+        'This password is too common. Please choose a different password.'
+      );
       return;
     }
 
@@ -221,7 +239,7 @@ export default function AccountSettingsPage() {
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             placeholder="Enter new password (min 8 characters)"
-            helperText="Minimum 8 characters"
+            helperText={`${PASSWORD_POLICY.minLength}-${PASSWORD_POLICY.maxLength} characters, avoid common passwords`}
             autoComplete="new-password"
           />
 
