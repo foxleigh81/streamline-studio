@@ -1,8 +1,11 @@
 # ADR-008: Multi-Tenancy Strategy
 
-**Status**: Accepted
+**Status**: Superseded by ADR-017
 **Date**: 2025-12-08
+**Superseded By**: ADR-017 (Teamspace Hierarchy Architecture) - 2025-12-15
 **Deciders**: Strategic Project Planner, Lead Developer, QA Architect
+
+> **Note**: This ADR established the foundational multi-tenancy approach with workspace-level scoping and the WorkspaceRepository pattern. ADR-017 extends this with a two-tier hierarchy (Teamspace → Project) to support SaaS billing and team-level permissions while maintaining the same core scoping principles.
 
 ## Context
 

@@ -1,0 +1,2137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workspace Identification Discussion</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .chat-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .discussion-context {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .discussion-context h2 {
+            font-size: 18px;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+
+        .discussion-context ul {
+            margin-left: 20px;
+            color: #6c757d;
+            line-height: 1.6;
+        }
+
+        .messages {
+            padding: 30px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .message {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .avatar.orchestrator { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .avatar.senior-dev { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .avatar.security { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .avatar.tron { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+        .avatar.qa { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333; }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .agent-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: #212529;
+        }
+
+        .agent-role {
+            font-size: 12px;
+            color: #868e96;
+        }
+
+        .timestamp {
+            font-size: 11px;
+            color: #adb5bd;
+            margin-left: auto;
+        }
+
+        .message-text {
+            color: #495057;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .message-text code {
+            background: #f1f3f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            color: #e83e8c;
+        }
+
+        .message-text strong {
+            color: #212529;
+            font-weight: 600;
+        }
+
+        .consensus {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            margin: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .consensus h2 {
+            font-size: 22px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .consensus-content {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .consensus-content h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            margin-top: 15px;
+        }
+
+        .consensus-content h3:first-child {
+            margin-top: 0;
+        }
+
+        .consensus-content ul {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+
+        .consensus-content code {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .options-table {
+            width: 100%;
+            margin: 15px 0;
+            border-collapse: collapse;
+        }
+
+        .options-table th,
+        .options-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .options-table th {
+            font-weight: 600;
+        }
+
+        .recommended {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #4caf50;
+        }
+
+        .recommended strong {
+            color: #a8ff78;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="header">
+            <h1>Workspace Identification Architecture Discussion</h1>
+            <p>Multi-Agent Collaborative Decision Making</p>
+        </div>
+
+        <div class="discussion-context">
+            <h2>Discussion Context</h2>
+            <ul>
+                <li><strong>Current State:</strong> Workspaces use globally unique slugs in URLs (<code>/w/[slug]</code>)</li>
+                <li><strong>User Concern:</strong> Users don't care about unique workspace URLs; workspaces won't be shared publicly</li>
+                <li><strong>Key Requirement:</strong> Granular permission control for inviting users to workspaces</li>
+                <li><strong>Schema:</strong> workspace_users join table with roles (owner, editor, viewer); invitations table for workspace invites</li>
+            </ul>
+        </div>
+
+        <div class="messages">
+            <div class="message">
+                <div class="avatar orchestrator">PO</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Project Orchestrator</span>
+                        <span class="agent-role">Team Coordinator</span>
+                        <span class="timestamp">14:32</span>
+                    </div>
+                    <div class="message-text">
+                        Good afternoon, team. I've assembled you to discuss a proposed architectural change to our workspace identification system. Currently, we use globally unique slugs (<code>/w/my-workspace</code>), but the user has raised a valid point: workspaces won't be shared publicly, and users don't care about memorable URLs. They want robust permission control for team collaboration.<br><br>
+                        I'd like each of you to analyze this from your domain expertise. Let's explore alternatives and reach consensus on the best path forward. Senior Developer, can you start us off with the technical landscape?
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar senior-dev">SD</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Senior Developer</span>
+                        <span class="agent-role">Next.js Architecture</span>
+                        <span class="timestamp">14:34</span>
+                    </div>
+                    <div class="message-text">
+                        Absolutely. Let me outline the options:<br><br>
+                        <strong>Option A: UUID-based URLs</strong> (<code>/w/[id]</code>)<br>
+                        - Simple schema change: drop the unique constraint on slug<br>
+                        - No collision concerns at all<br>
+                        - But URLs become unmemorable: <code>/w/a3f2c891-4b5e-...</code><br><br>
+                        <strong>Option B: User-scoped slugs</strong><br>
+                        - Add <code>ownerId</code> to workspaces table<br>
+                        - Composite unique constraint: <code>(ownerId, slug)</code><br>
+                        - User can have "my-workspace" and another user can too<br>
+                        - URLs stay friendly, but need to resolve by user context<br><br>
+                        <strong>Option C: Non-unique slugs</strong><br>
+                        - Remove uniqueness entirely<br>
+                        - Resolve workspace by checking user membership<br>
+                        - If user belongs to multiple workspaces with same slug, show a picker<br><br>
+                        From a routing perspective, all are viable. Option A is simplest but least user-friendly. Options B and C require more sophisticated resolution logic.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar tron">TR</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">TRON</span>
+                        <span class="agent-role">User Advocate</span>
+                        <span class="timestamp">14:37</span>
+                    </div>
+                    <div class="message-text">
+                        Hold on. I need to challenge an assumption here. The user said they "don't care about unique workspace URLs," but let me think about actual usage patterns:<br><br>
+                        1. <strong>Browser history:</strong> Users will have workspace URLs in their history. "My Videos Workspace" vs "a3f2c891..." - which helps them navigate?<br>
+                        2. <strong>Bookmarks:</strong> Many users bookmark their frequently used workspace. UUIDs are terrible for this.<br>
+                        3. <strong>Team communication:</strong> Even if not "public," team members will share links. "Go to /w/video-team" is clearer than "Go to /w/uuid..."<br><br>
+                        I'm strongly against Option A. It sacrifices usability for a problem we don't actually have. The user's concern isn't about slugs per se - it's about the <em>global uniqueness constraint</em> being unnecessary.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar security">SA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Security Architect</span>
+                        <span class="agent-role">Security & Access Control</span>
+                        <span class="timestamp">14:39</span>
+                    </div>
+                    <div class="message-text">
+                        TRON raises a valid point, but I have security concerns about all slug-based approaches:<br><br>
+                        <strong>Workspace enumeration risk:</strong><br>
+                        If slugs are predictable ("project-alpha", "client-work"), an attacker could enumerate workspaces by trying common names. Our current middleware would reject unauthorized access, but it still leaks information about workspace existence.<br><br>
+                        With UUIDs, enumeration is computationally infeasible.<br><br>
+                        That said, our authentication layer already validates workspace membership before exposing ANY data. The worst-case leak is "a workspace with this slug exists" - not ideal, but not catastrophic for a self-hosted tool.<br><br>
+                        My bigger concern is <strong>Option C</strong> (non-unique slugs). If user A belongs to two workspaces both named "client-work," we'd need disambiguation UI. That's a confusing user flow and potential for accidental data access if we mess up the picker logic.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar qa">QA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">QA Architect</span>
+                        <span class="agent-role">Quality & Testing</span>
+                        <span class="timestamp">14:42</span>
+                    </div>
+                    <div class="message-text">
+                        Security Architect, you're absolutely right about Option C. That disambiguation flow is a testing nightmare. We'd need to test:<br>
+                        - User in 2+ workspaces with same slug<br>
+                        - Picker state management<br>
+                        - Edge cases like invitations to duplicate-named workspaces<br>
+                        - Ensuring the picker doesn't leak workspace data from unauthorized workspaces<br><br>
+                        From a maintainability perspective, <strong>Option B (user-scoped slugs)</strong> strikes the best balance:<br>
+                        - Slugs remain human-readable<br>
+                        - Uniqueness is scoped, so we avoid collisions<br>
+                        - Resolution is deterministic: <code>user + slug = workspace</code><br>
+                        - No complex disambiguation UI<br><br>
+                        The schema change is straightforward: add <code>ownerId</code>, create composite index, update workspace creation logic to set owner.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar senior-dev">SD</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Senior Developer</span>
+                        <span class="agent-role">Next.js Architecture</span>
+                        <span class="timestamp">14:45</span>
+                    </div>
+                    <div class="message-text">
+                        Wait, I see a problem with Option B. What if I'm invited to someone else's workspace? I didn't create it, so <code>ownerId</code> points to them. How do I access it?<br><br>
+                        Example: Alice creates "video-project" (ownerId: alice). She invites Bob. Bob tries to access <code>/w/video-project</code>. Our resolution logic checks <code>ownerId = bob AND slug = 'video-project'</code> - no match.<br><br>
+                        We'd need to:<br>
+                        1. Check if user owns workspace with that slug<br>
+                        2. If not, check workspace_users join table for membership<br>
+                        3. If multiple matches (Bob is in Alice's "video-project" and Charlie's "video-project"), show picker<br><br>
+                        So Option B doesn't fully escape the disambiguation problem - it just makes it less common.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar tron">TR</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">TRON</span>
+                        <span class="agent-role">User Advocate</span>
+                        <span class="timestamp">14:47</span>
+                    </div>
+                    <div class="message-text">
+                        Good catch, Senior Dev. So we're back to: any slug-based approach that allows duplicates needs disambiguation.<br><br>
+                        Let me reframe this. What if we keep <strong>globally unique slugs</strong> but change how they're generated and presented?<br><br>
+                        <strong>Option D: Auto-suffixed slugs</strong><br>
+                        - User creates workspace "My Videos"<br>
+                        - We generate slug "my-videos"<br>
+                        - If collision detected, auto-append random suffix: "my-videos-a3f2"<br>
+                        - User never sees or edits the slug manually<br>
+                        - URLs remain readable: <code>/w/my-videos-a3f2</code><br><br>
+                        This gives us:<br>
+                        - Global uniqueness (no disambiguation needed)<br>
+                        - Human-readable URLs (better than full UUIDs)<br>
+                        - No user-facing collision errors<br>
+                        - Simple resolution: slug directly maps to workspace<br><br>
+                        The trade-off: URLs aren't perfectly clean, but they're still usable in bookmarks/history.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar security">SA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Security Architect</span>
+                        <span class="agent-role">Security & Access Control</span>
+                        <span class="timestamp">14:50</span>
+                    </div>
+                    <div class="message-text">
+                        TRON, I like Option D, but I'd suggest a hybrid:<br><br>
+                        <strong>Option E: Slug + Short UUID</strong><br>
+                        - Format: <code>/w/[slug]-[shortId]</code><br>
+                        - Example: <code>/w/my-videos-k7x9</code><br>
+                        - <code>shortId</code> is first 4-6 chars of workspace UUID<br>
+                        - Stored in DB: <code>slug = "my-videos-k7x9"</code> (globally unique)<br><br>
+                        Benefits:<br>
+                        - Prevents enumeration (short ID adds entropy)<br>
+                        - Human-readable primary part<br>
+                        - Guaranteed uniqueness<br>
+                        - Simple resolution logic<br><br>
+                        We could even make the format <code>[shortId]-[slug]</code> (e.g., <code>k7x9-my-videos</code>) to prioritize uniqueness in the URL path.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar qa">QA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">QA Architect</span>
+                        <span class="agent-role">Quality & Testing</span>
+                        <span class="timestamp">14:52</span>
+                    </div>
+                    <div class="message-text">
+                        I appreciate the creativity, but let's step back. Are we overcomplicating this?<br><br>
+                        The user's feedback was: "Users won't care about unique workspace URLs because workspaces won't be shared publicly."<br><br>
+                        I interpret this as: they don't want users to <em>agonize over choosing a slug</em> like they would for a public profile. But that doesn't mean slugs themselves are bad.<br><br>
+                        Current behavior: User creates workspace, must choose unique slug. If taken, they get error.<br><br>
+                        <strong>What if we just make slug optional and auto-generated?</strong><br>
+                        - User creates workspace "My Videos"<br>
+                        - We auto-generate slug from name: "my-videos"<br>
+                        - If collision, append incremental suffix: "my-videos-2"<br>
+                        - User can customize slug later if they want<br>
+                        - Keep global uniqueness constraint<br><br>
+                        This addresses the user's pain point (no manual slug management) while maintaining simplicity.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar senior-dev">SD</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Senior Developer</span>
+                        <span class="agent-role">Next.js Architecture</span>
+                        <span class="timestamp">14:55</span>
+                    </div>
+                    <div class="message-text">
+                        QA, that's the most pragmatic solution I've heard. Let me outline the implementation:<br><br>
+                        <strong>Schema: No change needed</strong><br>
+                        - Keep <code>slug TEXT NOT NULL UNIQUE</code><br><br>
+                        <strong>Workspace creation flow:</strong><br>
+                        1. User provides workspace name<br>
+                        2. Generate slug: <code>slugify(name)</code><br>
+                        3. Check uniqueness: <code>SELECT COUNT(*) WHERE slug = ?</code><br>
+                        4. If taken, append suffix: <code>slug-2</code>, <code>slug-3</code>, etc.<br>
+                        5. Store workspace<br><br>
+                        <strong>Migration path:</strong><br>
+                        - Existing workspaces: keep their slugs<br>
+                        - New workspaces: auto-generated<br>
+                        - Optional: Add "customize slug" in workspace settings<br><br>
+                        <strong>URL resolution:</strong><br>
+                        - Unchanged: <code>/w/[slug]</code> directly queries workspace by slug<br>
+                        - Middleware validates user membership (already implemented)<br><br>
+                        No complex logic. No disambiguation. No new tables.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar tron">TR</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">TRON</span>
+                        <span class="agent-role">User Advocate</span>
+                        <span class="timestamp">14:57</span>
+                    </div>
+                    <div class="message-text">
+                        I'm on board with this. From a UX perspective:<br><br>
+                        <strong>Current (problematic):</strong><br>
+                        - "Create workspace"<br>
+                        - Name: "My Videos"<br>
+                        - Slug: [empty, required field]<br>
+                        - User types "my-videos"<br>
+                        - Error: "Slug already taken"<br>
+                        - User tries "my-videos-2024", "my-videos-fox", etc.<br><br>
+                        <strong>Proposed (better):</strong><br>
+                        - "Create workspace"<br>
+                        - Name: "My Videos"<br>
+                        - [Slug auto-generated behind the scenes]<br>
+                        - Success<br><br>
+                        If we add slug customization later, we can show it in settings as an advanced option. 95% of users will never touch it.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar security">SA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Security Architect</span>
+                        <span class="agent-role">Security & Access Control</span>
+                        <span class="timestamp">14:59</span>
+                    </div>
+                    <div class="message-text">
+                        I still have the workspace enumeration concern with predictable slugs, but I acknowledge it's a minor risk for this use case. Our middleware already prevents unauthorized access.<br><br>
+                        One mitigation: when generating suffixes for collisions, use random short strings instead of incremental numbers:<br>
+                        - Instead of: <code>my-videos-2</code>, <code>my-videos-3</code><br>
+                        - Use: <code>my-videos-k7x9</code>, <code>my-videos-m3n2</code><br><br>
+                        This adds entropy without sacrificing readability. If someone tries to enumerate "my-videos-1" through "my-videos-100," they'll mostly hit 404s.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar qa">QA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">QA Architect</span>
+                        <span class="agent-role">Quality & Testing</span>
+                        <span class="timestamp">15:01</span>
+                    </div>
+                    <div class="message-text">
+                        Security Architect's suggestion is reasonable. We can use <code>nanoid</code> or similar to generate 4-character alphanumeric suffixes. Low collision probability, adds entropy.<br><br>
+                        <strong>Testing requirements:</strong><br>
+                        1. Auto-generation from workspace name<br>
+                        2. Collision detection and suffix generation<br>
+                        3. Slug uniqueness validation<br>
+                        4. Edge cases: empty names, special characters, very long names<br>
+                        5. Optional: slug customization (if we add it)<br><br>
+                        All straightforward to test. No complex state machines or disambiguation flows.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar orchestrator">PO</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Project Orchestrator</span>
+                        <span class="agent-role">Team Coordinator</span>
+                        <span class="timestamp">15:03</span>
+                    </div>
+                    <div class="message-text">
+                        Excellent discussion, team. Let me summarize where we've landed:<br><br>
+                        <strong>Rejected approaches:</strong><br>
+                        - UUID-only URLs: Poor UX (TRON)<br>
+                        - User-scoped slugs: Doesn't solve disambiguation (Senior Dev)<br>
+                        - Non-unique slugs: Complex disambiguation UI (QA, Security)<br><br>
+                        <strong>Consensus recommendation:</strong><br>
+                        Keep globally unique slugs, but auto-generate them from workspace name with intelligent collision handling (random suffixes for entropy).<br><br>
+                        <strong>Implementation plan:</strong><br>
+                        1. Update workspace creation to auto-generate slugs<br>
+                        2. Use <code>nanoid</code> for collision suffixes (4 chars)<br>
+                        3. Remove manual slug input from create form<br>
+                        4. Optionally add slug customization in settings later<br><br>
+                        <strong>Schema changes:</strong> None. Existing structure works.<br><br>
+                        <strong>Migration:</strong> No data migration needed. Existing workspaces keep slugs.<br><br>
+                        Does everyone agree this addresses the user's concern while maintaining system integrity?
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar senior-dev">SD</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Senior Developer</span>
+                        <span class="agent-role">Next.js Architecture</span>
+                        <span class="timestamp">15:04</span>
+                    </div>
+                    <div class="message-text">
+                        Agreed. Minimal code change, maximum UX improvement.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar security">SA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Security Architect</span>
+                        <span class="agent-role">Security & Access Control</span>
+                        <span class="timestamp">15:04</span>
+                    </div>
+                    <div class="message-text">
+                        Agreed. Random suffixes address my enumeration concern adequately.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar tron">TR</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">TRON</span>
+                        <span class="agent-role">User Advocate</span>
+                        <span class="timestamp">15:04</span>
+                    </div>
+                    <div class="message-text">
+                        Agreed. This directly solves the user's pain point without sacrificing usability.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar qa">QA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">QA Architect</span>
+                        <span class="agent-role">Quality & Testing</span>
+                        <span class="timestamp">15:05</span>
+                    </div>
+                    <div class="message-text">
+                        Agreed. Clean, testable, maintainable.
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEW PROPOSAL: Teamspace Hierarchy -->
+            <div class="message">
+                <div class="avatar orchestrator">PO</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Project Orchestrator</span>
+                        <span class="agent-role">Team Coordinator</span>
+                        <span class="timestamp">15:20</span>
+                    </div>
+                    <div class="message-text">
+                        Team, I need to bring you back. The user has reviewed our consensus and proposed a significantly different approach that changes the architecture more fundamentally.<br><br>
+                        <strong>New Proposal: Teamspace Hierarchy (Notion-style)</strong><br><br>
+                        Instead of workspaces being the top-level entity, introduce a two-tier hierarchy:<br><br>
+                        1. <strong>Teamspace</strong> - New top-level entity with globally unique slug<br>
+                        - A namespace for collaboration (1+ people)<br>
+                        - Globally unique slug enforced (like current workspaces)<br>
+                        - URL: <code>/t/[teamspace-slug]/...</code><br><br>
+                        2. <strong>Project</strong> - Rename "workspace" to "project"<br>
+                        - Sits under a Teamspace<br>
+                        - Only unique within its parent Teamspace (not globally)<br>
+                        - URL: <code>/t/[teamspace-slug]/[project-slug]</code><br><br>
+                        3. <strong>Default Project</strong> - Users can set which project opens on login<br><br>
+                        <strong>Example URLs:</strong><br>
+                        - <code>/t/acme-corp/video-production</code><br>
+                        - <code>/t/acme-corp/podcast-editing</code><br>
+                        - <code>/t/freelance-work/client-videos</code><br><br>
+                        This solves slug collisions elegantly: "video-production" only needs to be unique within "acme-corp", not globally. Different teams can have identically named projects.<br><br>
+                        This is a major architectural shift. I need each of you to analyze this from your domain and raise concerns. Senior Developer, what's your initial reaction?
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar senior-dev">SD</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Senior Developer</span>
+                        <span class="agent-role">Next.js Architecture</span>
+                        <span class="timestamp">15:23</span>
+                    </div>
+                    <div class="message-text">
+                        This is a substantial change. Let me break down what it means architecturally:<br><br>
+                        <strong>Schema Changes Required:</strong><br>
+                        1. New <code>teamspaces</code> table:<br>
+                        - <code>id</code>, <code>name</code>, <code>slug</code> (globally unique)<br>
+                        - <code>createdAt</code>, <code>updatedAt</code><br><br>
+                        2. Modify existing <code>workspaces</code> table (rename to <code>projects</code>):<br>
+                        - Add <code>teamspaceId</code> foreign key<br>
+                        - Change <code>slug</code> constraint from globally unique to composite unique: <code>(teamspaceId, slug)</code><br><br>
+                        3. Update join tables:<br>
+                        - <code>workspace_users</code> → rename to <code>project_users</code><br>
+                        - New <code>teamspace_users</code> table for teamspace-level permissions<br><br>
+                        <strong>Migration Complexity:</strong><br>
+                        - Existing workspaces need to be migrated into teamspaces<br>
+                        - Option A: Each workspace becomes both a teamspace AND a project (1:1 initially)<br>
+                        - Option B: Create a default teamspace per user, migrate their workspaces as projects under it<br><br>
+                        <strong>Routing Changes:</strong><br>
+                        - Current: <code>/app/(app)/w/[slug]/</code><br>
+                        - New: <code>/app/(app)/t/[teamspaceSlug]/[projectSlug]/</code><br>
+                        - Need catch-all or nested dynamic routes<br><br>
+                        This is not a small change. It's a fundamental restructuring of the data model.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar tron">TR</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">TRON</span>
+                        <span class="agent-role">User Advocate</span>
+                        <span class="timestamp">15:26</span>
+                    </div>
+                    <div class="message-text">
+                        I need to play devil's advocate here. Let me ask some hard UX questions:<br><br>
+                        <strong>1. Does this add meaningful value or just complexity?</strong><br>
+                        - For a single user with 3 workspaces (current model): simple, flat structure<br>
+                        - With teamspaces: user must now conceptualize a two-tier hierarchy<br>
+                        - Is the mental model clearer or more confusing?<br><br>
+                        <strong>2. What's the user journey for creating their first project?</strong><br>
+                        - Must they create a teamspace first, THEN a project?<br>
+                        - Or do we auto-create a default teamspace ("My Team") and hide it from solo users?<br>
+                        - If we hide it, why have it at all?<br><br>
+                        <strong>3. Invitation flow gets more complex:</strong><br>
+                        - Do I invite someone to my teamspace (access to all projects) or to a specific project?<br>
+                        - What if I want them to access 2 of my 5 projects? Do I need teamspace-level and project-level permissions?<br>
+                        - That's two permission models to maintain and explain to users.<br><br>
+                        <strong>4. URL length:</strong><br>
+                        - Current: <code>/w/my-videos</code> (short)<br>
+                        - Proposed: <code>/t/foxleigh-studios/my-videos</code> (longer)<br>
+                        - Is the extra segment worth it?<br><br>
+                        I'm not saying this is a bad idea - Notion proves it can work. But we need to justify the added complexity with clear user benefits.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar qa">QA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">QA Architect</span>
+                        <span class="agent-role">Quality & Testing</span>
+                        <span class="timestamp">15:29</span>
+                    </div>
+                    <div class="message-text">
+                        TRON raises critical points. From a testing perspective, this explodes our test surface:<br><br>
+                        <strong>New test scenarios:</strong><br>
+                        - Teamspace creation/deletion<br>
+                        - Project creation within teamspace<br>
+                        - Teamspace-level permissions<br>
+                        - Project-level permissions<br>
+                        - Permission inheritance (does teamspace access grant project access?)<br>
+                        - Invitations: teamspace vs project invitations<br>
+                        - Migration: existing data → new structure<br>
+                        - URL routing: nested dynamic routes<br>
+                        - Edge cases: deleting teamspace with projects, orphaned projects, etc.<br><br>
+                        <strong>Our current implementation has:</strong><br>
+                        - Workspace creation/management<br>
+                        - Workspace-level permissions<br>
+                        - Simple invitation flow<br>
+                        - Flat URL structure<br><br>
+                        We're easily doubling our test requirements. What's the ROI?<br><br>
+                        More importantly: <strong>do we have a clear use case that the current model can't solve?</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar security">SA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Security Architect</span>
+                        <span class="agent-role">Security & Access Control</span>
+                        <span class="timestamp">15:32</span>
+                    </div>
+                    <div class="message-text">
+                        From a security standpoint, I need clarity on the permission model before I can assess this:<br><br>
+                        <strong>Permission Architecture Questions:</strong><br><br>
+                        1. <strong>Teamspace permissions:</strong><br>
+                        - If I'm a member of "acme-corp" teamspace, do I automatically have access to all projects?<br>
+                        - Or are teamspace permissions separate from project permissions?<br><br>
+                        2. <strong>Invitation model:</strong><br>
+                        - Can I invite someone to a teamspace without granting project access?<br>
+                        - Can I invite someone to a project without adding them to the teamspace?<br>
+                        - If the latter, what happens when they navigate to <code>/t/acme-corp</code>? 403?<br><br>
+                        3. <strong>WorkspaceRepository pattern:</strong><br>
+                        - Our current pattern is <code>WorkspaceRepository(db, workspaceId)</code><br>
+                        - Does it become <code>ProjectRepository(db, teamspaceId, projectId)</code>?<br>
+                        - Do we need a separate <code>TeamspaceRepository</code>?<br><br>
+                        4. <strong>Authorization middleware:</strong><br>
+                        - Currently validates user membership in workspace<br>
+                        - Now needs to validate teamspace access AND project access?<br>
+                        - Two-tier authorization increases attack surface<br><br>
+                        <strong>My concern:</strong> We're introducing a hierarchical permission model where a flat model currently works. That's a complexity multiplier for security validation.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar senior-dev">SD</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Senior Developer</span>
+                        <span class="agent-role">Next.js Architecture</span>
+                        <span class="timestamp">15:35</span>
+                    </div>
+                    <div class="message-text">
+                        Let me attempt to clarify the permission model, because I think that's where this proposal needs the most definition:<br><br>
+                        <strong>Option 1: Teamspace as "organization" (Slack-style)</strong><br>
+                        - Teamspace membership = access to teamspace scope<br>
+                        - Project permissions are separate and required for project access<br>
+                        - Teamspace admins can manage all projects, regular members only see projects they're added to<br>
+                        - Invitation flow: invite to teamspace, then grant project access separately<br><br>
+                        <strong>Option 2: Teamspace as "namespace only" (simpler)</strong><br>
+                        - Teamspace has no permissions of its own<br>
+                        - It's purely a URL namespace and grouping mechanism<br>
+                        - All permissions are at project level<br>
+                        - Teamspace slug is just owned by whoever created it<br>
+                        - Invitation flow: invite directly to projects (teamspace is invisible)<br><br>
+                        If we go with Option 2, the question becomes: <strong>why have teamspaces at all?</strong> They're just a naming prefix.<br><br>
+                        If we go with Option 1, we're building a full organization/workspace/project hierarchy. That's a major feature, not a simple refactor.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar tron">TR</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">TRON</span>
+                        <span class="agent-role">User Advocate</span>
+                        <span class="timestamp">15:38</span>
+                    </div>
+                    <div class="message-text">
+                        Senior Dev, that's the key insight. Let me reframe the original user request:<br><br>
+                        <strong>User's stated problem:</strong> "Users won't care about unique workspace URLs because workspaces won't be shared publicly."<br><br>
+                        <strong>Our consensus solution:</strong> Auto-generate slugs to eliminate the manual uniqueness burden.<br><br>
+                        <strong>New proposal:</strong> Add a teamspace layer to create namespaced uniqueness.<br><br>
+                        <strong>But here's the thing:</strong> If teamspaces are just a namespace without permissions/features, they don't solve anything the auto-generated slugs don't already solve. We're trading:<br>
+                        - <code>/w/my-videos-k7x9</code> (flat, one entity)<br>
+                        - for <code>/t/my-team/my-videos</code> (nested, two entities)<br><br>
+                        The second is arguably cleaner URLs, but at the cost of a much more complex data model.<br><br>
+                        <strong>The real question:</strong> Do we need teamspace-level features (organization management, team billing, team-wide settings)? If not, the hierarchy is premature.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar qa">QA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">QA Architect</span>
+                        <span class="agent-role">Quality & Testing</span>
+                        <span class="timestamp">15:40</span>
+                    </div>
+                    <div class="message-text">
+                        I agree with TRON. This feels like premature abstraction. Let me propose a decision framework:<br><br>
+                        <strong>When to introduce hierarchy:</strong><br>
+                        - Clear use cases for organization-level features<br>
+                        - Users managing 10+ workspaces that need grouping<br>
+                        - Team billing or team-wide settings requirements<br>
+                        - Delegation: "team admin" vs "project member" roles<br><br>
+                        <strong>Current state:</strong><br>
+                        - Users create a handful of workspaces<br>
+                        - Each workspace has its own permissions<br>
+                        - No organization-level features on the roadmap<br><br>
+                        <strong>Risk of over-engineering:</strong><br>
+                        - Build complex hierarchy now<br>
+                        - Users mostly have 1 teamspace with 1-3 projects<br>
+                        - Hierarchy adds friction without benefit<br>
+                        - Migration pain if we need to simplify later<br><br>
+                        <strong>YAGNI principle:</strong> You Aren't Gonna Need It. Build what's needed now, not what might be needed later.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar security">SA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Security Architect</span>
+                        <span class="agent-role">Security & Access Control</span>
+                        <span class="timestamp">15:43</span>
+                    </div>
+                    <div class="message-text">
+                        I want to add one more consideration: <strong>migration path if we need this later.</strong><br><br>
+                        If we implement auto-generated slugs now:<br>
+                        - Workspaces have globally unique slugs<br>
+                        - Future migration to teamspaces: create teamspace per user, move workspaces under it<br>
+                        - Not trivial, but feasible<br><br>
+                        If we implement teamspaces now:<br>
+                        - We've committed to a two-tier model<br>
+                        - Can't simplify later without data loss or breaking existing URLs<br>
+                        - Higher irreversibility<br><br>
+                        From a risk management perspective: <strong>start simple, add complexity when justified</strong>. It's easier to add hierarchy later than to remove it.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar senior-dev">SD</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Senior Developer</span>
+                        <span class="agent-role">Next.js Architecture</span>
+                        <span class="timestamp">15:45</span>
+                    </div>
+                    <div class="message-text">
+                        Let me play devil's advocate for the teamspace approach, because I want to make sure we're considering it fairly:<br><br>
+                        <strong>Arguments FOR teamspaces:</strong><br><br>
+                        1. <strong>Clearer mental model for teams:</strong><br>
+                        - "My team is 'acme-corp', within it we have 'video-production' and 'podcast-editing'"<br>
+                        - vs "I have workspaces 'acme-video-k7x9' and 'acme-podcast-m3n2'"<br><br>
+                        2. <strong>URL aesthetics:</strong><br>
+                        - <code>/t/acme-corp/video-production</code> is genuinely cleaner than <code>/w/acme-video-production-k7x9</code><br><br>
+                        3. <strong>Natural permission boundaries:</strong><br>
+                        - "You're part of the acme-corp team" (teamspace access)<br>
+                        - "You work on the video-production project" (project access)<br>
+                        - This mirrors real-world team structures<br><br>
+                        4. <strong>Scalability:</strong><br>
+                        - If the app grows, we'll likely need organization features<br>
+                        - Building them now avoids painful migration later<br><br>
+                        <strong>Counter-arguments:</strong><br>
+                        - Most users will have 1 teamspace (their personal namespace)<br>
+                        - The hierarchy is invisible to them, so it's just extra complexity<br>
+                        - We can add it later if needed (Security Architect's point)<br><br>
+                        I'm genuinely torn. The teamspace model is elegant for multi-team scenarios, but overkill for single users.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar orchestrator">PO</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Project Orchestrator</span>
+                        <span class="agent-role">Team Coordinator</span>
+                        <span class="timestamp">15:48</span>
+                    </div>
+                    <div class="message-text">
+                        This is exactly the kind of rigorous analysis I need. Let me synthesize what I'm hearing:<br><br>
+                        <strong>Team consensus seems to be:</strong><br>
+                        - Teamspaces solve a problem we don't currently have<br>
+                        - They add significant complexity (schema, permissions, testing, migration)<br>
+                        - The UX benefit (cleaner URLs) doesn't justify the engineering cost<br>
+                        - We can add them later if organization-level features become necessary<br><br>
+                        <strong>However,</strong> I need to escalate this to the user because:<br>
+                        1. They specifically proposed this approach - they may have use cases we don't know about<br>
+                        2. They might be planning features (team billing, admin delegation) that would justify the hierarchy<br>
+                        3. The URL structure decision affects future architecture<br><br>
+                        <strong>My recommendation to the user:</strong><br>
+                        - Stick with our consensus (auto-generated slugs) for v1<br>
+                        - If/when organization features are needed, migrate to teamspaces<br>
+                        - Document the migration path now so we're prepared<br><br>
+                        But I want to hear if anyone strongly disagrees or if the user has information that changes the calculus.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar tron">TR</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">TRON</span>
+                        <span class="agent-role">User Advocate</span>
+                        <span class="timestamp">15:50</span>
+                    </div>
+                    <div class="message-text">
+                        Orchestrator, I support your recommendation, but I want to add a UX perspective on the migration path:<br><br>
+                        <strong>If we migrate to teamspaces later:</strong><br>
+                        1. Create a default teamspace for each user (auto-named from their username or "Personal")<br>
+                        2. Migrate their workspaces → projects under that teamspace<br>
+                        3. URL redirect: <code>/w/old-slug</code> → <code>/t/user-teamspace/old-slug</code><br>
+                        4. Provide UI to rename/reorganize teamspaces<br><br>
+                        This is a well-trodden path. Notion, Slack, and others have done this migration successfully.<br><br>
+                        <strong>For solo users:</strong> The teamspace would be largely invisible (default selection), so the UX remains simple.<br><br>
+                        <strong>For team users:</strong> They get the full organizational hierarchy when they need it.<br><br>
+                        This progressive disclosure approach is much better than building complexity upfront that most users won't use.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar qa">QA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">QA Architect</span>
+                        <span class="agent-role">Quality & Testing</span>
+                        <span class="timestamp">15:52</span>
+                    </div>
+                    <div class="message-text">
+                        Agreed with Orchestrator and TRON. One final point:<br><br>
+                        <strong>If the user insists on teamspaces now,</strong> we should ask them to explicitly define:<br>
+                        1. Teamspace-level features (settings, permissions, billing, etc.)<br>
+                        2. Permission model (do teamspace members auto-access all projects?)<br>
+                        3. Invitation flow (teamspace invite vs project invite)<br>
+                        4. Solo user experience (is teamspace hidden or explicit?)<br><br>
+                        Without answers to these, we're building an incomplete abstraction. That's worse than no abstraction.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar security">SA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Security Architect</span>
+                        <span class="agent-role">Security & Access Control</span>
+                        <span class="timestamp">15:53</span>
+                    </div>
+                    <div class="message-text">
+                        Final security note: if we do implement teamspaces eventually, we must:<br>
+                        - Maintain our WorkspaceRepository pattern (just rename to ProjectRepository)<br>
+                        - Add TeamspaceRepository for teamspace-scoped queries<br>
+                        - Ensure middleware validates BOTH teamspace and project access<br>
+                        - Test permission boundaries rigorously (e.g., can't access project in teamspace you're not part of)<br><br>
+                        This is doable, but it doubles our authorization surface. Not a blocker, just something to be aware of.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar senior-dev">SD</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Senior Developer</span>
+                        <span class="agent-role">Next.js Architecture</span>
+                        <span class="timestamp">15:54</span>
+                    </div>
+                    <div class="message-text">
+                        I'm aligned with the team. My vote: proceed with auto-generated slugs (our first consensus). Document the teamspace migration path. Revisit when organization features are on the roadmap.
+                    </div>
+                </div>
+            </div>
+            <div class="message">
+                <div class="avatar orchestrator">PO</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Project Orchestrator</span>
+                        <span class="agent-role">Team Coordinator</span>
+                        <span class="timestamp">16:15</span>
+                    </div>
+                    <div class="message-text">
+                        STOP. The user has responded with critical context that fundamentally changes our analysis. Everyone needs to hear this:<br><br>
+                        <strong>NEW INFORMATION:</strong><br><br>
+                        <strong>1. Dual Deployment Model:</strong><br>
+                        - Single codebase supports BOTH self-hosted (single-tenant) AND multi-tenant SaaS<br>
+                        - Not either/or - this must work for both deployment types<br><br>
+                        <strong>2. SaaS Billing Requirement:</strong><br>
+                        - Under the SaaS model, teamspace-level billing is REQUIRED<br>
+                        - Billing is per teamspace, not per user or per project<br>
+                        - This alone justifies the teamspace entity<br><br>
+                        <strong>3. Slack-Style Permission Model (Clarified):</strong><br>
+                        - Users join teamspaces as members with roles (admin, editor, read-only)<br>
+                        - Users only see projects they're explicitly invited to<br>
+                        - When invited to a project, teamspace role is the DEFAULT permission<br>
+                        - Project owners can OVERRIDE permissions for specific users<br>
+                        - Example: Teamspace editor can be made read-only on a sensitive project<br><br>
+                        <strong>4. NO MIGRATION NEEDED:</strong><br>
+                        - This is a PRE-LAUNCH application<br>
+                        - There are ZERO existing workspaces to migrate<br>
+                        - The migration concern is completely moot<br><br>
+                        Team, we need to reconsider our recommendation immediately. QA, you cited "no clear use case" - SaaS billing is a clear use case. Security Architect, thoughts on the permission model?
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar qa">QA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">QA Architect</span>
+                        <span class="agent-role">Quality & Testing</span>
+                        <span class="timestamp">16:17</span>
+                    </div>
+                    <div class="message-text">
+                        Well, that changes everything. I withdraw my objections about premature abstraction.<br><br>
+                        <strong>SaaS billing at the teamspace level</strong> is a concrete, immediate requirement. You can't bolt that on later - it's a fundamental entity in the system.<br><br>
+                        And the pre-launch status removes my biggest concern: migration complexity. We're building fresh, which means we can design it right from the start instead of retrofitting.<br><br>
+                        My new question: <strong>How does single-tenant mode work?</strong><br>
+                        - Is there a default teamspace created at setup?<br>
+                        - Is the teamspace concept hidden from single-tenant users?<br>
+                        - Or does every deployment (single or multi) use the same teamspace model?<br><br>
+                        If we can answer that cleanly, I'm on board.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar security">SA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Security Architect</span>
+                        <span class="agent-role">Security & Access Control</span>
+                        <span class="timestamp">16:20</span>
+                    </div>
+                    <div class="message-text">
+                        The Slack-style permission model the user described is actually elegant from a security perspective. Let me map it out:<br><br>
+                        <strong>Permission Inheritance with Overrides:</strong><br><br>
+                        1. <strong>Teamspace Membership:</strong><br>
+                        - User joins teamspace with role (admin/editor/viewer)<br>
+                        - Teamspace role does NOT auto-grant project access<br>
+                        - Users only see projects they're invited to (principle of least privilege)<br><br>
+                        2. <strong>Project Invitation:</strong><br>
+                        - User is invited to a specific project<br>
+                        - Default permission = their teamspace role<br>
+                        - Example: Alice is "editor" in teamspace → invited to Project A → starts as "editor" in Project A<br><br>
+                        3. <strong>Project-Level Override:</strong><br>
+                        - Project owner can override permission for specific users<br>
+                        - Example: Make Alice "read-only" on Project B despite being "editor" in teamspace<br>
+                        - Or make Bob "admin" on Project C despite being "viewer" in teamspace<br><br>
+                        <strong>Authorization Logic:</strong><br>
+                        - Check: Is user member of teamspace? (403 if no)<br>
+                        - Check: Is user invited to project? (404 if no - don't leak project existence)<br>
+                        - Resolve: Project-specific permission OR teamspace default<br>
+                        - Apply: Permission-based access control<br><br>
+                        This is actually SIMPLER than two independent permission systems. The teamspace role is just a default - overrides are explicit and stored at project level.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar tron">TR</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">TRON</span>
+                        <span class="agent-role">User Advocate</span>
+                        <span class="timestamp">16:23</span>
+                    </div>
+                    <div class="message-text">
+                        I need to completely reverse my position. The Slack-style model the user described is fantastic UX:<br><br>
+                        <strong>Scenario: Alice runs "Acme Studios" teamspace</strong><br><br>
+                        1. <strong>Invite Bob to teamspace as "editor":</strong><br>
+                        - Bob joins "Acme Studios"<br>
+                        - Bob sees... nothing yet (no projects visible)<br>
+                        - Alice's intent: Bob is generally an editor on our projects<br><br>
+                        2. <strong>Invite Bob to "Video Project A":</strong><br>
+                        - Bob automatically gets "editor" permissions (from teamspace role)<br>
+                        - No need to set permissions again<br>
+                        - Bob can edit Video Project A<br><br>
+                        3. <strong>Invite Bob to "Sensitive Client Project B":</strong><br>
+                        - Alice overrides: make Bob "read-only" on this specific project<br>
+                        - Bob can view but not edit Sensitive Client Project B<br><br>
+                        This is brilliant because:<br>
+                        - Default case (Bob is editor everywhere): zero extra work<br>
+                        - Exception case (Bob is read-only here): explicit override<br>
+                        - Bob doesn't see projects he's not invited to (no clutter, no accidental access)<br><br>
+                        Compare to flat structure:<br>
+                        - Invite Bob to Workspace A → set permissions<br>
+                        - Invite Bob to Workspace B → set permissions again<br>
+                        - Invite Bob to Workspace C → set permissions again<br>
+                        - No concept of "Bob is generally an editor" - must specify every time<br><br>
+                        The teamspace model reduces repetition and makes team management intuitive.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar senior-dev">SD</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Senior Developer</span>
+                        <span class="agent-role">Next.js Architecture</span>
+                        <span class="timestamp">16:26</span>
+                    </div>
+                    <div class="message-text">
+                        Alright, I'm convinced. Let me sketch the revised schema with SaaS billing in mind:<br><br>
+                        <strong>Schema Design:</strong><br><br>
+                        <code>teamspaces</code> table:<br>
+                        - <code>id</code> (UUID, PK)<br>
+                        - <code>name</code> (TEXT NOT NULL)<br>
+                        - <code>slug</code> (TEXT NOT NULL UNIQUE) - globally unique<br>
+                        - <code>billing_plan</code> (TEXT) - for SaaS: free/pro/enterprise<br>
+                        - <code>billing_customer_id</code> (TEXT) - Stripe customer ID<br>
+                        - <code>mode</code> (TEXT) - 'single-tenant' | 'multi-tenant'<br>
+                        - <code>createdAt</code>, <code>updatedAt</code><br><br>
+                        <code>teamspace_users</code> join table:<br>
+                        - <code>teamspaceId</code> (UUID, FK)<br>
+                        - <code>userId</code> (UUID, FK)<br>
+                        - <code>role</code> (TEXT) - 'admin' | 'editor' | 'viewer'<br>
+                        - <code>joinedAt</code><br>
+                        - Composite PK: (teamspaceId, userId)<br><br>
+                        <code>projects</code> table (renamed from workspaces):<br>
+                        - <code>id</code> (UUID, PK)<br>
+                        - <code>teamspaceId</code> (UUID, FK, NOT NULL)<br>
+                        - <code>name</code> (TEXT NOT NULL)<br>
+                        - <code>slug</code> (TEXT NOT NULL)<br>
+                        - <code>createdAt</code>, <code>updatedAt</code><br>
+                        - Composite UNIQUE: (teamspaceId, slug) - unique within teamspace<br><br>
+                        <code>project_users</code> join table:<br>
+                        - <code>projectId</code> (UUID, FK)<br>
+                        - <code>userId</code> (UUID, FK)<br>
+                        - <code>role_override</code> (TEXT, NULLABLE) - 'admin' | 'editor' | 'viewer' | NULL<br>
+                        - <code>invitedAt</code><br>
+                        - Composite PK: (projectId, userId)<br>
+                        - If <code>role_override</code> is NULL, use teamspace_users.role as default<br><br>
+                        <strong>Single-Tenant Mode Handling:</strong><br>
+                        - On setup wizard completion, create a teamspace with <code>mode='single-tenant'</code><br>
+                        - Auto-slug: "main" or user-chosen slug<br>
+                        - UI can optionally hide teamspace layer (always use default)<br>
+                        - Billing fields ignored in single-tenant mode<br><br>
+                        <strong>Multi-Tenant SaaS Mode:</strong><br>
+                        - Users can create multiple teamspaces<br>
+                        - Each teamspace has billing attached<br>
+                        - Full teamspace management UI visible<br><br>
+                        Same codebase, conditional UI based on mode.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar tron">TR</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">TRON</span>
+                        <span class="agent-role">User Advocate</span>
+                        <span class="timestamp">16:29</span>
+                    </div>
+                    <div class="message-text">
+                        Senior Dev, that single-tenant handling is perfect. Let me flesh out the UX:<br><br>
+                        <strong>Single-Tenant Mode (Self-Hosted):</strong><br>
+                        - Setup wizard: "Name your workspace" → becomes teamspace name<br>
+                        - Auto-create teamspace with slug (user doesn't see "teamspace" terminology)<br>
+                        - UI shows: "My Projects" (not "Teamspaces > Projects")<br>
+                        - Create project: URLs are <code>/t/main/my-video-project</code> but user just sees project name<br>
+                        - Invitation: "Invite to project" (teamspace membership is implicit)<br><br>
+                        <strong>Multi-Tenant SaaS Mode:</strong><br>
+                        - Dashboard: "Your Teamspaces" (explicit concept)<br>
+                        - Create teamspace: name + slug<br>
+                        - Billing attached at teamspace level<br>
+                        - UI shows: "Acme Studios > Video Project" (two-tier navigation)<br>
+                        - Invitation: "Invite to teamspace" (with role) + "Invite to project" (uses teamspace role default)<br><br>
+                        Same data model, different presentation layer. Beautiful.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar security">SA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Security Architect</span>
+                        <span class="agent-role">Security & Access Control</span>
+                        <span class="timestamp">16:32</span>
+                    </div>
+                    <div class="message-text">
+                        Let me detail the authorization middleware for this model:<br><br>
+                        <strong>Middleware: <code>/t/[teamspaceSlug]/[projectSlug]</code></strong><br><br>
+                        1. <strong>Resolve Teamspace:</strong><br>
+                        - Query: <code>SELECT id FROM teamspaces WHERE slug = ?</code><br>
+                        - If not found: 404<br><br>
+                        2. <strong>Validate Teamspace Membership:</strong><br>
+                        - Query: <code>SELECT role FROM teamspace_users WHERE teamspaceId = ? AND userId = ?</code><br>
+                        - If not found: 403 Forbidden ("Not a member of this teamspace")<br>
+                        - Store teamspace role in context<br><br>
+                        3. <strong>Resolve Project:</strong><br>
+                        - Query: <code>SELECT id FROM projects WHERE teamspaceId = ? AND slug = ?</code><br>
+                        - If not found: 404 (don't leak project existence to non-members)<br><br>
+                        4. <strong>Validate Project Access:</strong><br>
+                        - Query: <code>SELECT role_override FROM project_users WHERE projectId = ? AND userId = ?</code><br>
+                        - If not found: 403 Forbidden ("Not invited to this project")<br>
+                        - Effective role: <code>role_override ?? teamspace_role</code><br>
+                        - Store effective role in context<br><br>
+                        5. <strong>Attach to Request Context:</strong><br>
+                        - <code>ctx.teamspace = { id, slug }</code><br>
+                        - <code>ctx.project = { id, slug, teamspaceId }</code><br>
+                        - <code>ctx.userRole = effectiveRole</code><br><br>
+                        <strong>Repository Pattern:</strong><br>
+                        - <code>ProjectRepository(db, projectId)</code> - project-scoped queries<br>
+                        - <code>TeamspaceRepository(db, teamspaceId)</code> - teamspace-scoped queries (list projects, billing, etc.)<br><br>
+                        This is clean, secure, and performant (4 queries per request, all indexed).
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar qa">QA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">QA Architect</span>
+                        <span class="agent-role">Quality & Testing</span>
+                        <span class="timestamp">16:35</span>
+                    </div>
+                    <div class="message-text">
+                        Alright, let me outline the testing strategy for this model:<br><br>
+                        <strong>Unit Tests:</strong><br>
+                        - Teamspace creation/deletion<br>
+                        - Project creation within teamspace (slug uniqueness scoped to teamspace)<br>
+                        - Teamspace role assignment (admin/editor/viewer)<br>
+                        - Project role override logic<br>
+                        - Effective role resolution (override ?? teamspace default)<br><br>
+                        <strong>Integration Tests:</strong><br>
+                        - Middleware: teamspace + project access validation<br>
+                        - Permission inheritance scenarios<br>
+                        - Invitation flows (teamspace invite, project invite)<br>
+                        - Billing operations (SaaS mode only)<br><br>
+                        <strong>E2E Tests:</strong><br>
+                        - Single-tenant setup wizard<br>
+                        - Multi-tenant teamspace creation + billing setup<br>
+                        - User invitation flow with role defaults<br>
+                        - Project-specific permission overrides<br>
+                        - Cross-teamspace access (user in multiple teamspaces)<br><br>
+                        <strong>Edge Cases:</strong><br>
+                        - User in teamspace but not invited to any projects (sees empty project list)<br>
+                        - User invited to project BEFORE joining teamspace (invitation pending until teamspace join)<br>
+                        - Deleting teamspace cascades to projects and memberships<br>
+                        - Slug collision within teamspace (should error)<br>
+                        - Slug collision ACROSS teamspaces (should succeed - different namespaces)<br><br>
+                        This is more complex than flat structure, yes, but it's justified complexity with clear benefits.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar senior-dev">SD</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Senior Developer</span>
+                        <span class="agent-role">Next.js Architecture</span>
+                        <span class="timestamp">16:38</span>
+                    </div>
+                    <div class="message-text">
+                        Let me address URL structure and routing implementation:<br><br>
+                        <strong>Route Structure:</strong><br>
+                        - <code>/app/(app)/t/[teamspaceSlug]/[projectSlug]/page.tsx</code> - Project dashboard<br>
+                        - <code>/app/(app)/t/[teamspaceSlug]/[projectSlug]/videos/page.tsx</code> - Video list<br>
+                        - <code>/app/(app)/t/[teamspaceSlug]/[projectSlug]/videos/[videoId]/page.tsx</code> - Video detail<br>
+                        - <code>/app/(app)/t/[teamspaceSlug]/settings/page.tsx</code> - Teamspace settings (SaaS mode)<br><br>
+                        <strong>Migration from Current State:</strong><br>
+                        - Current route: <code>/app/(app)/w/[slug]/...</code><br>
+                        - New route: <code>/app/(app)/t/[teamspaceSlug]/[projectSlug]/...</code><br>
+                        - Since this is pre-launch: DELETE old routes, no backwards compat needed<br><br>
+                        <strong>Default Project Landing:</strong><br>
+                        - User visits <code>/t/acme-corp</code> (no project slug)<br>
+                        - If user has default project set: redirect to <code>/t/acme-corp/default-project</code><br>
+                        - If not: show project picker (list of projects user has access to in this teamspace)<br><br>
+                        <strong>Context Providers:</strong><br>
+                        - <code>TeamspaceProvider</code> - provides teamspace context<br>
+                        - <code>ProjectProvider</code> - provides project context (nested under TeamspaceProvider)<br>
+                        - Components access via hooks: <code>useTeamspace()</code>, <code>useProject()</code>, <code>useUserRole()</code><br><br>
+                        This is cleaner than I initially thought. The nesting is natural.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar tron">TR</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">TRON</span>
+                        <span class="agent-role">User Advocate</span>
+                        <span class="timestamp">16:41</span>
+                    </div>
+                    <div class="message-text">
+                        One more UX consideration: <strong>What entities need teamspace vs project context?</strong><br><br>
+                        <strong>Teamspace-Scoped (Shared Across Projects):</strong><br>
+                        - Users / Team members<br>
+                        - Invitations to teamspace<br>
+                        - Billing / subscription<br>
+                        - Teamspace settings (branding, defaults)<br>
+                        - Audit logs (optional: teamspace-wide activity)<br><br>
+                        <strong>Project-Scoped (Isolated Per Project):</strong><br>
+                        - Videos<br>
+                        - Documents / Scripts<br>
+                        - Project settings<br>
+                        - Project-specific invitations<br>
+                        - Audit logs (project-specific activity)<br><br>
+                        This is important because it determines repository usage:<br>
+                        - <code>TeamspaceRepository</code> for teamspace-scoped queries<br>
+                        - <code>ProjectRepository</code> for project-scoped queries (like current WorkspaceRepository)<br><br>
+                        No global queries (maintain our multi-tenancy pattern).
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar security">SA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Security Architect</span>
+                        <span class="agent-role">Security & Access Control</span>
+                        <span class="timestamp">16:43</span>
+                    </div>
+                    <div class="message-text">
+                        TRON, excellent breakdown. Let me add security considerations for each scope:<br><br>
+                        <strong>Teamspace-Scoped Operations (Require Teamspace Membership):</strong><br>
+                        - View team members: any teamspace member<br>
+                        - Invite to teamspace: teamspace admin only<br>
+                        - Manage billing: teamspace admin only<br>
+                        - Edit teamspace settings: teamspace admin only<br>
+                        - View audit logs: teamspace admin only (or editor if we allow)<br><br>
+                        <strong>Project-Scoped Operations (Require Project Access):</strong><br>
+                        - View project: any project member (viewer+)<br>
+                        - Edit project content: project editor or admin<br>
+                        - Invite to project: project admin only (or teamspace admin)<br>
+                        - Delete project: project admin only (or teamspace admin)<br><br>
+                        <strong>Key Security Principle:</strong><br>
+                        Teamspace admin can do anything within their teamspace (including all projects). This prevents lockout scenarios where a project admin leaves and no one can access the project.<br><br>
+                        <strong>Role Hierarchy:</strong><br>
+                        - Teamspace Admin > Teamspace Editor > Teamspace Viewer<br>
+                        - Project-level overrides can elevate OR restrict<br>
+                        - But teamspace admin always has override power (for safety)<br><br>
+                        This is standard and proven in Slack, GitHub orgs, etc.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar orchestrator">PO</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Project Orchestrator</span>
+                        <span class="agent-role">Team Coordinator</span>
+                        <span class="timestamp">16:46</span>
+                    </div>
+                    <div class="message-text">
+                        Outstanding work, team. The additional context from the user completely changes our calculus. Let me summarize our NEW consensus:<br><br>
+                        <strong>Decision: PROCEED with Teamspace Hierarchy</strong><br><br>
+                        <strong>Justification (Addressing Previous Concerns):</strong><br>
+                        1. <strong>Concrete Use Case:</strong> SaaS billing at teamspace level is an immediate, non-negotiable requirement<br>
+                        2. <strong>No Migration Burden:</strong> Pre-launch app means we're building fresh, no retrofitting needed<br>
+                        3. <strong>Clear Permission Model:</strong> Slack-style with sensible defaults and explicit overrides<br>
+                        4. <strong>Dual Deployment Support:</strong> Single codebase handles both self-hosted and SaaS with mode flag<br><br>
+                        <strong>Architecture Summary:</strong><br>
+                        - Two-tier hierarchy: Teamspace → Projects<br>
+                        - Teamspace: globally unique slug, billing entity (SaaS), user membership with roles<br>
+                        - Projects: unique within teamspace, inherit teamspace role as default, allow overrides<br>
+                        - URL: <code>/t/[teamspace-slug]/[project-slug]</code><br>
+                        - Single-tenant mode: auto-create default teamspace, optionally hide from UI<br>
+                        - Multi-tenant mode: full teamspace management, billing, multiple teamspaces per user<br><br>
+                        <strong>Next Steps (Implementation Plan):</strong><br>
+                        1. Schema definition (detailed by Senior Dev)<br>
+                        2. Migration from workspaces → projects (rename tables, add relationships)<br>
+                        3. Middleware authorization (four-step validation by Security Architect)<br>
+                        4. Repository pattern (TeamspaceRepository + ProjectRepository)<br>
+                        5. Context providers (TeamspaceProvider, ProjectProvider)<br>
+                        6. Route restructuring (<code>/w/[slug]</code> → <code>/t/[teamspace]/[project]</code>)<br>
+                        7. Permission resolution logic (override ?? teamspace default)<br>
+                        8. UI conditional rendering (single-tenant vs multi-tenant mode)<br>
+                        9. Testing strategy (unit, integration, E2E per QA's outline)<br><br>
+                        Does everyone agree this is the right path forward given the new information?
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar senior-dev">SD</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Senior Developer</span>
+                        <span class="agent-role">Next.js Architecture</span>
+                        <span class="timestamp">16:47</span>
+                    </div>
+                    <div class="message-text">
+                        Agreed. SaaS billing requirement justifies the architecture. Pre-launch status removes migration risk. Let's build it right from the start.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar security">SA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Security Architect</span>
+                        <span class="agent-role">Security & Access Control</span>
+                        <span class="timestamp">16:47</span>
+                    </div>
+                    <div class="message-text">
+                        Agreed. The permission model is clean and secure. Teamspace admin override prevents lockout scenarios. I'm satisfied.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar tron">TR</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">TRON</span>
+                        <span class="agent-role">User Advocate</span>
+                        <span class="timestamp">16:48</span>
+                    </div>
+                    <div class="message-text">
+                        Agreed. The Slack-style UX is intuitive and reduces repetitive permission management. Single-tenant mode can hide the complexity. I'm fully on board.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar qa">QA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">QA Architect</span>
+                        <span class="agent-role">Quality & Testing</span>
+                        <span class="timestamp">16:48</span>
+                    </div>
+                    <div class="message-text">
+                        Agreed. The complexity is justified by the SaaS requirement. Testing is more involved, but manageable and clear. Let's do it.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar orchestrator">PO</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Project Orchestrator</span>
+                        <span class="agent-role">Project Coordination</span>
+                        <span class="timestamp">16:52</span>
+                    </div>
+                    <div class="message-text">
+                        Excellent work on the architecture decision. Before we finalize, the user has raised another critical requirement: <strong>data portability between self-hosted and SaaS deployments</strong>.<br><br>
+                        <strong>Scenario:</strong> A user starts with self-hosted single-tenant but later wants to migrate to multi-tenant SaaS (e.g., they need multiple teamspaces or want managed hosting).<br><br>
+                        <strong>Proposed approach:</strong><br>
+                        - Treat each single-tenant installation as one teamspace<br>
+                        - Allow users to export the contents of a teamspace<br>
+                        - Users can create a new teamspace in SaaS and import the exported data<br><br>
+                        <strong>Questions for the team:</strong><br>
+                        1. Would this export/import approach work architecturally?<br>
+                        2. Should we build export/import now, or just design with it in mind and add later?<br>
+                        3. What data needs to be exported? (projects, videos, documents, users, permissions, audit logs?)<br>
+                        4. What format makes sense? (JSON, SQLite dump, custom format?)<br><br>
+                        Let's discuss this thoroughly. Senior Developer, can you start with the technical feasibility?
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar senior-dev">SD</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Senior Developer</span>
+                        <span class="agent-role">Technical Architecture</span>
+                        <span class="timestamp">16:54</span>
+                    </div>
+                    <div class="message-text">
+                        Good timing to discuss this. The teamspace architecture we just designed actually makes this <strong>much easier</strong> than it would have been with a flat workspace model.<br><br>
+                        <strong>Technical feasibility: HIGH</strong><br><br>
+                        Since everything is already scoped to a teamspace, we can export a complete "teamspace bundle" that's self-contained. The repository pattern makes the query logic straightforward.<br><br>
+                        <strong>Recommended export format: Structured JSON</strong><br><br>
+                        <code>
+{<br>
+&nbsp;&nbsp;"version": "1.0",<br>
+&nbsp;&nbsp;"exportedAt": "2025-01-15T16:54:00Z",<br>
+&nbsp;&nbsp;"teamspace": {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"name": "My Company",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"slug": "my-company",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"createdAt": "2025-01-01T00:00:00Z"<br>
+&nbsp;&nbsp;},<br>
+&nbsp;&nbsp;"users": [...],<br>
+&nbsp;&nbsp;"projects": [...],<br>
+&nbsp;&nbsp;"videos": [...],<br>
+&nbsp;&nbsp;"documents": [...],<br>
+&nbsp;&nbsp;"permissions": {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"teamspace_users": [...],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"project_users": [...]<br>
+&nbsp;&nbsp;}<br>
+}
+                        </code><br><br>
+                        <strong>Why JSON?</strong><br>
+                        - Human-readable (users can inspect their data)<br>
+                        - Platform-agnostic (works across different database versions)<br>
+                        - Flexible schema evolution (add fields without breaking old exports)<br>
+                        - Easy to validate with JSON Schema<br>
+                        - Can handle large files with streaming<br><br>
+                        <strong>What to include:</strong><br>
+                        - Teamspace metadata (name, slug, settings)<br>
+                        - All projects with metadata<br>
+                        - All videos with content<br>
+                        - All documents/scripts with content<br>
+                        - User list (email, role) - NOT passwords/sessions<br>
+                        - Permissions (teamspace roles, project overrides)<br>
+                        - Audit logs (optional, can be large)<br><br>
+                        <strong>What to exclude:</strong><br>
+                        - Password hashes (users re-authenticate in new environment)<br>
+                        - Sessions (invalid after migration)<br>
+                        - Billing data (SaaS creates new subscription)<br>
+                        - System-generated IDs (re-generated during import)<br><br>
+                        <strong>Import strategy:</strong><br>
+                        1. Validate JSON schema and version compatibility<br>
+                        2. Check for conflicts (teamspace slug collision, user email conflicts)<br>
+                        3. Create new teamspace with new UUIDs<br>
+                        4. Import projects (re-assign IDs, maintain relationships)<br>
+                        5. Import videos/documents (preserve content, update foreign keys)<br>
+                        6. Map users (invite if they don't exist, or map to existing accounts)<br>
+                        7. Apply permissions<br><br>
+                        <strong>Build now or later?</strong> My vote: <strong>Later, but design for it now.</strong><br><br>
+                        Here's why:<br>
+                        - Export/import is complex and needs proper testing<br>
+                        - We're pre-launch - no existing users need migration yet<br>
+                        - BUT: our schema design is stable, so we can plan the data model<br>
+                        - Document the export format spec now, implement when users need it<br><br>
+                        If we design the schema with export in mind (which we already did with clean hierarchies), we can add this feature in a future sprint without refactoring.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar security">SA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Security Architect</span>
+                        <span class="agent-role">Security & Access Control</span>
+                        <span class="timestamp">16:57</span>
+                    </div>
+                    <div class="message-text">
+                        Critical security considerations here. Export/import is a <strong>high-risk feature</strong> if not done carefully.<br><br>
+                        <strong>Export security concerns:</strong><br><br>
+                        1. <strong>Data sanitization:</strong> Exported data contains ALL teamspace content. Users need to understand this is a complete data dump.<br>
+                        2. <strong>Secrets handling:</strong> NEVER export password hashes, session tokens, API keys, or any credentials.<br>
+                        3. <strong>Access control:</strong> Only teamspace admins can trigger export.<br>
+                        4. <strong>Audit logging:</strong> Log who exported what and when (for compliance).<br>
+                        5. <strong>Download security:</strong> Short-lived signed URLs (expire in 1 hour), HTTPS only.<br><br>
+                        <strong>Import security concerns:</strong><br><br>
+                        1. <strong>User identity mapping:</strong> This is the BIG one. When you import "alice@example.com" into SaaS:<br>
+                        &nbsp;&nbsp;&nbsp;- Does alice@example.com already exist in SaaS?<br>
+                        &nbsp;&nbsp;&nbsp;- If yes: map to existing user (requires their consent!)<br>
+                        &nbsp;&nbsp;&nbsp;- If no: send invitation to join the teamspace<br><br>
+                        2. <strong>Schema validation:</strong> Malicious users could craft fake exports. We MUST:<br>
+                        &nbsp;&nbsp;&nbsp;- Validate JSON schema strictly<br>
+                        &nbsp;&nbsp;&nbsp;- Sanitize all text content (XSS prevention)<br>
+                        &nbsp;&nbsp;&nbsp;- Enforce data limits (max projects, videos, etc.)<br><br>
+                        3. <strong>Conflict resolution:</strong><br>
+                        &nbsp;&nbsp;&nbsp;- Teamspace slug collision: prompt user to rename<br>
+                        &nbsp;&nbsp;&nbsp;- Project slug collision within teamspace: auto-rename or prompt<br><br>
+                        4. <strong>Authorization:</strong> Only teamspace admins can import.<br><br>
+                        <strong>User consent for mapping:</strong><br>
+                        This is critical. If I'm alice@example.com and someone imports a teamspace that includes me, I should get an invitation email saying:<br><br>
+                        <em>"Bob has migrated the 'Acme Corp' teamspace to Streamline Studio SaaS and invited you to join as an Editor. Accept this invitation to access the teamspace."</em><br><br>
+                        I should NOT be automatically added without my knowledge.<br><br>
+                        <strong>Recommendation: Build later, design now.</strong><br><br>
+                        I agree with Senior Dev. This feature needs careful implementation and thorough security testing. However, we should document the security requirements NOW so they're not an afterthought:<br><br>
+                        - Export format spec (what's included/excluded)<br>
+                        - User consent flow for identity mapping<br>
+                        - Validation rules for imports<br>
+                        - Rate limiting (prevent export/import spam)<br><br>
+                        If we document these requirements now, the implementation will be secure from the start.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar tron">TR</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">TRON</span>
+                        <span class="agent-role">User Advocate</span>
+                        <span class="timestamp">17:00</span>
+                    </div>
+                    <div class="message-text">
+                        From a user perspective, export/import is <strong>confidence-building</strong>. It says "your data is yours, you're not locked in."<br><br>
+                        <strong>User experience considerations:</strong><br><br>
+                        1. <strong>Export UX:</strong><br>
+                        &nbsp;&nbsp;&nbsp;- Clear button in teamspace settings: "Export Teamspace Data"<br>
+                        &nbsp;&nbsp;&nbsp;- Warning modal: "This will export ALL data including projects, videos, and user emails. Download will be available for 1 hour."<br>
+                        &nbsp;&nbsp;&nbsp;- Progress indicator for large teamspaces<br>
+                        &nbsp;&nbsp;&nbsp;- Email notification when export is ready<br><br>
+                        2. <strong>Import UX:</strong><br>
+                        &nbsp;&nbsp;&nbsp;- "Import from Self-Hosted" option during teamspace creation<br>
+                        &nbsp;&nbsp;&nbsp;- File upload with drag-and-drop<br>
+                        &nbsp;&nbsp;&nbsp;- Validation preview: "Found 3 projects, 45 videos, 12 users"<br>
+                        &nbsp;&nbsp;&nbsp;- Conflict resolution UI if teamspace slug exists: "The teamspace 'acme-corp' already exists. Choose a different name:"<br>
+                        &nbsp;&nbsp;&nbsp;- Import progress with clear steps: "Creating projects... 2/3"<br><br>
+                        3. <strong>User invitation flow:</strong><br>
+                        After import, show summary:<br>
+                        <em>"Teamspace imported successfully! Invitations sent to 12 users. They'll receive an email to join."</em><br><br>
+                        4. <strong>Transparency:</strong><br>
+                        Users need to know what's happening to their teammates. Show status:<br>
+                        &nbsp;&nbsp;&nbsp;- alice@example.com - Existing user (mapped automatically)<br>
+                        &nbsp;&nbsp;&nbsp;- bob@example.com - Invitation sent<br>
+                        &nbsp;&nbsp;&nbsp;- charlie@example.com - Invitation pending acceptance<br><br>
+                        <strong>Build now or later?</strong> <strong>Later is fine</strong>, but I want to emphasize: <strong>advertise it early.</strong><br><br>
+                        Even if we don't build it for v1, we should mention it in documentation and marketing: "Data portability coming soon." This builds trust with self-hosted users who might worry about lock-in.<br><br>
+                        When we DO build it, the UX should be simple and reassuring. Migrating your entire workspace is stressful - the UI should hold the user's hand through the process.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar qa">QA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">QA Architect</span>
+                        <span class="agent-role">Quality & Testing</span>
+                        <span class="timestamp">17:03</span>
+                    </div>
+                    <div class="message-text">
+                        Export/import is <strong>high-complexity testing</strong>. Let me break down what needs to be validated:<br><br>
+                        <strong>Export testing:</strong><br>
+                        1. <strong>Data completeness:</strong> Verify all entities are included<br>
+                        2. <strong>Data integrity:</strong> Relationships preserved (video → project, document → video)<br>
+                        3. <strong>Data exclusion:</strong> Verify passwords/sessions NOT in export<br>
+                        4. <strong>Large datasets:</strong> Test with 100+ projects, 1000+ videos<br>
+                        5. <strong>Character encoding:</strong> Unicode, emojis, special characters<br>
+                        6. <strong>File size limits:</strong> What happens with 500MB of content?<br><br>
+                        <strong>Import testing:</strong><br>
+                        1. <strong>Schema validation:</strong> Reject malformed JSON, old versions<br>
+                        2. <strong>Conflict scenarios:</strong><br>
+                        &nbsp;&nbsp;&nbsp;- Teamspace slug collision<br>
+                        &nbsp;&nbsp;&nbsp;- User email conflicts<br>
+                        &nbsp;&nbsp;&nbsp;- Project slug collision<br>
+                        3. <strong>Partial import handling:</strong> What if import fails halfway?<br>
+                        4. <strong>Rollback strategy:</strong> Failed import should not leave orphaned data<br>
+                        5. <strong>User mapping:</strong><br>
+                        &nbsp;&nbsp;&nbsp;- Existing users mapped correctly<br>
+                        &nbsp;&nbsp;&nbsp;- New users invited<br>
+                        &nbsp;&nbsp;&nbsp;- Permissions applied correctly<br>
+                        6. <strong>Data integrity post-import:</strong><br>
+                        &nbsp;&nbsp;&nbsp;- All videos accessible<br>
+                        &nbsp;&nbsp;&nbsp;- All documents render correctly<br>
+                        &nbsp;&nbsp;&nbsp;- Permissions enforced<br><br>
+                        <strong>Round-trip testing:</strong><br>
+                        The gold standard: Export from environment A → Import to environment B → Verify everything works identically.<br><br>
+                        <strong>Edge cases:</strong><br>
+                        - Empty teamspace (no projects)<br>
+                        - Teamspace with deleted/archived content<br>
+                        - Very old export format (test compatibility)<br>
+                        - Concurrent imports to same teamspace<br><br>
+                        <strong>My recommendation: Build later, but spec thoroughly now.</strong><br><br>
+                        Here's why:<br>
+                        - Testing this properly requires 2-3 weeks of QA work<br>
+                        - We need E2E tests for both export and import flows<br>
+                        - Rollback/recovery testing is complex<br>
+                        - Better to do this right than rush it<br><br>
+                        <strong>What to do NOW:</strong><br>
+                        1. Document the export JSON schema with versioning<br>
+                        2. Write the specification for import validation rules<br>
+                        3. Design the conflict resolution strategies<br>
+                        4. Plan the test scenarios (even if we don't write tests yet)<br><br>
+                        This way, when we build it, we have a clear quality bar and comprehensive test plan ready to go.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar senior-dev">SD</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Senior Developer</span>
+                        <span class="agent-role">Technical Architecture</span>
+                        <span class="timestamp">17:06</span>
+                    </div>
+                    <div class="message-text">
+                        One more technical consideration: <strong>how does this affect our current schema design?</strong><br><br>
+                        <strong>Good news: Our teamspace architecture is already export-friendly.</strong><br><br>
+                        The clean hierarchy we just designed means everything is naturally scoped:<br>
+                        - Teamspace contains projects<br>
+                        - Projects contain videos<br>
+                        - Videos contain documents<br>
+                        - Permissions are explicit relationships<br><br>
+                        <strong>No schema changes needed for future export/import.</strong><br><br>
+                        However, I recommend we add ONE field to prepare for this:<br><br>
+                        <code>teamspaces.external_id</code> (TEXT, NULLABLE, UNIQUE)<br><br>
+                        This would store the original teamspace ID from the source system. Benefits:<br>
+                        - Helps with debugging migration issues<br>
+                        - Enables re-import/sync scenarios (advanced use case)<br>
+                        - Provides audit trail of where data came from<br><br>
+                        Example: User exports from self-hosted (teamspace ID = <code>uuid-123</code>), imports to SaaS (new ID = <code>uuid-789</code>), we store <code>external_id = "uuid-123"</code>.<br><br>
+                        This is optional but makes life easier later. What do you think?
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar security">SA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Security Architect</span>
+                        <span class="agent-role">Security & Access Control</span>
+                        <span class="timestamp">17:08</span>
+                    </div>
+                    <div class="message-text">
+                        <code>external_id</code> is fine from a security perspective as long as:<br>
+                        1. It's NOT exposed in public URLs (internal reference only)<br>
+                        2. It's NOT used for authorization (always use the new system-generated ID)<br>
+                        3. It's treated as untrusted data (sanitized during import)<br><br>
+                        I support adding it now. It's a cheap addition that enables future flexibility without security risk.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar orchestrator">PO</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Project Orchestrator</span>
+                        <span class="agent-role">Project Coordination</span>
+                        <span class="timestamp">17:10</span>
+                    </div>
+                    <div class="message-text">
+                        Excellent discussion. I'm hearing strong consensus. Let me summarize:<br><br>
+                        <strong>CONSENSUS: Build export/import LATER, design for it NOW.</strong><br><br>
+                        <strong>Immediate actions (include in current work):</strong><br>
+                        1. Add <code>teamspaces.external_id</code> field to schema (future-proofing)<br>
+                        2. Document export format specification (JSON schema with versioning)<br>
+                        3. Document import validation rules and conflict resolution strategies<br>
+                        4. Add to roadmap as post-v1 feature<br><br>
+                        <strong>Future implementation (separate phase):</strong><br>
+                        1. Build export functionality (with security audit logging)<br>
+                        2. Build import functionality (with validation and user consent flow)<br>
+                        3. Comprehensive testing (round-trip, edge cases, rollback)<br>
+                        4. UX polish (progress indicators, conflict resolution UI)<br><br>
+                        <strong>Key design decisions captured:</strong><br>
+                        - <strong>Format:</strong> Structured JSON with schema versioning<br>
+                        - <strong>Scope:</strong> Full teamspace export (projects, videos, documents, users, permissions)<br>
+                        - <strong>Exclusions:</strong> Passwords, sessions, billing data, system IDs<br>
+                        - <strong>Security:</strong> Admin-only, audit logging, user consent for identity mapping<br>
+                        - <strong>Conflicts:</strong> Prompt user for teamspace slug collision, auto-handle or prompt for project conflicts<br><br>
+                        Team, any objections to this approach?
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar senior-dev">SD</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Senior Developer</span>
+                        <span class="agent-role">Technical Architecture</span>
+                        <span class="timestamp">17:11</span>
+                    </div>
+                    <div class="message-text">
+                        No objections. This is the right call. We design with portability in mind, document the spec, and implement when users need it. The <code>external_id</code> field is a good addition.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar security">SA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">Security Architect</span>
+                        <span class="agent-role">Security & Access Control</span>
+                        <span class="timestamp">17:11</span>
+                    </div>
+                    <div class="message-text">
+                        Agreed. Documenting the security requirements now prevents future vulnerabilities. I'll want to review the spec when it's written.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar tron">TR</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">TRON</span>
+                        <span class="agent-role">User Advocate</span>
+                        <span class="timestamp">17:12</span>
+                    </div>
+                    <div class="message-text">
+                        Perfect. And let's add a note to the documentation: "Data portability (export/import) is on our roadmap." Users need to know we're thinking about this.
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="avatar qa">QA</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="agent-name">QA Architect</span>
+                        <span class="agent-role">Quality & Testing</span>
+                        <span class="timestamp">17:12</span>
+                    </div>
+                    <div class="message-text">
+                        Agreed. Documenting the test plan now will save weeks when we build it. I'll prepare the test scenario specifications.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="consensus">
+            <h2>📋 FINAL Consensus Recommendation</h2>
+            <div class="consensus-content">
+                <h3>Decision: IMPLEMENT Teamspace Hierarchy + Design for Data Portability</h3>
+
+                <p><strong>CRITICAL CONTEXT CHANGED THE DECISION:</strong></p>
+                <ul>
+                    <li><strong>SaaS Billing Requirement:</strong> Teamspace-level billing is non-negotiable for SaaS deployment</li>
+                    <li><strong>Pre-Launch Status:</strong> No existing workspaces to migrate - building fresh</li>
+                    <li><strong>Dual Deployment Model:</strong> Single codebase must support both self-hosted and SaaS</li>
+                    <li><strong>Clear Permission Model:</strong> Slack-style with teamspace role defaults and project overrides</li>
+                    <li><strong>Data Portability Required:</strong> Users must be able to migrate from self-hosted to SaaS</li>
+                </ul>
+
+                <h3>Data Portability Strategy</h3>
+
+                <p><strong>Decision: Design for Export/Import NOW, Implement LATER</strong></p>
+
+                <p><strong>Immediate Actions (v1):</strong></p>
+                <ul>
+                    <li>Add <code>teamspaces.external_id</code> field (TEXT, NULLABLE, UNIQUE) for migration tracking</li>
+                    <li>Document export JSON schema specification with versioning</li>
+                    <li>Document import validation rules and conflict resolution strategies</li>
+                    <li>Add "Data portability coming soon" to roadmap and documentation</li>
+                </ul>
+
+                <p><strong>Future Implementation (Post-v1):</strong></p>
+                <ul>
+                    <li>Export functionality with audit logging</li>
+                    <li>Import functionality with validation and user consent flow</li>
+                    <li>Comprehensive testing (round-trip, edge cases, rollback)</li>
+                    <li>UX polish (progress indicators, conflict resolution UI)</li>
+                </ul>
+
+                <p><strong>Export Format: Structured JSON</strong></p>
+                <ul>
+                    <li><strong>Include:</strong> Teamspace metadata, projects, videos, documents, user list (emails only), permissions</li>
+                    <li><strong>Exclude:</strong> Password hashes, sessions, billing data, system-generated IDs</li>
+                    <li><strong>Security:</strong> Admin-only access, short-lived signed URLs, audit logging</li>
+                    <li><strong>User Mapping:</strong> Invitation-based consent flow (no automatic user addition)</li>
+                </ul>
+
+                <p><strong>Rationale:</strong></p>
+                <ul>
+                    <li>Teamspace hierarchy makes export/import straightforward (clean scoping)</li>
+                    <li>Pre-launch status means no immediate need (no existing users to migrate)</li>
+                    <li>Designing now prevents future refactoring</li>
+                    <li>Builds user trust (data ownership, no vendor lock-in)</li>
+                    <li>Proper implementation requires 2-3 weeks QA work - better done right than rushed</li>
+                </ul>
+
+                <h3>Architecture: Two-Tier Hierarchy</h3>
+
+                <p><strong>Teamspace (Top Level):</strong></p>
+                <ul>
+                    <li>Globally unique slug (enforced at DB level)</li>
+                    <li>Billing entity (SaaS mode): plan, customer ID, subscription</li>
+                    <li>User membership with roles: admin, editor, viewer</li>
+                    <li>URL base: <code>/t/[teamspace-slug]</code></li>
+                </ul>
+
+                <p><strong>Project (Under Teamspace):</strong></p>
+                <ul>
+                    <li>Unique slug within parent teamspace (composite unique constraint)</li>
+                    <li>Inherits teamspace role as default permission</li>
+                    <li>Allows project-specific permission overrides</li>
+                    <li>URL: <code>/t/[teamspace-slug]/[project-slug]</code></li>
+                </ul>
+
+                <h3>Schema Changes</h3>
+
+                <p><strong>New <code>teamspaces</code> table:</strong></p>
+                <ul>
+                    <li><code>id</code> (UUID, PK)</li>
+                    <li><code>name</code> (TEXT NOT NULL)</li>
+                    <li><code>slug</code> (TEXT NOT NULL UNIQUE)</li>
+                    <li><code>external_id</code> (TEXT, NULLABLE, UNIQUE) - for migration tracking</li>
+                    <li><code>billing_plan</code> (TEXT) - for SaaS</li>
+                    <li><code>billing_customer_id</code> (TEXT) - Stripe integration</li>
+                    <li><code>mode</code> (TEXT) - 'single-tenant' | 'multi-tenant'</li>
+                    <li><code>createdAt</code>, <code>updatedAt</code></li>
+                </ul>
+
+                <p><strong>New <code>teamspace_users</code> table:</strong></p>
+                <ul>
+                    <li><code>teamspaceId</code> (UUID, FK)</li>
+                    <li><code>userId</code> (UUID, FK)</li>
+                    <li><code>role</code> (TEXT) - 'admin' | 'editor' | 'viewer'</li>
+                    <li><code>joinedAt</code></li>
+                    <li>Composite PK: (teamspaceId, userId)</li>
+                </ul>
+
+                <p><strong>Modify <code>workspaces</code> → <code>projects</code>:</strong></p>
+                <ul>
+                    <li>Add <code>teamspaceId</code> (UUID, FK, NOT NULL)</li>
+                    <li>Change <code>slug</code> constraint: from globally unique to composite unique <code>(teamspaceId, slug)</code></li>
+                </ul>
+
+                <p><strong>Modify <code>workspace_users</code> → <code>project_users</code>:</strong></p>
+                <ul>
+                    <li>Add <code>role_override</code> (TEXT, NULLABLE) - overrides teamspace default if set</li>
+                    <li>Effective role logic: <code>role_override ?? teamspace_users.role</code></li>
+                </ul>
+
+                <h3>Permission Model (Slack-Style)</h3>
+
+                <p><strong>Teamspace Membership:</strong></p>
+                <ul>
+                    <li>User joins teamspace with role (admin/editor/viewer)</li>
+                    <li>Teamspace membership does NOT auto-grant project access</li>
+                    <li>Users only see projects they're explicitly invited to</li>
+                </ul>
+
+                <p><strong>Project Invitation:</strong></p>
+                <ul>
+                    <li>User is invited to specific project within teamspace</li>
+                    <li>Default permission = their teamspace role</li>
+                    <li>Example: Alice is teamspace "editor" → invited to Project A → starts as "editor" in Project A</li>
+                </ul>
+
+                <p><strong>Project-Level Override:</strong></p>
+                <ul>
+                    <li>Project admin can override permission for specific users</li>
+                    <li>Example: Make Alice "read-only" on Project B despite being "editor" in teamspace</li>
+                    <li>Or make Bob "admin" on Project C despite being "viewer" in teamspace</li>
+                </ul>
+
+                <p><strong>Teamspace Admin Override:</strong></p>
+                <ul>
+                    <li>Teamspace admins always have full access to all projects (prevents lockout)</li>
+                    <li>Can invite users to projects, manage settings, delete projects</li>
+                </ul>
+
+                <h3>Authorization Middleware</h3>
+
+                <p><strong>Request: <code>/t/[teamspaceSlug]/[projectSlug]</code></strong></p>
+                <ol>
+                    <li>Resolve teamspace by slug (404 if not found)</li>
+                    <li>Validate user is teamspace member (403 if not)</li>
+                    <li>Resolve project by (teamspaceId, slug) (404 if not found)</li>
+                    <li>Validate user has project access (403 if not invited)</li>
+                    <li>Resolve effective role: <code>project_users.role_override ?? teamspace_users.role</code></li>
+                    <li>Attach to context: <code>ctx.teamspace</code>, <code>ctx.project</code>, <code>ctx.userRole</code></li>
+                </ol>
+
+                <h3>Repository Pattern</h3>
+
+                <ul>
+                    <li><strong>TeamspaceRepository(db, teamspaceId):</strong> Teamspace-scoped queries (projects list, members, billing)</li>
+                    <li><strong>ProjectRepository(db, projectId):</strong> Project-scoped queries (videos, documents, scripts)</li>
+                    <li>Maintains our multi-tenancy isolation pattern</li>
+                </ul>
+
+                <h3>Single-Tenant vs Multi-Tenant Mode</h3>
+
+                <table class="options-table">
+                    <thead>
+                        <tr>
+                            <th>Aspect</th>
+                            <th>Single-Tenant (Self-Hosted)</th>
+                            <th>Multi-Tenant (SaaS)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Teamspace Creation</strong></td>
+                            <td>Auto-created during setup wizard</td>
+                            <td>User creates via dashboard</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Teamspace Visibility</strong></td>
+                            <td>Optional: hide from UI (always use default)</td>
+                            <td>Explicit: "Your Teamspaces" dashboard</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Billing</strong></td>
+                            <td>Ignored (no billing in self-hosted)</td>
+                            <td>Active: Stripe integration, plans, limits</td>
+                        </tr>
+                        <tr>
+                            <td><strong>URL Structure</strong></td>
+                            <td><code>/t/main/my-project</code> (default teamspace)</td>
+                            <td><code>/t/acme-corp/my-project</code> (explicit)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Navigation</strong></td>
+                            <td>"My Projects" (flat feel)</td>
+                            <td>"Acme Corp > Projects" (hierarchical)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>URL Structure</h3>
+
+                <ul>
+                    <li><strong>Teamspace landing:</strong> <code>/t/acme-corp</code> (redirects to default project or shows picker)</li>
+                    <li><strong>Project dashboard:</strong> <code>/t/acme-corp/video-production</code></li>
+                    <li><strong>Videos:</strong> <code>/t/acme-corp/video-production/videos</code></li>
+                    <li><strong>Video detail:</strong> <code>/t/acme-corp/video-production/videos/[id]</code></li>
+                    <li><strong>Teamspace settings:</strong> <code>/t/acme-corp/settings</code> (SaaS mode)</li>
+                </ul>
+
+                <h3>Entity Scoping</h3>
+
+                <p><strong>Teamspace-Scoped:</strong></p>
+                <ul>
+                    <li>Users / Team members</li>
+                    <li>Teamspace invitations</li>
+                    <li>Billing / subscription (SaaS)</li>
+                    <li>Teamspace settings</li>
+                </ul>
+
+                <p><strong>Project-Scoped:</strong></p>
+                <ul>
+                    <li>Videos</li>
+                    <li>Documents / Scripts</li>
+                    <li>Project settings</li>
+                    <li>Project invitations</li>
+                </ul>
+
+                <h3>Implementation Steps</h3>
+
+                <ol>
+                    <li><strong>Database Schema:</strong> Create migrations for new tables, modify existing tables</li>
+                    <li><strong>Repository Pattern:</strong> Implement TeamspaceRepository and ProjectRepository</li>
+                    <li><strong>Middleware:</strong> Update authorization to handle two-tier validation</li>
+                    <li><strong>Routes:</strong> Restructure from <code>/w/[slug]</code> to <code>/t/[teamspace]/[project]</code></li>
+                    <li><strong>Context Providers:</strong> Create TeamspaceProvider and ProjectProvider</li>
+                    <li><strong>Permission Resolution:</strong> Implement override logic and effective role calculation</li>
+                    <li><strong>UI Components:</strong> Conditional rendering for single vs multi-tenant mode</li>
+                    <li><strong>Setup Wizard:</strong> Auto-create default teamspace in single-tenant mode</li>
+                    <li><strong>Billing Integration:</strong> Stripe integration at teamspace level (SaaS mode)</li>
+                    <li><strong>Testing:</strong> Unit, integration, E2E per QA's comprehensive plan</li>
+                </ol>
+
+                <h3>Testing Requirements</h3>
+
+                <p><strong>Unit Tests:</strong></p>
+                <ul>
+                    <li>Teamspace/project creation, slug uniqueness (scoped to teamspace)</li>
+                    <li>Role assignment and override logic</li>
+                    <li>Effective role resolution</li>
+                </ul>
+
+                <p><strong>Integration Tests:</strong></p>
+                <ul>
+                    <li>Middleware authorization (four-step validation)</li>
+                    <li>Permission inheritance scenarios</li>
+                    <li>Invitation flows</li>
+                </ul>
+
+                <p><strong>E2E Tests:</strong></p>
+                <ul>
+                    <li>Single-tenant setup wizard</li>
+                    <li>Multi-tenant teamspace creation</li>
+                    <li>User invitation with role defaults</li>
+                    <li>Project permission overrides</li>
+                    <li>Cross-teamspace access</li>
+                </ul>
+
+                <div class="recommended">
+                    <strong>TEAM CONSENSUS:</strong> Proceed with teamspace hierarchy implementation AND design for data portability. The SaaS billing requirement, pre-launch status, and clear Slack-style permission model all justify the two-tier architecture. The ability to support both single-tenant and multi-tenant from a single codebase is a strategic win. Data portability (export/import) will be implemented post-v1, but we design the schema and document the specification NOW to prevent future refactoring. Add <code>teamspaces.external_id</code> field for migration tracking. Begin implementation with schema definition and migration planning.
+                </div>
+
+                <h3>Key Benefits</h3>
+
+                <ul>
+                    <li><strong>Billing Foundation:</strong> SaaS model has proper billing entity at teamspace level</li>
+                    <li><strong>Clean URLs:</strong> <code>/t/acme-corp/video-production</code> is more readable than <code>/w/acme-video-production-k7x9</code></li>
+                    <li><strong>Intuitive Permissions:</strong> Set role once at teamspace level, applies as default to all projects</li>
+                    <li><strong>Flexible Overrides:</strong> Can make exceptions on sensitive projects</li>
+                    <li><strong>Scalable:</strong> Supports solo users (1 teamspace) to enterprise teams (many teamspaces)</li>
+                    <li><strong>No Migration:</strong> Pre-launch means clean implementation, no data migration headaches</li>
+                    <li><strong>Data Portability:</strong> Architecture designed for future export/import enables user migration from self-hosted to SaaS without vendor lock-in</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

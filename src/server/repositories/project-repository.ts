@@ -1,10 +1,11 @@
 /**
- * Workspace Repository
+ * Project Repository
  *
- * The ONLY interface for accessing workspace-scoped data.
+ * The ONLY interface for accessing project-scoped data.
  * All queries MUST go through this pattern to ensure proper isolation.
  *
  * @see /docs/adrs/008-multi-tenancy-strategy.md
+ * @see /docs/adrs/017-teamspace-hierarchy.md
  */
 
 import { eq, and, desc, asc, gt, inArray, type SQL } from 'drizzle-orm';
@@ -71,37 +72,37 @@ const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
 
 /**
- * WorkspaceRepository - Enforces workspace scoping on ALL queries
+ * ProjectRepository - Enforces project scoping on ALL queries
  *
- * This class is the ONLY way to access workspace-scoped data.
- * Every method automatically includes workspace_id filtering.
+ * This class is the ONLY way to access project-scoped data.
+ * Every method automatically includes project_id filtering.
  *
  * SECURITY: Never bypass this class for direct database queries.
  *
  * @example
  * ```typescript
- * const repo = new WorkspaceRepository(db, workspaceId);
+ * const repo = new ProjectRepository(db, projectId);
  * const videos = await repo.getVideos({ status: 'scripting' });
- * const video = await repo.getVideo(videoId); // Returns null if wrong workspace
+ * const video = await repo.getVideo(videoId); // Returns null if wrong project
  * ```
  */
-export class WorkspaceRepository {
+export class ProjectRepository {
   private readonly db: NodePgDatabase<typeof schema>;
-  private readonly workspaceId: string;
+  private readonly projectId: string;
 
-  constructor(db: NodePgDatabase<typeof schema>, workspaceId: string) {
-    if (!workspaceId) {
-      throw new Error('WorkspaceRepository requires a workspaceId');
+  constructor(db: NodePgDatabase<typeof schema>, projectId: string) {
+    if (!projectId) {
+      throw new Error('ProjectRepository requires a projectId');
     }
     this.db = db;
-    this.workspaceId = workspaceId;
+    this.projectId = projectId;
   }
 
   /**
-   * Get the workspace ID this repository is scoped to
+   * Get the project ID this repository is scoped to
    */
-  getWorkspaceId(): string {
-    return this.workspaceId;
+  getProjectId(): string {
+    return this.projectId;
   }
 
   // ===========================================================================
@@ -113,7 +114,7 @@ export class WorkspaceRepository {
    */
   async getVideos(options?: VideoListOptions): Promise<Video[]> {
     const limit = Math.min(options?.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
-    const conditions: SQL[] = [eq(videos.workspaceId, this.workspaceId)];
+    const conditions: SQL[] = [eq(videos.workspaceId, this.projectId)];
 
     if (options?.status) {
       conditions.push(eq(videos.status, options.status));
@@ -185,20 +186,20 @@ export class WorkspaceRepository {
 
   /**
    * Get a single video by ID
-   * Returns null if video doesn't exist or belongs to a different workspace
+   * Returns null if video doesn't exist or belongs to a different project
    */
   async getVideo(id: string): Promise<Video | null> {
     const result = await this.db
       .select()
       .from(videos)
-      .where(and(eq(videos.id, id), eq(videos.workspaceId, this.workspaceId)))
+      .where(and(eq(videos.id, id), eq(videos.workspaceId, this.projectId)))
       .limit(1);
 
     return result[0] ?? null;
   }
 
   /**
-   * Create a new video in the workspace
+   * Create a new video in the project
    */
   async createVideo(
     data: Omit<NewVideo, 'id' | 'workspaceId' | 'createdAt' | 'updatedAt'>
@@ -207,7 +208,7 @@ export class WorkspaceRepository {
       .insert(videos)
       .values({
         ...data,
-        workspaceId: this.workspaceId,
+        workspaceId: this.projectId,
       })
       .returning();
 
@@ -220,7 +221,7 @@ export class WorkspaceRepository {
 
   /**
    * Update a video by ID
-   * Returns null if video doesn't exist or belongs to a different workspace
+   * Returns null if video doesn't exist or belongs to a different project
    */
   async updateVideo(
     id: string,
@@ -232,7 +233,7 @@ export class WorkspaceRepository {
         ...data,
         updatedAt: new Date(),
       })
-      .where(and(eq(videos.id, id), eq(videos.workspaceId, this.workspaceId)))
+      .where(and(eq(videos.id, id), eq(videos.workspaceId, this.projectId)))
       .returning();
 
     return result[0] ?? null;
@@ -240,12 +241,12 @@ export class WorkspaceRepository {
 
   /**
    * Delete a video by ID
-   * Returns true if deleted, false if not found or wrong workspace
+   * Returns true if deleted, false if not found or wrong project
    */
   async deleteVideo(id: string): Promise<boolean> {
     const result = await this.db
       .delete(videos)
-      .where(and(eq(videos.id, id), eq(videos.workspaceId, this.workspaceId)))
+      .where(and(eq(videos.id, id), eq(videos.workspaceId, this.projectId)))
       .returning({ id: videos.id });
 
     return result.length > 0;
@@ -257,13 +258,13 @@ export class WorkspaceRepository {
 
   /**
    * Get all documents with optional filtering
-   * Note: Documents are scoped via their video's workspace
+   * Note: Documents are scoped via their video's project
    */
   async getDocuments(options?: DocumentListOptions): Promise<Document[]> {
     const limit = Math.min(options?.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
 
     // Build conditions array for WHERE clause
-    const conditions: SQL[] = [eq(videos.workspaceId, this.workspaceId)];
+    const conditions: SQL[] = [eq(videos.workspaceId, this.projectId)];
 
     if (options?.videoId) {
       conditions.push(eq(documents.videoId, options.videoId));
@@ -273,8 +274,8 @@ export class WorkspaceRepository {
       conditions.push(eq(documents.type, options.type));
     }
 
-    // Documents are workspace-scoped through their videos
-    // We need to join with videos to ensure workspace isolation
+    // Documents are project-scoped through their videos
+    // We need to join with videos to ensure project isolation
     return this.db
       .select({
         id: documents.id,
@@ -294,7 +295,7 @@ export class WorkspaceRepository {
 
   /**
    * Get a single document by ID
-   * Returns null if document doesn't exist or belongs to a different workspace's video
+   * Returns null if document doesn't exist or belongs to a different project's video
    */
   async getDocument(id: string): Promise<Document | null> {
     const result = await this.db
@@ -310,9 +311,7 @@ export class WorkspaceRepository {
       })
       .from(documents)
       .innerJoin(videos, eq(documents.videoId, videos.id))
-      .where(
-        and(eq(documents.id, id), eq(videos.workspaceId, this.workspaceId))
-      )
+      .where(and(eq(documents.id, id), eq(videos.workspaceId, this.projectId)))
       .limit(1);
 
     return result[0] ?? null;
@@ -322,7 +321,7 @@ export class WorkspaceRepository {
    * Get documents for a specific video
    */
   async getDocumentsByVideo(videoId: string): Promise<Document[]> {
-    // First verify the video belongs to this workspace
+    // First verify the video belongs to this project
     const video = await this.getVideo(videoId);
     if (!video) {
       return [];
@@ -341,7 +340,7 @@ export class WorkspaceRepository {
     videoId: string,
     type: DocumentType
   ): Promise<Document | null> {
-    // First verify the video belongs to this workspace
+    // First verify the video belongs to this project
     const video = await this.getVideo(videoId);
     if (!video) {
       return null;
@@ -358,12 +357,12 @@ export class WorkspaceRepository {
 
   /**
    * Create a document for a video
-   * Throws if video doesn't exist or belongs to a different workspace
+   * Throws if video doesn't exist or belongs to a different project
    */
   async createDocument(
     data: Omit<NewDocument, 'id' | 'createdAt' | 'updatedAt'>
   ): Promise<Document> {
-    // Verify the video belongs to this workspace
+    // Verify the video belongs to this project
     const video = await this.getVideo(data.videoId);
     if (!video) {
       throw new Error('Video not found or access denied');
@@ -380,13 +379,13 @@ export class WorkspaceRepository {
 
   /**
    * Update a document by ID
-   * Returns null if document doesn't exist or belongs to a different workspace's video
+   * Returns null if document doesn't exist or belongs to a different project's video
    */
   async updateDocument(
     id: string,
     data: Partial<Omit<NewDocument, 'id' | 'videoId' | 'createdAt'>>
   ): Promise<Document | null> {
-    // First verify the document belongs to a video in this workspace
+    // First verify the document belongs to a video in this project
     const existingDoc = await this.getDocument(id);
     if (!existingDoc) {
       return null;
@@ -406,10 +405,10 @@ export class WorkspaceRepository {
 
   /**
    * Delete a document by ID
-   * Returns true if deleted, false if not found or wrong workspace
+   * Returns true if deleted, false if not found or wrong project
    */
   async deleteDocument(id: string): Promise<boolean> {
-    // First verify the document belongs to a video in this workspace
+    // First verify the document belongs to a video in this project
     const existingDoc = await this.getDocument(id);
     if (!existingDoc) {
       return false;
@@ -428,7 +427,7 @@ export class WorkspaceRepository {
   // ===========================================================================
 
   /**
-   * Get all categories in the workspace
+   * Get all categories in the project
    */
   async getCategories(options?: CategoryListOptions): Promise<Category[]> {
     const limit = Math.min(options?.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
@@ -447,21 +446,21 @@ export class WorkspaceRepository {
     return this.db
       .select()
       .from(categories)
-      .where(eq(categories.workspaceId, this.workspaceId))
+      .where(eq(categories.workspaceId, this.projectId))
       .orderBy(orderFn(orderColumn))
       .limit(limit);
   }
 
   /**
    * Get a single category by ID
-   * Returns null if category doesn't exist or belongs to a different workspace
+   * Returns null if category doesn't exist or belongs to a different project
    */
   async getCategory(id: string): Promise<Category | null> {
     const result = await this.db
       .select()
       .from(categories)
       .where(
-        and(eq(categories.id, id), eq(categories.workspaceId, this.workspaceId))
+        and(eq(categories.id, id), eq(categories.workspaceId, this.projectId))
       )
       .limit(1);
 
@@ -469,7 +468,7 @@ export class WorkspaceRepository {
   }
 
   /**
-   * Create a new category in the workspace
+   * Create a new category in the project
    */
   async createCategory(
     data: Omit<NewCategory, 'id' | 'workspaceId' | 'createdAt' | 'updatedAt'>
@@ -478,7 +477,7 @@ export class WorkspaceRepository {
       .insert(categories)
       .values({
         ...data,
-        workspaceId: this.workspaceId,
+        workspaceId: this.projectId,
       })
       .returning();
 
@@ -491,7 +490,7 @@ export class WorkspaceRepository {
 
   /**
    * Update a category by ID
-   * Returns null if category doesn't exist or belongs to a different workspace
+   * Returns null if category doesn't exist or belongs to a different project
    */
   async updateCategory(
     id: string,
@@ -504,7 +503,7 @@ export class WorkspaceRepository {
         updatedAt: new Date(),
       })
       .where(
-        and(eq(categories.id, id), eq(categories.workspaceId, this.workspaceId))
+        and(eq(categories.id, id), eq(categories.workspaceId, this.projectId))
       )
       .returning();
 
@@ -513,13 +512,13 @@ export class WorkspaceRepository {
 
   /**
    * Delete a category by ID
-   * Returns true if deleted, false if not found or wrong workspace
+   * Returns true if deleted, false if not found or wrong project
    */
   async deleteCategory(id: string): Promise<boolean> {
     const result = await this.db
       .delete(categories)
       .where(
-        and(eq(categories.id, id), eq(categories.workspaceId, this.workspaceId))
+        and(eq(categories.id, id), eq(categories.workspaceId, this.projectId))
       )
       .returning({ id: categories.id });
 
@@ -534,7 +533,7 @@ export class WorkspaceRepository {
    * Get categories for a video
    */
   async getVideoCategoryIds(videoId: string): Promise<string[]> {
-    // First verify the video belongs to this workspace
+    // First verify the video belongs to this project
     const video = await this.getVideo(videoId);
     if (!video) {
       return [];
@@ -555,20 +554,20 @@ export class WorkspaceRepository {
     videoId: string,
     categoryIds: string[]
   ): Promise<void> {
-    // Verify the video belongs to this workspace
+    // Verify the video belongs to this project
     const video = await this.getVideo(videoId);
     if (!video) {
       throw new Error('Video not found or access denied');
     }
 
-    // Verify all categories belong to this workspace using a single batch query
+    // Verify all categories belong to this project using a single batch query
     if (categoryIds.length > 0) {
       const existingCategories = await this.db
         .select({ id: categories.id })
         .from(categories)
         .where(
           and(
-            eq(categories.workspaceId, this.workspaceId),
+            eq(categories.workspaceId, this.projectId),
             inArray(categories.id, categoryIds)
           )
         );
@@ -606,13 +605,13 @@ export class WorkspaceRepository {
    * Add a category to a video
    */
   async addVideoCategory(videoId: string, categoryId: string): Promise<void> {
-    // Verify the video belongs to this workspace
+    // Verify the video belongs to this project
     const video = await this.getVideo(videoId);
     if (!video) {
       throw new Error('Video not found or access denied');
     }
 
-    // Verify the category belongs to this workspace
+    // Verify the category belongs to this project
     const category = await this.getCategory(categoryId);
     if (!category) {
       throw new Error('Category not found or access denied');
@@ -631,7 +630,7 @@ export class WorkspaceRepository {
     videoId: string,
     categoryId: string
   ): Promise<void> {
-    // Verify the video belongs to this workspace
+    // Verify the video belongs to this project
     const video = await this.getVideo(videoId);
     if (!video) {
       throw new Error('Video not found or access denied');
@@ -653,7 +652,7 @@ export class WorkspaceRepository {
 
   /**
    * Create an audit log entry
-   * Always scoped to this workspace
+   * Always scoped to this project
    */
   async createAuditLog(
     data: Omit<NewAuditLogEntry, 'id' | 'workspaceId' | 'createdAt'>
@@ -662,7 +661,7 @@ export class WorkspaceRepository {
       .insert(auditLog)
       .values({
         ...data,
-        workspaceId: this.workspaceId,
+        workspaceId: this.projectId,
       })
       .returning();
 
@@ -674,7 +673,7 @@ export class WorkspaceRepository {
   }
 
   /**
-   * Get audit log entries for this workspace
+   * Get audit log entries for this project
    */
   async getAuditLog(options?: PaginationOptions): Promise<AuditLogEntry[]> {
     const limit = Math.min(options?.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
@@ -682,7 +681,7 @@ export class WorkspaceRepository {
     return this.db
       .select()
       .from(auditLog)
-      .where(eq(auditLog.workspaceId, this.workspaceId))
+      .where(eq(auditLog.workspaceId, this.projectId))
       .orderBy(desc(auditLog.createdAt))
       .limit(limit);
   }
@@ -702,7 +701,7 @@ export class WorkspaceRepository {
       .from(auditLog)
       .where(
         and(
-          eq(auditLog.workspaceId, this.workspaceId),
+          eq(auditLog.workspaceId, this.projectId),
           eq(auditLog.entityType, entityType),
           eq(auditLog.entityId, entityId)
         )
@@ -724,7 +723,7 @@ export class WorkspaceRepository {
    * @param expectedVersion - Expected current version
    * @param userId - User making the update
    * @returns Updated document or null if version mismatch
-   * @throws Error if document not found or belongs to different workspace
+   * @throws Error if document not found or belongs to different project
    * @see ADR-009: Versioning and Audit Approach
    */
   async updateDocumentWithRevision(
@@ -733,7 +732,7 @@ export class WorkspaceRepository {
     expectedVersion: number,
     userId: string
   ): Promise<{ document: Document; versionMatch: boolean }> {
-    // First verify the document belongs to a video in this workspace
+    // First verify the document belongs to a video in this project
     const existingDoc = await this.getDocument(id);
     if (!existingDoc) {
       throw new Error('Document not found or access denied');
@@ -803,7 +802,7 @@ export class WorkspaceRepository {
     documentId: string,
     options?: PaginationOptions
   ): Promise<DocumentRevision[]> {
-    // First verify the document belongs to a video in this workspace
+    // First verify the document belongs to a video in this project
     const document = await this.getDocument(documentId);
     if (!document) {
       return [];
@@ -842,7 +841,7 @@ export class WorkspaceRepository {
       .where(
         and(
           eq(documentRevisions.id, revisionId),
-          eq(videos.workspaceId, this.workspaceId)
+          eq(videos.workspaceId, this.projectId)
         )
       )
       .limit(1);
@@ -865,7 +864,7 @@ export class WorkspaceRepository {
     revisionId: string,
     userId: string
   ): Promise<Document> {
-    // Verify the document belongs to this workspace
+    // Verify the document belongs to this project
     const document = await this.getDocument(documentId);
     if (!document) {
       throw new Error('Document not found or access denied');
@@ -925,14 +924,14 @@ export class WorkspaceRepository {
 }
 
 /**
- * Create a WorkspaceRepository instance
+ * Create a ProjectRepository instance
  *
  * @param db - Drizzle database instance
- * @param workspaceId - The workspace ID to scope all queries to
+ * @param projectId - The project ID to scope all queries to
  */
-export function createWorkspaceRepository(
+export function createProjectRepository(
   db: NodePgDatabase<typeof schema>,
-  workspaceId: string
-): WorkspaceRepository {
-  return new WorkspaceRepository(db, workspaceId);
+  projectId: string
+): ProjectRepository {
+  return new ProjectRepository(db, projectId);
 }

@@ -46,8 +46,8 @@ export function CreateWorkspaceModal({
     onSuccess: (data) => {
       // Invalidate workspace list
       utils.workspace.list.invalidate();
-      // Redirect to new workspace
-      router.push(`/w/${data.slug}/videos`);
+      // Redirect to new workspace (using default teamspace during migration)
+      router.push(`/t/default/${data.slug}/videos`);
       // Close modal
       handleClose();
     },

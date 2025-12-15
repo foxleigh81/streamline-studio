@@ -14,7 +14,7 @@ import {
   createTestVideo,
   isDatabaseAvailable,
 } from '@/test/helpers/database';
-import { WorkspaceRepository } from '../workspace-repository';
+import { ProjectRepository } from '../project-repository';
 
 // Check database availability before running tests
 let dbAvailable = false;
@@ -23,11 +23,11 @@ beforeAll(async () => {
   dbAvailable = await isDatabaseAvailable();
 });
 
-describe('WorkspaceRepository - Category Operations', () => {
+describe('ProjectRepository - Category Operations', () => {
   let workspace1Id: string;
   let workspace2Id: string;
-  let repo1: WorkspaceRepository;
-  let repo2: WorkspaceRepository;
+  let repo1: ProjectRepository;
+  let repo2: ProjectRepository;
 
   beforeEach(async (ctx) => {
     if (!dbAvailable) {
@@ -43,8 +43,8 @@ describe('WorkspaceRepository - Category Operations', () => {
     workspace1Id = workspace1.id;
     workspace2Id = workspace2.id;
 
-    repo1 = new WorkspaceRepository(db, workspace1Id);
-    repo2 = new WorkspaceRepository(db, workspace2Id);
+    repo1 = new ProjectRepository(db, workspace1Id);
+    repo2 = new ProjectRepository(db, workspace2Id);
   });
 
   afterEach(async () => {

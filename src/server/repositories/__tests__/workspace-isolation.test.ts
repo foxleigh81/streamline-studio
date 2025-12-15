@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { WorkspaceRepository } from '../workspace-repository';
+import { ProjectRepository } from '../project-repository';
 
 // Mock the database module
 vi.mock('@/server/db', () => ({
@@ -22,41 +22,41 @@ vi.mock('@/server/db', () => ({
   },
 }));
 
-describe('WorkspaceRepository', () => {
+describe('ProjectRepository', () => {
   describe('Constructor validation', () => {
-    it('throws error when workspaceId is empty', () => {
+    it('throws error when projectId is empty', () => {
       const mockDb = {} as never;
       expect(() => {
-        new WorkspaceRepository(mockDb, '');
-      }).toThrow('WorkspaceRepository requires a workspaceId');
+        new ProjectRepository(mockDb, '');
+      }).toThrow('ProjectRepository requires a projectId');
     });
 
-    it('stores workspaceId correctly', () => {
+    it('stores projectId correctly', () => {
       const mockDb = {} as never;
-      const repo = new WorkspaceRepository(mockDb, 'workspace-123');
-      expect(repo.getWorkspaceId()).toBe('workspace-123');
+      const repo = new ProjectRepository(mockDb, 'project-123');
+      expect(repo.getProjectId()).toBe('project-123');
     });
   });
 });
 
 describe('Cross-Tenant Isolation - Unit Tests', () => {
   /**
-   * These unit tests verify the WorkspaceRepository's isolation logic
+   * These unit tests verify the ProjectRepository's isolation logic
    * without requiring a real database connection.
    */
 
-  it('WorkspaceRepository always includes workspaceId in queries', () => {
+  it('ProjectRepository always includes workspaceId in queries', () => {
     // This is a design verification test
-    // The actual isolation is enforced by the WorkspaceRepository class design
+    // The actual isolation is enforced by the ProjectRepository class design
     // where every method includes workspaceId in the WHERE clause
 
     // Verify the class has the expected methods
-    expect(WorkspaceRepository.prototype.getVideos).toBeDefined();
-    expect(WorkspaceRepository.prototype.getVideo).toBeDefined();
-    expect(WorkspaceRepository.prototype.getDocuments).toBeDefined();
-    expect(WorkspaceRepository.prototype.getDocument).toBeDefined();
-    expect(WorkspaceRepository.prototype.getCategories).toBeDefined();
-    expect(WorkspaceRepository.prototype.getCategory).toBeDefined();
+    expect(ProjectRepository.prototype.getVideos).toBeDefined();
+    expect(ProjectRepository.prototype.getVideo).toBeDefined();
+    expect(ProjectRepository.prototype.getDocuments).toBeDefined();
+    expect(ProjectRepository.prototype.getDocument).toBeDefined();
+    expect(ProjectRepository.prototype.getCategories).toBeDefined();
+    expect(ProjectRepository.prototype.getCategory).toBeDefined();
   });
 
   it('repository is scoped to single workspace', () => {
@@ -64,13 +64,13 @@ describe('Cross-Tenant Isolation - Unit Tests', () => {
     const workspaceA = 'workspace-a-id';
     const workspaceB = 'workspace-b-id';
 
-    const repoA = new WorkspaceRepository(mockDb, workspaceA);
-    const repoB = new WorkspaceRepository(mockDb, workspaceB);
+    const repoA = new ProjectRepository(mockDb, workspaceA);
+    const repoB = new ProjectRepository(mockDb, workspaceB);
 
     // Each repository should be scoped to its own workspace
-    expect(repoA.getWorkspaceId()).toBe(workspaceA);
-    expect(repoB.getWorkspaceId()).toBe(workspaceB);
-    expect(repoA.getWorkspaceId()).not.toBe(repoB.getWorkspaceId());
+    expect(repoA.getProjectId()).toBe(workspaceA);
+    expect(repoB.getProjectId()).toBe(workspaceB);
+    expect(repoA.getProjectId()).not.toBe(repoB.getProjectId());
   });
 });
 
@@ -106,7 +106,7 @@ describe.skip('Cross-Tenant Isolation - Integration Tests (requires database)', 
       // 4. Try to access entity from workspaceA using workspaceB's repository
 
       // const entityInA = await createTestEntity(entity, { workspaceId: workspaceA.id });
-      // const repoForB = new WorkspaceRepository(db, workspaceB.id);
+      // const repoForB = new ProjectRepository(db, workspaceB.id);
       // const result = await repoForB[method](entityInA.id);
       // expect(result).toBeNull(); // NOT_FOUND behavior
 
@@ -124,7 +124,7 @@ describe.skip('Cross-Tenant Isolation - Integration Tests (requires database)', 
     //   createTestVideo({ workspaceId: workspaceA.id }),
     //   createTestVideo({ workspaceId: workspaceA.id }),
     // ]);
-    // const repoForB = new WorkspaceRepository(db, workspaceB.id);
+    // const repoForB = new ProjectRepository(db, workspaceB.id);
     // const results = await repoForB.getVideos();
 
     // Results should not contain any videos from workspaceA
@@ -143,7 +143,7 @@ describe.skip('Cross-Tenant Isolation - Integration Tests (requires database)', 
     // 3. Try to update video using workspaceB's repository
 
     // const videoInA = await createTestVideo({ workspaceId: workspaceA.id });
-    // const repoForB = new WorkspaceRepository(db, workspaceB.id);
+    // const repoForB = new ProjectRepository(db, workspaceB.id);
     // const result = await repoForB.updateVideo(videoInA.id, { title: 'Hacked!' });
     // expect(result).toBeNull();
 
@@ -161,7 +161,7 @@ describe.skip('Cross-Tenant Isolation - Integration Tests (requires database)', 
     // 3. Try to delete video using workspaceB's repository
 
     // const videoInA = await createTestVideo({ workspaceId: workspaceA.id });
-    // const repoForB = new WorkspaceRepository(db, workspaceB.id);
+    // const repoForB = new ProjectRepository(db, workspaceB.id);
     // const deleted = await repoForB.deleteVideo(videoInA.id);
     // expect(deleted).toBe(false);
 
@@ -181,7 +181,7 @@ describe.skip('Cross-Tenant Isolation - Integration Tests (requires database)', 
 
     // const videoInA = await createTestVideo({ workspaceId: workspaceA.id });
     // const docInA = await createTestDocument({ videoId: videoInA.id });
-    // const repoForB = new WorkspaceRepository(db, workspaceB.id);
+    // const repoForB = new ProjectRepository(db, workspaceB.id);
     // const result = await repoForB.getDocument(docInA.id);
     // expect(result).toBeNull();
 
@@ -194,9 +194,9 @@ describe.skip('Cross-Tenant Isolation - Integration Tests (requires database)', 
     // 2. Create repository scoped to workspaceB
     // 3. List audit logs using workspaceB's repository
 
-    // const repoForA = new WorkspaceRepository(db, workspaceA.id);
+    // const repoForA = new ProjectRepository(db, workspaceA.id);
     // await repoForA.createAuditLog({ action: 'test', userId: userA.id });
-    // const repoForB = new WorkspaceRepository(db, workspaceB.id);
+    // const repoForB = new ProjectRepository(db, workspaceB.id);
     // const logsInB = await repoForB.getAuditLog();
     // expect(logsInB).toHaveLength(0);
 

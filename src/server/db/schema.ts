@@ -7,6 +7,7 @@ import {
   pgEnum,
   primaryKey,
   index,
+  uniqueIndex,
   date,
   jsonb,
 } from 'drizzle-orm/pg-core';
@@ -46,6 +47,17 @@ export const workspaceRoleEnum = pgEnum('workspace_role', [
 ]);
 
 /**
+ * Teamspace role enum
+ * @see ADR-017: Teamspace Hierarchy Architecture
+ */
+export const teamspaceRoleEnum = pgEnum('teamspace_role', [
+  'owner',
+  'admin',
+  'editor',
+  'viewer',
+]);
+
+/**
  * Video status enum
  * Represents the workflow stages of a video project
  */
@@ -76,15 +88,19 @@ export const documentTypeEnum = pgEnum('document_type', [
 // =============================================================================
 
 /**
- * Workspaces table
- * Represents a workspace (single-tenant or multi-tenant)
- * @see ADR-008: Multi-Tenancy Strategy
+ * Teamspaces table
+ * Represents the top-level organization/team entity
+ * @see ADR-017: Teamspace Hierarchy Architecture
  */
-export const workspaces = pgTable('workspaces', {
+export const teamspaces = pgTable('teamspaces', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(),
+  externalId: text('external_id').unique(),
   mode: workspaceModeEnum('mode').notNull().default('single-tenant'),
+  billingPlan: text('billing_plan'),
+  billingCustomerId: text('billing_customer_id'),
+  billingSubscriptionId: text('billing_subscription_id'),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -92,6 +108,37 @@ export const workspaces = pgTable('workspaces', {
     .notNull()
     .defaultNow(),
 });
+
+/**
+ * Projects table (formerly Workspaces)
+ * Represents a project within a teamspace
+ * @see ADR-008: Multi-Tenancy Strategy
+ * @see ADR-017: Teamspace Hierarchy Architecture
+ */
+export const projects = pgTable(
+  'projects',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    teamspaceId: uuid('teamspace_id').references(() => teamspaces.id, {
+      onDelete: 'cascade',
+    }),
+    name: text('name').notNull(),
+    slug: text('slug').notNull(),
+    mode: workspaceModeEnum('mode').notNull().default('single-tenant'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('projects_teamspace_slug_unique').on(
+      table.teamspaceId,
+      table.slug
+    ),
+  ]
+);
 
 /**
  * Users table
@@ -111,31 +158,56 @@ export const users = pgTable('users', {
 });
 
 /**
- * Workspace Users join table
- * Links users to workspaces with roles
- * @see ADR-008: Multi-Tenancy Strategy
+ * Teamspace Users join table
+ * Links users to teamspaces with roles
+ * @see ADR-017: Teamspace Hierarchy Architecture
  */
-export const workspaceUsers = pgTable(
-  'workspace_users',
+export const teamspaceUsers = pgTable(
+  'teamspace_users',
   {
-    workspaceId: uuid('workspace_id')
+    teamspaceId: uuid('teamspace_id')
       .notNull()
-      .references(() => workspaces.id, { onDelete: 'cascade' }),
+      .references(() => teamspaces.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    role: teamspaceRoleEnum('role').notNull().default('editor'),
+    joinedAt: timestamp('joined_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.teamspaceId, table.userId] })]
+);
+
+/**
+ * Project Users join table
+ * Links users to projects with roles
+ * @see ADR-008: Multi-Tenancy Strategy
+ * @see ADR-017: Teamspace Hierarchy Architecture
+ */
+export const projectUsers = pgTable(
+  'project_users',
+  {
+    projectId: uuid('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     role: workspaceRoleEnum('role').notNull().default('editor'),
+    roleOverride: workspaceRoleEnum('role_override'),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
-  (table) => [primaryKey({ columns: [table.workspaceId, table.userId] })]
+  (table) => [primaryKey({ columns: [table.projectId, table.userId] })]
 );
 
 /**
  * Invitations table
- * Stores pending workspace invitations
+ * Stores pending project invitations
  * @see Phase 5.2: Team Management
+ * @see ADR-017: Teamspace Hierarchy Architecture
  */
 export const invitations = pgTable(
   'invitations',
@@ -143,7 +215,7 @@ export const invitations = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     workspaceId: uuid('workspace_id')
       .notNull()
-      .references(() => workspaces.id, { onDelete: 'cascade' }),
+      .references(() => projects.id, { onDelete: 'cascade' }),
     email: text('email').notNull(),
     role: workspaceRoleEnum('role').notNull().default('editor'),
     token: text('token').notNull().unique(), // 256-bit token as hex (64 chars)
@@ -178,7 +250,8 @@ export const sessions = pgTable('sessions', {
 
 /**
  * Videos table
- * Stores video projects within workspaces
+ * Stores video projects within projects
+ * @see ADR-017: Teamspace Hierarchy Architecture
  */
 export const videos = pgTable(
   'videos',
@@ -186,7 +259,7 @@ export const videos = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     workspaceId: uuid('workspace_id')
       .notNull()
-      .references(() => workspaces.id, { onDelete: 'cascade' }),
+      .references(() => projects.id, { onDelete: 'cascade' }),
     title: text('title').notNull(),
     description: text('description'),
     status: videoStatusEnum('status').notNull().default('idea'),
@@ -211,12 +284,13 @@ export const videos = pgTable(
 /**
  * Categories table
  * Custom categories for organizing videos
+ * @see ADR-017: Teamspace Hierarchy Architecture
  */
 export const categories = pgTable('categories', {
   id: uuid('id').primaryKey().defaultRandom(),
   workspaceId: uuid('workspace_id')
     .notNull()
-    .references(() => workspaces.id, { onDelete: 'cascade' }),
+    .references(() => projects.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   color: text('color').notNull().default('#6B7280'), // Default gray (hex color)
   createdAt: timestamp('created_at', { withTimezone: true })
@@ -302,6 +376,7 @@ export const documentRevisions = pgTable(
  * Tracks important changes for security and debugging
  * Append-only (no updates or deletes)
  * @see ADR-009: Versioning and Audit Approach
+ * @see ADR-017: Teamspace Hierarchy Architecture
  */
 export const auditLog = pgTable(
   'audit_log',
@@ -309,7 +384,7 @@ export const auditLog = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     workspaceId: uuid('workspace_id')
       .notNull()
-      .references(() => workspaces.id, { onDelete: 'cascade' }),
+      .references(() => projects.id, { onDelete: 'cascade' }),
     userId: uuid('user_id').references(() => users.id, {
       onDelete: 'set null',
     }),
@@ -331,8 +406,28 @@ export const auditLog = pgTable(
 // RELATIONS
 // =============================================================================
 
-export const workspacesRelations = relations(workspaces, ({ many }) => ({
-  workspaceUsers: many(workspaceUsers),
+export const teamspacesRelations = relations(teamspaces, ({ many }) => ({
+  teamspaceUsers: many(teamspaceUsers),
+  projects: many(projects),
+}));
+
+export const teamspaceUsersRelations = relations(teamspaceUsers, ({ one }) => ({
+  teamspace: one(teamspaces, {
+    fields: [teamspaceUsers.teamspaceId],
+    references: [teamspaces.id],
+  }),
+  user: one(users, {
+    fields: [teamspaceUsers.userId],
+    references: [users.id],
+  }),
+}));
+
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  teamspace: one(teamspaces, {
+    fields: [projects.teamspaceId],
+    references: [teamspaces.id],
+  }),
+  projectUsers: many(projectUsers),
   videos: many(videos),
   categories: many(categories),
   auditLogs: many(auditLog),
@@ -340,18 +435,19 @@ export const workspacesRelations = relations(workspaces, ({ many }) => ({
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
-  workspaceUsers: many(workspaceUsers),
+  teamspaceUsers: many(teamspaceUsers),
+  projectUsers: many(projectUsers),
   sessions: many(sessions),
   invitationsCreated: many(invitations),
 }));
 
-export const workspaceUsersRelations = relations(workspaceUsers, ({ one }) => ({
-  workspace: one(workspaces, {
-    fields: [workspaceUsers.workspaceId],
-    references: [workspaces.id],
+export const projectUsersRelations = relations(projectUsers, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectUsers.projectId],
+    references: [projects.id],
   }),
   user: one(users, {
-    fields: [workspaceUsers.userId],
+    fields: [projectUsers.userId],
     references: [users.id],
   }),
 }));
@@ -364,9 +460,9 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
 }));
 
 export const videosRelations = relations(videos, ({ one, many }) => ({
-  workspace: one(workspaces, {
+  project: one(projects, {
     fields: [videos.workspaceId],
-    references: [workspaces.id],
+    references: [projects.id],
   }),
   creator: one(users, {
     fields: [videos.createdBy],
@@ -377,9 +473,9 @@ export const videosRelations = relations(videos, ({ one, many }) => ({
 }));
 
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
-  workspace: one(workspaces, {
+  project: one(projects, {
     fields: [categories.workspaceId],
-    references: [workspaces.id],
+    references: [projects.id],
   }),
   videoCategories: many(videoCategories),
 }));
@@ -425,9 +521,9 @@ export const documentRevisionsRelations = relations(
 );
 
 export const invitationsRelations = relations(invitations, ({ one }) => ({
-  workspace: one(workspaces, {
+  project: one(projects, {
     fields: [invitations.workspaceId],
-    references: [workspaces.id],
+    references: [projects.id],
   }),
   creator: one(users, {
     fields: [invitations.createdBy],
@@ -439,14 +535,20 @@ export const invitationsRelations = relations(invitations, ({ one }) => ({
 // TYPE EXPORTS
 // =============================================================================
 
-export type Workspace = typeof workspaces.$inferSelect;
-export type NewWorkspace = typeof workspaces.$inferInsert;
+export type Teamspace = typeof teamspaces.$inferSelect;
+export type NewTeamspace = typeof teamspaces.$inferInsert;
+
+export type TeamspaceUser = typeof teamspaceUsers.$inferSelect;
+export type NewTeamspaceUser = typeof teamspaceUsers.$inferInsert;
+
+export type Project = typeof projects.$inferSelect;
+export type NewProject = typeof projects.$inferInsert;
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 
-export type WorkspaceUser = typeof workspaceUsers.$inferSelect;
-export type NewWorkspaceUser = typeof workspaceUsers.$inferInsert;
+export type ProjectUser = typeof projectUsers.$inferSelect;
+export type NewProjectUser = typeof projectUsers.$inferInsert;
 
 export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
@@ -468,6 +570,8 @@ export type NewAuditLogEntry = typeof auditLog.$inferInsert;
 
 export type WorkspaceMode = (typeof workspaceModeEnum.enumValues)[number];
 export type WorkspaceRole = (typeof workspaceRoleEnum.enumValues)[number];
+export type ProjectRole = WorkspaceRole; // Alias for renamed tables
+export type TeamspaceRole = (typeof teamspaceRoleEnum.enumValues)[number];
 export type VideoStatus = (typeof videoStatusEnum.enumValues)[number];
 export type DocumentType = (typeof documentTypeEnum.enumValues)[number];
 

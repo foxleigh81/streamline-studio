@@ -14,12 +14,7 @@ import { TRPCError } from '@trpc/server';
 // eslint-disable-next-line no-restricted-imports -- Invitation operations require direct queries for public token validation (not workspace-scoped)
 import { eq, and, gt, isNull } from 'drizzle-orm';
 import { router, publicProcedure, ownerProcedure } from '../procedures';
-import {
-  invitations,
-  users,
-  workspaceUsers,
-  auditLog,
-} from '@/server/db/schema';
+import { invitations, users, projectUsers, auditLog } from '@/server/db/schema';
 import {
   generateInvitationToken,
   calculateInvitationExpiry,
@@ -84,11 +79,11 @@ export const invitationRouter = router({
         // Check if user is already a member of this workspace
         const existingMembership = await ctx.db
           .select()
-          .from(workspaceUsers)
+          .from(projectUsers)
           .where(
             and(
-              eq(workspaceUsers.workspaceId, ctx.workspace.id),
-              eq(workspaceUsers.userId, userId)
+              eq(projectUsers.projectId, ctx.workspace.id),
+              eq(projectUsers.userId, userId)
             )
           )
           .limit(1);
@@ -305,9 +300,8 @@ export const invitationRouter = router({
       }
 
       // Get workspace name
-      const workspace = await ctx.db.query.workspaces.findFirst({
-        where: (workspaces, { eq }) =>
-          eq(workspaces.id, invitation.workspaceId),
+      const workspace = await ctx.db.query.projects.findFirst({
+        where: (projects, { eq }) => eq(projects.id, invitation.workspaceId),
         columns: {
           name: true,
           slug: true,
@@ -401,11 +395,11 @@ export const invitationRouter = router({
           // Check if already a member
           const existingMembership = await tx
             .select()
-            .from(workspaceUsers)
+            .from(projectUsers)
             .where(
               and(
-                eq(workspaceUsers.workspaceId, invitation.workspaceId),
-                eq(workspaceUsers.userId, userId)
+                eq(projectUsers.projectId, invitation.workspaceId),
+                eq(projectUsers.userId, userId)
               )
             )
             .limit(1);
@@ -440,8 +434,8 @@ export const invitationRouter = router({
         }
 
         // Add user to workspace
-        await tx.insert(workspaceUsers).values({
-          workspaceId: invitation.workspaceId,
+        await tx.insert(projectUsers).values({
+          projectId: invitation.workspaceId,
           userId,
           role: invitation.role,
         });

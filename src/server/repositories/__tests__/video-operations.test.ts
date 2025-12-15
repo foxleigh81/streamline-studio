@@ -1,7 +1,7 @@
 /**
  * Workspace Repository - Video Operations Tests
  *
- * Tests for video CRUD operations in the WorkspaceRepository.
+ * Tests for video CRUD operations in the ProjectRepository.
  * Verifies workspace isolation, pagination, and filtering.
  *
  * @see /docs/adrs/005-testing-strategy.md
@@ -15,7 +15,7 @@ import {
   createTestWorkspace,
   isDatabaseAvailable,
 } from '@/test/helpers/database';
-import { WorkspaceRepository } from '../workspace-repository';
+import { ProjectRepository } from '../project-repository';
 
 // Check database availability before running tests
 let dbAvailable = false;
@@ -24,11 +24,11 @@ beforeAll(async () => {
   dbAvailable = await isDatabaseAvailable();
 });
 
-describe('WorkspaceRepository - Video Operations', () => {
+describe('ProjectRepository - Video Operations', () => {
   let workspace1Id: string;
   let workspace2Id: string;
-  let repo1: WorkspaceRepository;
-  let repo2: WorkspaceRepository;
+  let repo1: ProjectRepository;
+  let repo2: ProjectRepository;
 
   beforeEach(async (ctx) => {
     if (!dbAvailable) {
@@ -45,8 +45,8 @@ describe('WorkspaceRepository - Video Operations', () => {
     workspace1Id = workspace1.id;
     workspace2Id = workspace2.id;
 
-    repo1 = new WorkspaceRepository(db, workspace1Id);
-    repo2 = new WorkspaceRepository(db, workspace2Id);
+    repo1 = new ProjectRepository(db, workspace1Id);
+    repo2 = new ProjectRepository(db, workspace2Id);
   });
 
   afterEach(async () => {
@@ -192,7 +192,7 @@ describe('WorkspaceRepository - Video Operations', () => {
     it('returns empty array when no videos exist', async () => {
       const emptyWorkspace = await createTestWorkspace({ name: 'Empty' });
       const db = await getTestDatabase();
-      const emptyRepo = new WorkspaceRepository(db, emptyWorkspace.id);
+      const emptyRepo = new ProjectRepository(db, emptyWorkspace.id);
 
       const videos = await emptyRepo.getVideos();
 

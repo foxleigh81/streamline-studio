@@ -117,10 +117,12 @@ export async function resetTestDatabase() {
       video_categories,
       videos,
       categories,
-      workspace_users,
+      project_users,
       sessions,
       users,
-      workspaces
+      projects,
+      teamspace_users,
+      teamspaces
     RESTART IDENTITY CASCADE
   `);
 }
@@ -138,11 +140,12 @@ export async function createTestWorkspace(
   const db = await getTestDatabase();
 
   const [workspace] = await db
-    .insert(schema.workspaces)
+    .insert(schema.projects)
     .values({
       name: options.name ?? 'Test Workspace',
       slug: options.slug ?? `test-${crypto.randomUUID()}`,
       mode: options.mode ?? 'single-tenant',
+      teamspaceId: null, // TODO: Set from teamspace context in Phase 2
     })
     .returning();
 
@@ -204,8 +207,8 @@ export async function createTestUserWithWorkspace(options: {
     name: options.name,
   });
 
-  await db.insert(schema.workspaceUsers).values({
-    workspaceId: workspace.id,
+  await db.insert(schema.projectUsers).values({
+    projectId: workspace.id,
     userId: user.id,
     role: options.role ?? 'owner',
   });

@@ -7,19 +7,26 @@ import { trpc } from '@/lib/trpc/client';
 import styles from './workspace-switcher.module.scss';
 
 /**
- * Workspace Switcher Component
+ * Workspace Switcher Component (Project Switcher)
  *
- * Displays the current workspace and allows switching between workspaces.
- * Shows a dropdown with all available workspaces and a create option (multi-tenant only).
+ * Displays the current project and allows switching between projects.
+ * Shows a dropdown with all available projects and a create option.
+ *
+ * Note: This component is named "WorkspaceSwitcher" for backward compatibility,
+ * but it now switches between projects (formerly called workspaces).
+ *
+ * @see /docs/adrs/017-teamspace-hierarchy.md
  */
 
 export interface WorkspaceSwitcherProps {
-  /** Current workspace slug */
+  /** Current workspace slug (maps to project in new structure) */
   workspaceSlug: string;
   /** Current workspace name */
   workspaceName?: string;
   /** Callback when create workspace is clicked */
   onCreateWorkspace?: () => void;
+  /** Optional teamspace slug (defaults to 'default' during migration) */
+  teamspaceSlug?: string;
 }
 
 /**
@@ -29,6 +36,7 @@ export function WorkspaceSwitcher({
   workspaceSlug,
   workspaceName,
   onCreateWorkspace,
+  teamspaceSlug = 'default',
 }: WorkspaceSwitcherProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number>(-1);
@@ -143,7 +151,7 @@ export function WorkspaceSwitcher({
   const handleWorkspaceSelect = (slug: string) => {
     setIsOpen(false);
     if (slug !== workspaceSlug) {
-      router.push(`/w/${slug}/videos`);
+      router.push(`/t/${teamspaceSlug}/${slug}/videos`);
     }
   };
 
@@ -158,7 +166,7 @@ export function WorkspaceSwitcher({
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-haspopup="true"
-        aria-label="Switch workspace"
+        aria-label="Switch project"
       >
         <span className={styles.workspaceName}>{displayName}</span>
         <span
@@ -178,11 +186,11 @@ export function WorkspaceSwitcher({
           }
         >
           {isLoading ? (
-            <div className={styles.loading}>Loading workspaces...</div>
+            <div className={styles.loading}>Loading projects...</div>
           ) : (
             <>
               <div className={styles.dropdownSection}>
-                <div className={styles.dropdownLabel}>Your Workspaces</div>
+                <div className={styles.dropdownLabel}>Your Projects</div>
                 {workspaces.map((workspace, index) => (
                   <button
                     key={workspace.id}
@@ -221,7 +229,7 @@ export function WorkspaceSwitcher({
                   role="menuitem"
                   tabIndex={-1}
                 >
-                  View All Workspaces
+                  View All Projects
                 </Link>
 
                 {onCreateWorkspace && (
@@ -239,7 +247,7 @@ export function WorkspaceSwitcher({
                     role="menuitem"
                     tabIndex={-1}
                   >
-                    + Create New Workspace
+                    + Create New Project
                   </button>
                 )}
               </div>

@@ -11,7 +11,7 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { router, publicProcedure } from '../procedures';
-import { users, workspaces, workspaceUsers } from '@/server/db/schema';
+import { users, projects, projectUsers } from '@/server/db/schema';
 import { validatePassword, hashPassword } from '@/lib/auth/password';
 import {
   generateSessionToken,
@@ -51,10 +51,10 @@ const setupInputSchema = z.object({
     .min(1, 'Name is required')
     .max(100, 'Name too long')
     .optional(),
-  workspaceName: z
+  projectName: z
     .string()
-    .min(1, 'Workspace name is required')
-    .max(100, 'Workspace name too long')
+    .min(1, 'Project name is required')
+    .max(100, 'Project name too long')
     .optional(),
 });
 
@@ -95,7 +95,7 @@ export const setupRouter = router({
   complete: publicProcedure
     .input(setupInputSchema)
     .mutation(async ({ ctx, input }): Promise<SetupResponse> => {
-      const { email, password, name, workspaceName } = input;
+      const { email, password, name, projectName } = input;
 
       // Check if setup is already complete
       const setupComplete = await isSetupComplete();
@@ -140,8 +140,8 @@ export const setupRouter = router({
       // Hash password
       const passwordHash = await hashPassword(password);
 
-      // Use transaction to create user and workspace atomically
-      const { newUser, newWorkspace } = await ctx.db.transaction(async (tx) => {
+      // Use transaction to create user and project atomically
+      const { newUser, newProject } = await ctx.db.transaction(async (tx) => {
         // Create user
         const userResult = await tx
           .insert(users)
@@ -160,32 +160,33 @@ export const setupRouter = router({
           });
         }
 
-        // Create workspace
-        const workspaceResult = await tx
-          .insert(workspaces)
+        // Create project
+        const projectResult = await tx
+          .insert(projects)
           .values({
-            name: workspaceName ?? 'My Workspace',
+            name: projectName ?? 'My Project',
             slug: 'default',
             mode: 'single-tenant',
+            teamspaceId: null, // Single-tenant mode doesn't require a teamspace
           })
           .returning();
 
-        const workspace = workspaceResult[0];
-        if (!workspace) {
+        const project = projectResult[0];
+        if (!project) {
           throw new TRPCError({
             code: 'INTERNAL_SERVER_ERROR',
-            message: 'Failed to create workspace',
+            message: 'Failed to create project',
           });
         }
 
-        // Link user to workspace as owner
-        await tx.insert(workspaceUsers).values({
-          workspaceId: workspace.id,
+        // Link user to project as owner
+        await tx.insert(projectUsers).values({
+          projectId: project.id,
           userId: user.id,
           role: 'owner',
         });
 
-        return { newUser: user, newWorkspace: workspace };
+        return { newUser: user, newProject: project };
       });
 
       // Mark setup as complete (persists to file)
@@ -211,7 +212,7 @@ export const setupRouter = router({
 
       console.warn('[Setup] Initial setup completed successfully', {
         userId: newUser.id,
-        workspaceId: newWorkspace.id,
+        projectId: newProject.id,
       });
 
       return {

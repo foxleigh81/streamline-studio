@@ -1,8 +1,11 @@
 # ADR-007: API Style and Authentication
 
-**Status**: Accepted
+**Status**: Accepted (Extended by ADR-017)
 **Date**: 2025-12-08
+**Extended By**: ADR-017 (Teamspace Hierarchy Architecture) - 2025-12-15
 **Deciders**: Strategic Project Planner, Lead Developer, QA Architect
+
+> **Note**: ADR-017 extends this ADR with a two-tier permission model (teamspace roles with project-level overrides) while maintaining the core tRPC and Lucia Auth decisions.
 
 ## Context
 

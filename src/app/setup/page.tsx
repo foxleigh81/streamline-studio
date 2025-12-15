@@ -1,17 +1,43 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { trpc } from '@/lib/trpc/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import styles from './setup.module.scss';
 
 /**
+ * Project name suggestions for auto-generation
+ */
+const PROJECT_NAME_SUGGESTIONS = [
+  'My YouTube Channel',
+  'Content Studio',
+  'Video Projects',
+  'Creative Hub',
+  'Production HQ',
+  'Media Workshop',
+  'Script Central',
+  'Creator Space',
+  'Video Vault',
+  'Content Lab',
+];
+
+/**
+ * Generate a random project name
+ */
+function generateProjectName(): string {
+  const index = Math.floor(Math.random() * PROJECT_NAME_SUGGESTIONS.length);
+  return PROJECT_NAME_SUGGESTIONS[index] ?? 'My Project';
+}
+
+/**
  * Initial Setup Wizard Page
  *
- * First-run setup wizard for creating the initial admin user and workspace.
- * This page is locked after the first user is created.
+ * Multi-step setup wizard for creating the initial admin user and project.
+ * Step 1: Create admin account
+ * Step 2: Set up first project
  *
  * Security Requirements (ADR-014):
  * - Must check setup completion status on mount
@@ -24,12 +50,23 @@ import styles from './setup.module.scss';
  */
 export default function SetupPage() {
   const router = useRouter();
+  const [currentStep, setCurrentStep] = useState(1);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Form state persisted across steps
+  const [accountData, setAccountData] = useState({
+    email: '',
+    name: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [projectName, setProjectName] = useState('');
+
   const [fieldErrors, setFieldErrors] = useState<{
     email?: string;
     password?: string;
     name?: string;
-    workspaceName?: string;
+    projectName?: string;
   }>({});
 
   // Check if setup is already complete
@@ -47,7 +84,6 @@ export default function SetupPage() {
 
   const setupMutation = trpc.setup.complete.useMutation({
     onSuccess: () => {
-      // Redirect to dashboard on successful setup
       router.push('/');
       router.refresh();
     },
@@ -56,48 +92,58 @@ export default function SetupPage() {
     },
   });
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleGenerateProjectName = useCallback(() => {
+    setProjectName(generateProjectName());
+  }, []);
+
+  const validateStep1 = (): boolean => {
+    const errors: typeof fieldErrors = {};
+
+    if (!accountData.email) {
+      errors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(accountData.email)) {
+      errors.email = 'Invalid email address';
+    }
+
+    if (!accountData.password) {
+      errors.password = 'Password is required';
+    } else if (accountData.password.length < 8) {
+      errors.password = 'Password must be at least 8 characters';
+    }
+
+    if (accountData.password !== accountData.confirmPassword) {
+      errors.password = 'Passwords do not match';
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleStep1Submit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setFormError(null);
+
+    if (validateStep1()) {
+      setCurrentStep(2);
+    }
+  };
+
+  const handleStep2Submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFormError(null);
     setFieldErrors({});
 
-    const formData = new FormData(event.currentTarget);
-    const email = (formData.get('email') ?? '') as string;
-    const password = (formData.get('password') ?? '') as string;
-    const confirmPassword = (formData.get('confirmPassword') ?? '') as string;
-    const name = (formData.get('name') ?? '') as string;
-    const workspaceName = (formData.get('workspaceName') ?? '') as string;
-
-    // Client-side validation
-    const errors: typeof fieldErrors = {};
-
-    if (!email) {
-      errors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errors.email = 'Invalid email address';
-    }
-
-    if (!password) {
-      errors.password = 'Password is required';
-    } else if (password.length < 8) {
-      errors.password = 'Password must be at least 8 characters';
-    }
-
-    if (password !== confirmPassword) {
-      errors.password = 'Passwords do not match';
-    }
-
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
-      return;
-    }
-
     setupMutation.mutate({
-      email,
-      password,
-      name: name || undefined,
-      workspaceName: workspaceName || undefined,
+      email: accountData.email,
+      password: accountData.password,
+      name: accountData.name || undefined,
+      projectName: projectName || undefined,
     });
+  };
+
+  const handleBack = () => {
+    setCurrentStep(1);
+    setFormError(null);
   };
 
   // Show loading state while checking setup status
@@ -105,7 +151,10 @@ export default function SetupPage() {
     return (
       <div className={styles.container}>
         <div className={styles.card}>
-          <div className={styles.loading}>Checking setup status...</div>
+          <div className={styles.loading}>
+            <div className={styles.spinner} aria-hidden="true" />
+            <span>Checking setup status...</span>
+          </div>
         </div>
       </div>
     );
@@ -120,10 +169,43 @@ export default function SetupPage() {
     <div className={styles.container}>
       <div className={styles.card}>
         <div className={styles.header}>
-          <h1 className={styles.title}>Welcome to Streamline Studio</h1>
+          <div className={styles.logoContainer}>
+            <Image
+              src="/streamline-studio-logo.png"
+              alt="Streamline Studio"
+              width={200}
+              height={50}
+              className={styles.logo}
+              priority
+            />
+          </div>
+          <h1 className={styles.title}>Set Up Your Studio</h1>
           <p className={styles.subtitle}>
-            Let&apos;s set up your account and workspace to get started.
+            {currentStep === 1
+              ? 'Create your admin account to get started.'
+              : 'Set up your first project to organize your video scripts.'}
           </p>
+        </div>
+
+        {/* Step Indicator */}
+        <div
+          className={styles.stepIndicator}
+          role="navigation"
+          aria-label="Setup progress"
+        >
+          <div
+            className={`${styles.step} ${currentStep >= 1 ? styles.stepActive : ''}`}
+          >
+            <div className={styles.stepNumber}>1</div>
+            <span className={styles.stepLabel}>Account</span>
+          </div>
+          <div className={styles.stepConnector} aria-hidden="true" />
+          <div
+            className={`${styles.step} ${currentStep >= 2 ? styles.stepActive : ''}`}
+          >
+            <div className={styles.stepNumber}>2</div>
+            <span className={styles.stepLabel}>Project</span>
+          </div>
         </div>
 
         {formError && (
@@ -132,96 +214,176 @@ export default function SetupPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className={styles.form} noValidate>
-          <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>Admin Account</h2>
-            <p className={styles.sectionDescription}>
-              Create your administrator account. You&apos;ll use this to log in.
-            </p>
-
-            <Input
-              label="Email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="admin@example.com"
-              error={fieldErrors.email}
-              disabled={setupMutation.isPending}
-              required
-            />
-
-            <Input
-              label="Name"
-              name="name"
-              type="text"
-              autoComplete="name"
-              placeholder="Your name"
-              error={fieldErrors.name}
-              disabled={setupMutation.isPending}
-            />
-
-            <div>
-              <Input
-                label="Password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                placeholder="Minimum 8 characters"
-                error={fieldErrors.password}
-                disabled={setupMutation.isPending}
-                required
-                aria-describedby="password-requirements"
-              />
-              <p
-                id="password-requirements"
-                className={styles.passwordRequirements}
-              >
-                Password must be at least 8 characters long
+        {/* Step 1: Account Creation */}
+        {currentStep === 1 && (
+          <form onSubmit={handleStep1Submit} className={styles.form} noValidate>
+            <fieldset className={styles.fieldset}>
+              <legend className={styles.legend}>
+                <span className={styles.legendContent}>
+                  <span className={styles.legendIcon}>👤</span>
+                  Admin Account
+                </span>
+              </legend>
+              <p className={styles.fieldsetDescription}>
+                Create your administrator account. You&apos;ll use this to log
+                in and manage your studio.
               </p>
+
+              <div className={styles.fieldGroupGrid}>
+                <Input
+                  label="Email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="admin@example.com"
+                  value={accountData.email}
+                  onChange={(e) =>
+                    setAccountData((prev) => ({
+                      ...prev,
+                      email: e.target.value,
+                    }))
+                  }
+                  error={fieldErrors.email}
+                  required
+                />
+
+                <Input
+                  label="Name"
+                  name="name"
+                  type="text"
+                  autoComplete="name"
+                  placeholder="Your name (optional)"
+                  value={accountData.name}
+                  onChange={(e) =>
+                    setAccountData((prev) => ({
+                      ...prev,
+                      name: e.target.value,
+                    }))
+                  }
+                  error={fieldErrors.name}
+                />
+
+                <div>
+                  <Input
+                    label="Password"
+                    name="password"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="Minimum 8 characters"
+                    value={accountData.password}
+                    onChange={(e) =>
+                      setAccountData((prev) => ({
+                        ...prev,
+                        password: e.target.value,
+                      }))
+                    }
+                    error={fieldErrors.password}
+                    required
+                    aria-describedby="password-requirements"
+                  />
+                  <p id="password-requirements" className={styles.fieldHint}>
+                    Password must be at least 8 characters long
+                  </p>
+                </div>
+
+                <Input
+                  label="Confirm Password"
+                  name="confirmPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="Re-enter your password"
+                  value={accountData.confirmPassword}
+                  onChange={(e) =>
+                    setAccountData((prev) => ({
+                      ...prev,
+                      confirmPassword: e.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+            </fieldset>
+
+            <Button type="submit" variant="primary" fullWidth>
+              Continue to Project Setup
+            </Button>
+          </form>
+        )}
+
+        {/* Step 2: Project Setup */}
+        {currentStep === 2 && (
+          <form onSubmit={handleStep2Submit} className={styles.form} noValidate>
+            <fieldset className={styles.fieldset}>
+              <legend className={styles.legend}>
+                <span className={styles.legendContent}>
+                  <span className={styles.legendIcon}>📁</span>
+                  Your First Project
+                </span>
+              </legend>
+              <p className={styles.fieldsetDescription}>
+                Projects are where you organize and manage your video scripts.
+                You can create more projects later.
+              </p>
+
+              <div className={styles.fieldGroup}>
+                <div className={styles.projectNameField}>
+                  <Input
+                    label="Project Name"
+                    name="projectName"
+                    type="text"
+                    placeholder="My YouTube Channel"
+                    value={projectName}
+                    onChange={(e) => setProjectName(e.target.value)}
+                    error={fieldErrors.projectName}
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleGenerateProjectName}
+                    className={styles.generateButton}
+                    aria-label="Generate a random project name"
+                  >
+                    🎲 Surprise me
+                  </Button>
+                </div>
+                <p className={styles.fieldHint}>
+                  💡 Don&apos;t worry, you can change this later in project
+                  settings.
+                </p>
+              </div>
+            </fieldset>
+
+            <div className={styles.buttonGroup}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleBack}
+                disabled={setupMutation.isPending}
+              >
+                ← Back
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={setupMutation.isPending}
+              >
+                {setupMutation.isPending
+                  ? 'Setting up...'
+                  : 'Launch Your Studio 🚀'}
+              </Button>
             </div>
-
-            <Input
-              label="Confirm Password"
-              name="confirmPassword"
-              type="password"
-              autoComplete="new-password"
-              placeholder="Re-enter your password"
-              disabled={setupMutation.isPending}
-              required
-            />
-          </div>
-
-          <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>Workspace</h2>
-            <p className={styles.sectionDescription}>
-              Your workspace is where you&apos;ll manage your video projects.
-            </p>
-
-            <Input
-              label="Workspace Name"
-              name="workspaceName"
-              type="text"
-              placeholder="My Workspace"
-              error={fieldErrors.workspaceName}
-              disabled={setupMutation.isPending}
-            />
-          </div>
-
-          <Button
-            type="submit"
-            variant="primary"
-            fullWidth
-            disabled={setupMutation.isPending}
-          >
-            {setupMutation.isPending ? 'Setting up...' : 'Complete Setup'}
-          </Button>
-        </form>
+          </form>
+        )}
 
         <div className={styles.footer}>
           <p className={styles.footerText}>
             This setup wizard can only be run once. After completion,
-            you&apos;ll be able to invite additional users.
+            you&apos;ll be able to invite additional team members.
           </p>
+          <div className={styles.footerBranding}>
+            <span>Powered by</span>
+            <strong>Streamline Studio</strong>
+          </div>
         </div>
       </div>
     </div>

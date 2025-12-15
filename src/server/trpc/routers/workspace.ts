@@ -12,7 +12,7 @@ import { TRPCError } from '@trpc/server';
 // eslint-disable-next-line no-restricted-imports -- Workspace operations require direct queries for workspace access validation
 import { eq, and } from 'drizzle-orm';
 import { router, protectedProcedure } from '../procedures';
-import { workspaces, workspaceUsers } from '@/server/db/schema';
+import { projects, projectUsers } from '@/server/db/schema';
 import { serverEnv } from '@/lib/env';
 
 /**
@@ -33,16 +33,16 @@ export const workspaceRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
     const userWorkspaces = await ctx.db
       .select({
-        id: workspaces.id,
-        name: workspaces.name,
-        slug: workspaces.slug,
-        role: workspaceUsers.role,
-        joinedAt: workspaceUsers.createdAt,
+        id: projects.id,
+        name: projects.name,
+        slug: projects.slug,
+        role: projectUsers.role,
+        joinedAt: projectUsers.createdAt,
       })
-      .from(workspaceUsers)
-      .innerJoin(workspaces, eq(workspaceUsers.workspaceId, workspaces.id))
-      .where(eq(workspaceUsers.userId, ctx.user.id))
-      .orderBy(workspaceUsers.createdAt);
+      .from(projectUsers)
+      .innerJoin(projects, eq(projectUsers.projectId, projects.id))
+      .where(eq(projectUsers.userId, ctx.user.id))
+      .orderBy(projectUsers.createdAt);
 
     return userWorkspaces;
   }),
@@ -56,18 +56,18 @@ export const workspaceRouter = router({
     .query(async ({ ctx, input }) => {
       const result = await ctx.db
         .select({
-          id: workspaces.id,
-          name: workspaces.name,
-          slug: workspaces.slug,
-          mode: workspaces.mode,
-          role: workspaceUsers.role,
+          id: projects.id,
+          name: projects.name,
+          slug: projects.slug,
+          mode: projects.mode,
+          role: projectUsers.role,
         })
-        .from(workspaceUsers)
-        .innerJoin(workspaces, eq(workspaceUsers.workspaceId, workspaces.id))
+        .from(projectUsers)
+        .innerJoin(projects, eq(projectUsers.projectId, projects.id))
         .where(
           and(
-            eq(workspaces.slug, input.slug),
-            eq(workspaceUsers.userId, ctx.user.id)
+            eq(projects.slug, input.slug),
+            eq(projectUsers.userId, ctx.user.id)
           )
         )
         .limit(1);
@@ -110,9 +110,9 @@ export const workspaceRouter = router({
 
       while (attempts < maxAttempts) {
         const existingWorkspace = await ctx.db
-          .select({ id: workspaces.id })
-          .from(workspaces)
-          .where(eq(workspaces.slug, slug))
+          .select({ id: projects.id })
+          .from(projects)
+          .where(eq(projects.slug, slug))
           .limit(1);
 
         if (existingWorkspace.length === 0) {
@@ -136,11 +136,12 @@ export const workspaceRouter = router({
       // Create workspace and add user as owner in transaction
       const result = await ctx.db.transaction(async (tx) => {
         const [workspace] = await tx
-          .insert(workspaces)
+          .insert(projects)
           .values({
             name: input.name,
             slug,
             mode: 'multi-tenant',
+            teamspaceId: null, // TODO: Set from teamspace context in Phase 2
           })
           .returning();
 
@@ -151,8 +152,8 @@ export const workspaceRouter = router({
           });
         }
 
-        await tx.insert(workspaceUsers).values({
-          workspaceId: workspace.id,
+        await tx.insert(projectUsers).values({
+          projectId: workspace.id,
           userId: ctx.user.id,
           role: 'owner',
         });
