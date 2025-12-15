@@ -9,6 +9,7 @@ import { revisionRouter } from './routers/revision';
 import { invitationRouter } from './routers/invitation';
 import { teamRouter } from './routers/team';
 import { workspaceRouter } from './routers/workspace';
+import { userRouter } from './routers/user';
 
 /**
  * tRPC Root Router
@@ -108,6 +109,12 @@ export const appRouter = router({
    * @see Phase 5.3
    */
   workspace: workspaceRouter,
+
+  /**
+   * User router
+   * Handles user profile and account management
+   */
+  user: userRouter,
 });
 
 // Export type for client-side usage

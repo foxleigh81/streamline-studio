@@ -1,0 +1,124 @@
+/**
+ * Account Settings Page Styles
+ */
+
+.container {
+  max-width: var(--container-2xl);
+  margin: 0 auto;
+  padding: var(--spacing-8);
+}
+
+.header {
+  margin-bottom: var(--spacing-8);
+}
+
+.title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-foreground);
+  margin-bottom: var(--spacing-2);
+}
+
+.description {
+  font-size: var(--font-size-base);
+  color: var(--color-foreground-muted);
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 20rem;
+  color: var(--color-foreground-muted);
+}
+
+/* Section Styles */
+.section {
+  background: var(--color-surface);
+  border: var(--border-width-thin) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  margin-bottom: var(--spacing-6);
+}
+
+.sectionHeader {
+  margin-bottom: var(--spacing-6);
+  padding-bottom: var(--spacing-4);
+  border-bottom: var(--border-width-thin) solid var(--color-border);
+}
+
+.sectionTitle {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-foreground);
+}
+
+/* Profile Info */
+.profileInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-6);
+  padding: var(--spacing-4);
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-md);
+}
+
+.userDetails {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.userName {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-foreground);
+}
+
+.userEmail {
+  font-size: var(--font-size-sm);
+  color: var(--color-foreground-muted);
+}
+
+/* Form Styles */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  max-width: var(--container-md);
+}
+
+.successMessage {
+  padding: var(--spacing-3) var(--spacing-4);
+  background: var(--color-success);
+  color: var(--color-success-foreground);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.errorMessage {
+  padding: var(--spacing-3) var(--spacing-4);
+  background: var(--color-destructive);
+  color: var(--color-destructive-foreground);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: var(--spacing-4);
+  }
+
+  .title {
+    font-size: var(--font-size-2xl);
+  }
+
+  .profileInfo {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

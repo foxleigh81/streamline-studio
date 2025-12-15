@@ -83,8 +83,8 @@ services:
     # behind a firewall or need external access for specific tooling.
     #
     # To enable: Uncomment the lines below
-    # ports:
-    #   - '5432:5432'
+    ports:
+      - '5432:5432'
 
   # ---------------------------------------------------------------------------
   # Redis

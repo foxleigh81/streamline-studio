@@ -2,6 +2,7 @@
 
 import { type ReactNode, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { Video, Tag, Users, Settings, LogOut } from 'lucide-react';
 import { trpc } from '@/lib/trpc/client';
@@ -107,7 +108,15 @@ export function AppShell({
       <aside className={styles.sidebar} aria-label="Main navigation">
         <div className={styles.sidebarHeader}>
           <h1 className={styles.logo}>
-            <Link href={buildLink('/videos')}>Streamline Studio</Link>
+            <Link href={buildLink('/videos')}>
+              <Image
+                src="/streamline-studio-logo.png"
+                alt="Streamline Studio"
+                width={200}
+                height={50}
+                priority
+              />
+            </Link>
           </h1>
           <div className={styles.workspaceSwitcherContainer}>
             <WorkspaceSwitcher

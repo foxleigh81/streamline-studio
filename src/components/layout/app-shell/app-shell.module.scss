@@ -45,17 +45,26 @@
   font-weight: var(--font-weight-bold);
 
   a {
+    display: block;
     color: var(--color-foreground);
     text-decoration: none;
+    transition: opacity var(--duration-fast) var(--ease-in-out);
 
     &:hover {
-      color: var(--color-primary);
+      opacity: 0.8;
     }
 
     &:focus-visible {
       outline: 2px solid var(--color-ring);
       outline-offset: 2px;
       border-radius: var(--radius-sm);
+    }
+
+    img {
+      display: block;
+      width: auto;
+      height: auto;
+      max-width: 100%;
     }
   }
 }

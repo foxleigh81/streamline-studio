@@ -9,19 +9,10 @@
 
 import { hash, verify } from '@node-rs/argon2';
 import { COMMON_PASSWORDS } from './common-passwords';
+import { PASSWORD_POLICY } from '@/lib/constants/password';
 
-/**
- * Password policy configuration
- * @see ADR-014: Password Policy
- */
-export const PASSWORD_POLICY = {
-  minLength: 8,
-  maxLength: 128,
-  // Complexity NOT enforced (research shows length > complexity)
-  requireUppercase: false,
-  requireNumber: false,
-  requireSpecial: false,
-} as const;
+// Re-export PASSWORD_POLICY for backwards compatibility
+export { PASSWORD_POLICY } from '@/lib/constants/password';
 
 /**
  * Argon2id configuration
