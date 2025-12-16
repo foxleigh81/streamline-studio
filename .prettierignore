@@ -23,3 +23,6 @@ yarn.lock
 
 # Generated
 next-env.d.ts
+
+# Development assistance (not source code)
+project-management

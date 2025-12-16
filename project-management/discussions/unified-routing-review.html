@@ -1,668 +1,1045 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Unified Routing Architecture Review</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          'Helvetica Neue', Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
 
-        .chat-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }
+      .chat-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
 
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
 
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
+      .header h1 {
+        font-size: 28px;
+        margin-bottom: 10px;
+      }
 
-        .header p {
-            opacity: 0.9;
-            font-size: 14px;
-        }
+      .header p {
+        opacity: 0.9;
+        font-size: 14px;
+      }
 
-        .discussion-context {
-            background: #f8f9fa;
-            padding: 20px 30px;
-            border-bottom: 1px solid #e9ecef;
-        }
+      .discussion-context {
+        background: #f8f9fa;
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+      }
 
-        .discussion-context h2 {
-            font-size: 18px;
-            color: #495057;
-            margin-bottom: 10px;
-        }
+      .discussion-context h2 {
+        font-size: 18px;
+        color: #495057;
+        margin-bottom: 10px;
+      }
 
-        .discussion-context ul {
-            margin-left: 20px;
-            color: #6c757d;
-            line-height: 1.6;
-        }
+      .discussion-context ul {
+        margin-left: 20px;
+        color: #6c757d;
+        line-height: 1.6;
+      }
 
-        .messages {
-            padding: 30px;
-        }
+      .messages {
+        padding: 30px;
+      }
 
-        .message {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-            animation: fadeIn 0.3s ease-in;
-        }
+      .message {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 25px;
+        animation: fadeIn 0.3s ease-in;
+      }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
         }
-
-        .avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: bold;
-            color: white;
-            flex-shrink: 0;
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
+      }
 
-        .avatar.orchestrator { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-        .avatar.senior-dev { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-        .avatar.security { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-        .avatar.tron { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
-        .avatar.qa { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333; }
+      .avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: bold;
+        color: white;
+        flex-shrink: 0;
+      }
 
-        .message-content {
-            flex: 1;
-        }
+      .avatar.orchestrator {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      }
+      .avatar.senior-dev {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      }
+      .avatar.security {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+      }
+      .avatar.tron {
+        background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+      }
+      .avatar.qa {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        color: #333;
+      }
 
-        .message-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 8px;
-        }
+      .message-content {
+        flex: 1;
+      }
 
-        .agent-name {
-            font-weight: 600;
-            font-size: 15px;
-            color: #212529;
-        }
+      .message-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
 
-        .agent-role {
-            font-size: 12px;
-            color: #868e96;
-        }
+      .agent-name {
+        font-weight: 600;
+        font-size: 15px;
+        color: #212529;
+      }
 
-        .timestamp {
-            font-size: 11px;
-            color: #adb5bd;
-            margin-left: auto;
-        }
+      .agent-role {
+        font-size: 12px;
+        color: #868e96;
+      }
 
-        .message-text {
-            color: #495057;
-            line-height: 1.6;
-            font-size: 14px;
-        }
+      .timestamp {
+        font-size: 11px;
+        color: #adb5bd;
+        margin-left: auto;
+      }
 
-        .message-text code {
-            background: #f1f3f5;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: 'Monaco', 'Courier New', monospace;
-            font-size: 13px;
-            color: #e83e8c;
-        }
+      .message-text {
+        color: #495057;
+        line-height: 1.6;
+        font-size: 14px;
+      }
 
-        .message-text strong {
-            color: #212529;
-            font-weight: 600;
-        }
+      .message-text code {
+        background: #f1f3f5;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Monaco', 'Courier New', monospace;
+        font-size: 13px;
+        color: #e83e8c;
+      }
 
-        .message-text h3 {
-            margin-top: 15px;
-            margin-bottom: 8px;
-            color: #212529;
-            font-size: 16px;
-        }
+      .message-text strong {
+        color: #212529;
+        font-weight: 600;
+      }
 
-        .message-text h4 {
-            margin-top: 12px;
-            margin-bottom: 6px;
-            color: #495057;
-            font-size: 14px;
-        }
+      .message-text h3 {
+        margin-top: 15px;
+        margin-bottom: 8px;
+        color: #212529;
+        font-size: 16px;
+      }
 
-        .message-text ul, .message-text ol {
-            margin-left: 20px;
-            margin-top: 8px;
-            margin-bottom: 8px;
-        }
+      .message-text h4 {
+        margin-top: 12px;
+        margin-bottom: 6px;
+        color: #495057;
+        font-size: 14px;
+      }
 
-        .message-text li {
-            margin-bottom: 4px;
-        }
+      .message-text ul,
+      .message-text ol {
+        margin-left: 20px;
+        margin-top: 8px;
+        margin-bottom: 8px;
+      }
 
-        .message-text table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 10px 0;
-            font-size: 13px;
-        }
+      .message-text li {
+        margin-bottom: 4px;
+      }
 
-        .message-text th, .message-text td {
-            padding: 8px;
-            text-align: left;
-            border: 1px solid #e9ecef;
-        }
+      .message-text table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 10px 0;
+        font-size: 13px;
+      }
 
-        .message-text th {
-            background: #f8f9fa;
-            font-weight: 600;
-        }
+      .message-text th,
+      .message-text td {
+        padding: 8px;
+        text-align: left;
+        border: 1px solid #e9ecef;
+      }
 
-        .message-text pre {
-            background: #f8f9fa;
-            padding: 12px;
-            border-radius: 6px;
-            overflow-x: auto;
-            margin: 10px 0;
-            font-size: 12px;
-        }
+      .message-text th {
+        background: #f8f9fa;
+        font-weight: 600;
+      }
 
-        .verdict {
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin: 15px 0;
-            font-weight: 500;
-        }
+      .message-text pre {
+        background: #f8f9fa;
+        padding: 12px;
+        border-radius: 6px;
+        overflow-x: auto;
+        margin: 10px 0;
+        font-size: 12px;
+      }
 
-        .verdict.safe {
-            background: #d4edda;
-            color: #155724;
-            border-left: 4px solid #28a745;
-        }
+      .verdict {
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin: 15px 0;
+        font-weight: 500;
+      }
 
-        .verdict.caution {
-            background: #fff3cd;
-            color: #856404;
-            border-left: 4px solid #ffc107;
-        }
+      .verdict.safe {
+        background: #d4edda;
+        color: #155724;
+        border-left: 4px solid #28a745;
+      }
 
-        .verdict.critical {
-            background: #f8d7da;
-            color: #721c24;
-            border-left: 4px solid #dc3545;
-        }
+      .verdict.caution {
+        background: #fff3cd;
+        color: #856404;
+        border-left: 4px solid #ffc107;
+      }
 
-        .consensus {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            margin: 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-        }
+      .verdict.critical {
+        background: #f8d7da;
+        color: #721c24;
+        border-left: 4px solid #dc3545;
+      }
 
-        .consensus h2 {
-            font-size: 22px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+      .consensus {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        margin: 30px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+      }
 
-        .consensus-content {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 15px;
-        }
+      .consensus h2 {
+        font-size: 22px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
 
-        .consensus-content h3 {
-            font-size: 16px;
-            margin-bottom: 10px;
-            margin-top: 15px;
-        }
+      .consensus-content {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 15px;
+      }
 
-        .consensus-content h3:first-child {
-            margin-top: 0;
-        }
+      .consensus-content h3 {
+        font-size: 16px;
+        margin-bottom: 10px;
+        margin-top: 15px;
+      }
 
-        .consensus-content ul {
-            margin-left: 20px;
-            line-height: 1.8;
-        }
+      .consensus-content h3:first-child {
+        margin-top: 0;
+      }
 
-        .consensus-content code {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 2px 6px;
-            border-radius: 3px;
-        }
+      .consensus-content ul {
+        margin-left: 20px;
+        line-height: 1.8;
+      }
 
-        .action-items {
-            background: #e8f5e9;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 15px 0;
-        }
+      .consensus-content code {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 2px 6px;
+        border-radius: 3px;
+      }
 
-        .action-items h4 {
-            color: #2e7d32;
-            margin-bottom: 10px;
-        }
+      .action-items {
+        background: #e8f5e9;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+      }
 
-        .action-items ul {
-            margin-left: 20px;
-        }
+      .action-items h4 {
+        color: #2e7d32;
+        margin-bottom: 10px;
+      }
 
-        .action-items li {
-            margin-bottom: 8px;
-        }
+      .action-items ul {
+        margin-left: 20px;
+      }
 
-        .priority-critical {
-            color: #dc3545;
-            font-weight: bold;
-        }
+      .action-items li {
+        margin-bottom: 8px;
+      }
 
-        .priority-high {
-            color: #fd7e14;
-            font-weight: bold;
-        }
+      .priority-critical {
+        color: #dc3545;
+        font-weight: bold;
+      }
 
-        .priority-medium {
-            color: #ffc107;
-            font-weight: bold;
-        }
+      .priority-high {
+        color: #fd7e14;
+        font-weight: bold;
+      }
+
+      .priority-medium {
+        color: #ffc107;
+        font-weight: bold;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="chat-container">
-        <div class="header">
-            <h1>Unified Routing Architecture Review</h1>
-            <p>Multi-Agent Security, UX, and Quality Assessment - December 2024</p>
+      <div class="header">
+        <h1>Unified Routing Architecture Review</h1>
+        <p>Multi-Agent Security, UX, and Quality Assessment - December 2024</p>
+      </div>
+
+      <div class="discussion-context">
+        <h2>Discussion Context</h2>
+        <ul>
+          <li>
+            <strong>Problem:</strong> Next.js doesn't allow different dynamic
+            parameter names at the same path level (<code>[project]</code> vs
+            <code>[teamspace]</code>)
+          </li>
+          <li>
+            <strong>Solution Implemented:</strong> Unified
+            <code>/t/[slug]</code> route where <code>slug</code> means project
+            (single-tenant) or teamspace (multi-tenant)
+          </li>
+          <li>
+            <strong>Single-tenant URLs:</strong>
+            <code>/t/my-project/videos</code>
+          </li>
+          <li>
+            <strong>Multi-tenant URLs:</strong>
+            <code>/t/my-team/my-project/videos</code>
+          </li>
+          <li>
+            <strong>Mode Detection:</strong> <code>isMultiTenant()</code> from
+            server environment config
+          </li>
+        </ul>
+      </div>
+
+      <div class="messages">
+        <!-- QA Architect Review -->
+        <div class="message">
+          <div class="avatar qa">QA</div>
+          <div class="message-content">
+            <div class="message-header">
+              <span class="agent-name">QA Architect</span>
+              <span class="agent-role"
+                >Quality & Maintainability Assessment</span
+              >
+              <span class="timestamp">Just now</span>
+            </div>
+            <div class="message-text">
+              <div class="verdict caution">
+                Conditional Approval - The approach is pragmatic but introduces
+                semantic ambiguity that will accumulate maintenance cost over
+                time.
+              </div>
+
+              <h3>Overall Assessment: Cautious Thumbs Up</h3>
+              <p>
+                The approach works and solves the immediate problem. However, I
+                have concerns about long-term maintainability.
+              </p>
+
+              <h3>Critical Issue: Semantic Parameter Overloading</h3>
+              <p>
+                The <code>[slug]</code> parameter means two completely different
+                things depending on runtime configuration. This is the
+                architectural equivalent of a variable named <code>data</code> -
+                technically valid but semantically opaque.
+              </p>
+
+              <p><strong>Evidence of confusion already present:</strong></p>
+              <pre>
+// In videos/page.tsx
+const teamspaceSlug = params.slug;  // Wrong for single-tenant!</pre
+              >
+              <p>
+                This works for multi-tenant but is semantically wrong for
+                single-tenant where <code>params.slug</code> is actually the
+                project, not teamspace.
+              </p>
+
+              <h3>Important: Provider Parameter Mismatch</h3>
+              <p>
+                The TeamspaceProvider looks for
+                <code>params.teamspace</code> but the route parameter is named
+                <code>slug</code>. This only works because the provider falls
+                through to default context when teamspace is not found. Fragile
+                coupling.
+              </p>
+
+              <h3>Important: Silent Mode Detection Risk</h3>
+              <pre>
+const mode = process.env.MODE ?? 'single-tenant';
+// Typos silently default to single-tenant!</pre
+              >
+
+              <h3>Testing Gap</h3>
+              <p>
+                No E2E tests verify single-tenant vs multi-tenant routing works
+                correctly. This is a significant coverage gap for a core
+                mechanism.
+              </p>
+
+              <h3>Edge Cases</h3>
+              <ul>
+                <li>
+                  <strong>Slug Collision:</strong> A project named
+                  <code>settings</code> would conflict with
+                  <code>/t/[slug]/settings</code>
+                </li>
+                <li>
+                  <strong>Deep Link Ambiguity:</strong> URLs shared between
+                  deployments have different meanings
+                </li>
+                <li>
+                  <strong>Settings at Wrong Level:</strong>
+                  <code>/t/my-project/settings</code> shows teamspace settings,
+                  not project settings in single-tenant
+                </li>
+              </ul>
+
+              <h3>Recommendations</h3>
+              <ol>
+                <li>
+                  <span class="priority-high">[HIGH]</span> Create URL builder
+                  utility to centralize route generation
+                </li>
+                <li>
+                  <span class="priority-high">[HIGH]</span> Add mode validation
+                  that throws on invalid <code>MODE</code> values
+                </li>
+                <li>
+                  <span class="priority-high">[HIGH]</span> Add mode-specific
+                  E2E tests
+                </li>
+                <li>
+                  <span class="priority-medium">[MEDIUM]</span> Consolidate
+                  duplicate auth validation functions
+                </li>
+                <li>
+                  <span class="priority-medium">[MEDIUM]</span> Add JSDoc
+                  clarifying parameter semantics
+                </li>
+              </ol>
+            </div>
+          </div>
         </div>
 
-        <div class="discussion-context">
-            <h2>Discussion Context</h2>
-            <ul>
-                <li><strong>Problem:</strong> Next.js doesn't allow different dynamic parameter names at the same path level (<code>[project]</code> vs <code>[teamspace]</code>)</li>
-                <li><strong>Solution Implemented:</strong> Unified <code>/t/[slug]</code> route where <code>slug</code> means project (single-tenant) or teamspace (multi-tenant)</li>
-                <li><strong>Single-tenant URLs:</strong> <code>/t/my-project/videos</code></li>
-                <li><strong>Multi-tenant URLs:</strong> <code>/t/my-team/my-project/videos</code></li>
-                <li><strong>Mode Detection:</strong> <code>isMultiTenant()</code> from server environment config</li>
-            </ul>
+        <!-- TRON Review -->
+        <div class="message">
+          <div class="avatar tron">TR</div>
+          <div class="message-content">
+            <div class="message-header">
+              <span class="agent-name">TRON</span>
+              <span class="agent-role">User Experience Advocate</span>
+              <span class="timestamp">Just now</span>
+            </div>
+            <div class="message-text">
+              <p><em>Fighting for the user on this routing refactor.</em></p>
+
+              <h3>Strengths</h3>
+              <ul>
+                <li>
+                  Accessibility foundations preserved (SkipLink, aria-labels,
+                  screen reader announcements)
+                </li>
+                <li>Error boundaries provide clear recovery actions</li>
+                <li>Breadcrumb hook adapts to deployment mode</li>
+              </ul>
+
+              <h3>Critical Bug Found</h3>
+              <div class="verdict critical">
+                CRITICAL: Broken links in single-tenant mode!
+              </div>
+              <p>
+                In <code>/src/lib/hooks/use-breadcrumbs.ts</code> (lines 62,
+                101):
+              </p>
+              <pre>
+return `/w/${project.slug}`;  // Says /w/ but layouts use /t/!</pre
+              >
+              <p>
+                <strong>Impact:</strong> Users clicking breadcrumb links in
+                single-tenant mode will hit 404 errors.
+              </p>
+
+              <h3>UX Issues</h3>
+
+              <h4>Silent redirect to /setup</h4>
+              <p>
+                When multi-tenant users have no projects, they're sent to
+                <code>/setup</code> with no explanation. Jarring experience.
+              </p>
+
+              <h4>Access denied page terminology</h4>
+              <p>
+                Page says "Return to My Teamspaces" even in single-tenant mode
+                where users don't have "teamspaces."
+              </p>
+
+              <h4>Missing not-found.tsx handlers</h4>
+              <p>
+                Invalid slugs redirect to "access denied" which says "You don't
+                have permission." This is misleading - the resource doesn't
+                exist, not that they lack permission. Different mental models.
+              </p>
+
+              <h4>URL discoverability</h4>
+              <p>
+                New users land on <code>/t/[slug]</code> and are immediately
+                redirected to <code>/videos</code>. No project overview or
+                dashboard - could disorient infrequent users.
+              </p>
+
+              <h3>Cognitive Load Concern</h3>
+              <p>
+                The same URL position means different things to different users.
+                When users discuss URLs, debug issues, or return to bookmarks,
+                this creates confusion. For neurodivergent users, this layering
+                can be overwhelming.
+              </p>
+
+              <h3>Priority Fixes</h3>
+              <ol>
+                <li>
+                  <span class="priority-critical">[CRITICAL]</span> Fix
+                  <code>/w/</code> to <code>/t/</code> in breadcrumb hooks -
+                  broken links!
+                </li>
+                <li>
+                  <span class="priority-high">[HIGH]</span> Add
+                  deployment-mode-aware language on access-denied page
+                </li>
+                <li>
+                  <span class="priority-high">[HIGH]</span> Add explanatory
+                  messaging for redirect-to-setup flow
+                </li>
+                <li>
+                  <span class="priority-medium">[MEDIUM]</span> Add
+                  not-found.tsx pages with "does not exist" messaging
+                </li>
+                <li>
+                  <span class="priority-medium">[MEDIUM]</span> Consider visual
+                  indicators showing URL segment meaning
+                </li>
+              </ol>
+
+              <p>
+                <strong
+                  >The user is counting on us to get this right. A URL is a
+                  promise.</strong
+                >
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div class="messages">
-            <!-- QA Architect Review -->
-            <div class="message">
-                <div class="avatar qa">QA</div>
-                <div class="message-content">
-                    <div class="message-header">
-                        <span class="agent-name">QA Architect</span>
-                        <span class="agent-role">Quality & Maintainability Assessment</span>
-                        <span class="timestamp">Just now</span>
-                    </div>
-                    <div class="message-text">
-                        <div class="verdict caution">Conditional Approval - The approach is pragmatic but introduces semantic ambiguity that will accumulate maintenance cost over time.</div>
-
-                        <h3>Overall Assessment: Cautious Thumbs Up</h3>
-                        <p>The approach works and solves the immediate problem. However, I have concerns about long-term maintainability.</p>
-
-                        <h3>Critical Issue: Semantic Parameter Overloading</h3>
-                        <p>The <code>[slug]</code> parameter means two completely different things depending on runtime configuration. This is the architectural equivalent of a variable named <code>data</code> - technically valid but semantically opaque.</p>
-
-                        <p><strong>Evidence of confusion already present:</strong></p>
-                        <pre>// In videos/page.tsx
-const teamspaceSlug = params.slug;  // Wrong for single-tenant!</pre>
-                        <p>This works for multi-tenant but is semantically wrong for single-tenant where <code>params.slug</code> is actually the project, not teamspace.</p>
-
-                        <h3>Important: Provider Parameter Mismatch</h3>
-                        <p>The TeamspaceProvider looks for <code>params.teamspace</code> but the route parameter is named <code>slug</code>. This only works because the provider falls through to default context when teamspace is not found. Fragile coupling.</p>
-
-                        <h3>Important: Silent Mode Detection Risk</h3>
-                        <pre>const mode = process.env.MODE ?? 'single-tenant';
-// Typos silently default to single-tenant!</pre>
-
-                        <h3>Testing Gap</h3>
-                        <p>No E2E tests verify single-tenant vs multi-tenant routing works correctly. This is a significant coverage gap for a core mechanism.</p>
-
-                        <h3>Edge Cases</h3>
-                        <ul>
-                            <li><strong>Slug Collision:</strong> A project named <code>settings</code> would conflict with <code>/t/[slug]/settings</code></li>
-                            <li><strong>Deep Link Ambiguity:</strong> URLs shared between deployments have different meanings</li>
-                            <li><strong>Settings at Wrong Level:</strong> <code>/t/my-project/settings</code> shows teamspace settings, not project settings in single-tenant</li>
-                        </ul>
-
-                        <h3>Recommendations</h3>
-                        <ol>
-                            <li><span class="priority-high">[HIGH]</span> Create URL builder utility to centralize route generation</li>
-                            <li><span class="priority-high">[HIGH]</span> Add mode validation that throws on invalid <code>MODE</code> values</li>
-                            <li><span class="priority-high">[HIGH]</span> Add mode-specific E2E tests</li>
-                            <li><span class="priority-medium">[MEDIUM]</span> Consolidate duplicate auth validation functions</li>
-                            <li><span class="priority-medium">[MEDIUM]</span> Add JSDoc clarifying parameter semantics</li>
-                        </ol>
-                    </div>
-                </div>
+        <!-- Security Review -->
+        <div class="message">
+          <div class="avatar security">S</div>
+          <div class="message-content">
+            <div class="message-header">
+              <span class="agent-name">Security Architect</span>
+              <span class="agent-role"
+                >Security & Authorization Assessment</span
+              >
+              <span class="timestamp">Just now</span>
             </div>
+            <div class="message-text">
+              <div class="verdict safe">
+                SAFE with Minor Recommendations - The implementation is
+                fundamentally sound.
+              </div>
 
-            <!-- TRON Review -->
-            <div class="message">
-                <div class="avatar tron">TR</div>
-                <div class="message-content">
-                    <div class="message-header">
-                        <span class="agent-name">TRON</span>
-                        <span class="agent-role">User Experience Advocate</span>
-                        <span class="timestamp">Just now</span>
-                    </div>
-                    <div class="message-text">
-                        <p><em>Fighting for the user on this routing refactor.</em></p>
+              <h3>Threat Assessment Summary</h3>
+              <table>
+                <tr>
+                  <th>Risk</th>
+                  <th>Severity</th>
+                  <th>Status</th>
+                </tr>
+                <tr>
+                  <td>Mode Detection Spoofing</td>
+                  <td>N/A</td>
+                  <td>SAFE - server-side env, not client accessible</td>
+                </tr>
+                <tr>
+                  <td>Cross-tenant Access</td>
+                  <td>Low</td>
+                  <td>MITIGATED - auth at layout level</td>
+                </tr>
+                <tr>
+                  <td>URL Manipulation</td>
+                  <td>Medium</td>
+                  <td>REQUIRES ATTENTION</td>
+                </tr>
+                <tr>
+                  <td>Information Disclosure</td>
+                  <td>Low</td>
+                  <td>ACCEPTABLE</td>
+                </tr>
+                <tr>
+                  <td>IDOR on Slug</td>
+                  <td>Low</td>
+                  <td>MITIGATED - membership validated</td>
+                </tr>
+              </table>
 
-                        <h3>Strengths</h3>
-                        <ul>
-                            <li>Accessibility foundations preserved (SkipLink, aria-labels, screen reader announcements)</li>
-                            <li>Error boundaries provide clear recovery actions</li>
-                            <li>Breadcrumb hook adapts to deployment mode</li>
-                        </ul>
+              <h3>Mode Detection Security - SAFE</h3>
+              <p>
+                Mode is derived from server-side environment variables validated
+                at startup via Zod. <code>NEXT_PUBLIC_MODE</code> cannot
+                influence server-side authorization because all auth runs in
+                Server Components.
+              </p>
 
-                        <h3>Critical Bug Found</h3>
-                        <div class="verdict critical">CRITICAL: Broken links in single-tenant mode!</div>
-                        <p>In <code>/src/lib/hooks/use-breadcrumbs.ts</code> (lines 62, 101):</p>
-                        <pre>return `/w/${project.slug}`;  // Says /w/ but layouts use /t/!</pre>
-                        <p><strong>Impact:</strong> Users clicking breadcrumb links in single-tenant mode will hit 404 errors.</p>
+              <h3>Authorization Boundaries - PROPERLY ENFORCED</h3>
+              <ul>
+                <li>
+                  Layout-level: <code>validateProjectAccess</code> requires
+                  project existence AND user membership
+                </li>
+                <li>
+                  API-level: tRPC middleware validates workspace membership
+                </li>
+                <li>
+                  Repository pattern scopes all queries to single workspace ID
+                </li>
+              </ul>
 
-                        <h3>UX Issues</h3>
+              <h3>URL Manipulation Concern</h3>
+              <p>
+                In single-tenant mode, the <code>[project]</code> layout will
+                still execute if a user navigates to
+                <code>/t/my-project/fake-nested/videos</code>. User gets access
+                denied (correct outcome), but unnecessary processing.
+              </p>
 
-                        <h4>Silent redirect to /setup</h4>
-                        <p>When multi-tenant users have no projects, they're sent to <code>/setup</code> with no explanation. Jarring experience.</p>
-
-                        <h4>Access denied page terminology</h4>
-                        <p>Page says "Return to My Teamspaces" even in single-tenant mode where users don't have "teamspaces."</p>
-
-                        <h4>Missing not-found.tsx handlers</h4>
-                        <p>Invalid slugs redirect to "access denied" which says "You don't have permission." This is misleading - the resource doesn't exist, not that they lack permission. Different mental models.</p>
-
-                        <h4>URL discoverability</h4>
-                        <p>New users land on <code>/t/[slug]</code> and are immediately redirected to <code>/videos</code>. No project overview or dashboard - could disorient infrequent users.</p>
-
-                        <h3>Cognitive Load Concern</h3>
-                        <p>The same URL position means different things to different users. When users discuss URLs, debug issues, or return to bookmarks, this creates confusion. For neurodivergent users, this layering can be overwhelming.</p>
-
-                        <h3>Priority Fixes</h3>
-                        <ol>
-                            <li><span class="priority-critical">[CRITICAL]</span> Fix <code>/w/</code> to <code>/t/</code> in breadcrumb hooks - broken links!</li>
-                            <li><span class="priority-high">[HIGH]</span> Add deployment-mode-aware language on access-denied page</li>
-                            <li><span class="priority-high">[HIGH]</span> Add explanatory messaging for redirect-to-setup flow</li>
-                            <li><span class="priority-medium">[MEDIUM]</span> Add not-found.tsx pages with "does not exist" messaging</li>
-                            <li><span class="priority-medium">[MEDIUM]</span> Consider visual indicators showing URL segment meaning</li>
-                        </ol>
-
-                        <p><strong>The user is counting on us to get this right. A URL is a promise.</strong></p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Security Review -->
-            <div class="message">
-                <div class="avatar security">S</div>
-                <div class="message-content">
-                    <div class="message-header">
-                        <span class="agent-name">Security Architect</span>
-                        <span class="agent-role">Security & Authorization Assessment</span>
-                        <span class="timestamp">Just now</span>
-                    </div>
-                    <div class="message-text">
-                        <div class="verdict safe">SAFE with Minor Recommendations - The implementation is fundamentally sound.</div>
-
-                        <h3>Threat Assessment Summary</h3>
-                        <table>
-                            <tr><th>Risk</th><th>Severity</th><th>Status</th></tr>
-                            <tr><td>Mode Detection Spoofing</td><td>N/A</td><td>SAFE - server-side env, not client accessible</td></tr>
-                            <tr><td>Cross-tenant Access</td><td>Low</td><td>MITIGATED - auth at layout level</td></tr>
-                            <tr><td>URL Manipulation</td><td>Medium</td><td>REQUIRES ATTENTION</td></tr>
-                            <tr><td>Information Disclosure</td><td>Low</td><td>ACCEPTABLE</td></tr>
-                            <tr><td>IDOR on Slug</td><td>Low</td><td>MITIGATED - membership validated</td></tr>
-                        </table>
-
-                        <h3>Mode Detection Security - SAFE</h3>
-                        <p>Mode is derived from server-side environment variables validated at startup via Zod. <code>NEXT_PUBLIC_MODE</code> cannot influence server-side authorization because all auth runs in Server Components.</p>
-
-                        <h3>Authorization Boundaries - PROPERLY ENFORCED</h3>
-                        <ul>
-                            <li>Layout-level: <code>validateProjectAccess</code> requires project existence AND user membership</li>
-                            <li>API-level: tRPC middleware validates workspace membership</li>
-                            <li>Repository pattern scopes all queries to single workspace ID</li>
-                        </ul>
-
-                        <h3>URL Manipulation Concern</h3>
-                        <p>In single-tenant mode, the <code>[project]</code> layout will still execute if a user navigates to <code>/t/my-project/fake-nested/videos</code>. User gets access denied (correct outcome), but unnecessary processing.</p>
-
-                        <p><strong>Recommendation:</strong> Add mode guard at the <code>[project]</code> layout:</p>
-                        <pre>if (isSingleTenant()) {
+              <p>
+                <strong>Recommendation:</strong> Add mode guard at the
+                <code>[project]</code> layout:
+              </p>
+              <pre>
+if (isSingleTenant()) {
   notFound(); // [project] segment shouldn't exist in single-tenant
-}</pre>
+}</pre
+              >
 
-                        <h3>Recommendations</h3>
-                        <ol>
-                            <li><span class="priority-high">[HIGH]</span> Add mode guard to nested <code>[project]</code> layout for defense-in-depth</li>
-                            <li><span class="priority-medium">[MEDIUM]</span> Audit tRPC client header injection for <code>x-workspace-id</code></li>
-                            <li><span class="priority-medium">[MEDIUM]</span> Add integration tests for mode boundary violations</li>
-                        </ol>
+              <h3>Recommendations</h3>
+              <ol>
+                <li>
+                  <span class="priority-high">[HIGH]</span> Add mode guard to
+                  nested <code>[project]</code> layout for defense-in-depth
+                </li>
+                <li>
+                  <span class="priority-medium">[MEDIUM]</span> Audit tRPC
+                  client header injection for <code>x-workspace-id</code>
+                </li>
+                <li>
+                  <span class="priority-medium">[MEDIUM]</span> Add integration
+                  tests for mode boundary violations
+                </li>
+              </ol>
 
-                        <h3>What Works Well</h3>
-                        <ul>
-                            <li>Server-side mode detection using validated environment variables</li>
-                            <li>Authorization enforced before any content renders</li>
-                            <li>API returns <code>NOT_FOUND</code> instead of <code>FORBIDDEN</code> to prevent enumeration</li>
-                            <li>Repository pattern prevents cross-tenant scope</li>
-                        </ul>
-                    </div>
-                </div>
+              <h3>What Works Well</h3>
+              <ul>
+                <li>
+                  Server-side mode detection using validated environment
+                  variables
+                </li>
+                <li>Authorization enforced before any content renders</li>
+                <li>
+                  API returns <code>NOT_FOUND</code> instead of
+                  <code>FORBIDDEN</code> to prevent enumeration
+                </li>
+                <li>Repository pattern prevents cross-tenant scope</li>
+              </ul>
             </div>
+          </div>
         </div>
+      </div>
 
-        <!-- Consensus Section -->
-        <div class="consensus">
-            <h2>Team Consensus</h2>
-            <div class="consensus-content">
-                <h3>Overall Verdict: APPROVE WITH CONDITIONS</h3>
-                <p>The unified routing architecture is a pragmatic solution to a real Next.js constraint. Security is sound, but there are critical UX bugs and maintainability concerns that need immediate attention.</p>
+      <!-- Consensus Section -->
+      <div class="consensus">
+        <h2>Team Consensus</h2>
+        <div class="consensus-content">
+          <h3>Overall Verdict: APPROVE WITH CONDITIONS</h3>
+          <p>
+            The unified routing architecture is a pragmatic solution to a real
+            Next.js constraint. Security is sound, but there are critical UX
+            bugs and maintainability concerns that need immediate attention.
+          </p>
 
-                <h3>Critical Actions (Must Fix Before Release)</h3>
-                <ul>
-                    <li><strong>Fix breadcrumb <code>/w/</code> to <code>/t/</code> bug</strong> - Currently breaks navigation in single-tenant mode</li>
-                    <li><strong>Add mode guard to <code>[project]</code> layout</strong> - Defense-in-depth for single-tenant mode</li>
-                    <li><strong>Update access-denied page terminology</strong> - Mode-aware language</li>
-                </ul>
+          <h3>Critical Actions (Must Fix Before Release)</h3>
+          <ul>
+            <li>
+              <strong
+                >Fix breadcrumb <code>/w/</code> to <code>/t/</code> bug</strong
+              >
+              - Currently breaks navigation in single-tenant mode
+            </li>
+            <li>
+              <strong>Add mode guard to <code>[project]</code> layout</strong> -
+              Defense-in-depth for single-tenant mode
+            </li>
+            <li>
+              <strong>Update access-denied page terminology</strong> -
+              Mode-aware language
+            </li>
+          </ul>
 
-                <h3>High Priority (Before Production)</h3>
-                <ul>
-                    <li>Create URL builder utility to centralize route generation</li>
-                    <li>Add mode validation that throws on invalid <code>MODE</code> values</li>
-                    <li>Add mode-specific E2E tests</li>
-                    <li>Add explanatory messaging for redirect flows</li>
-                </ul>
+          <h3>High Priority (Before Production)</h3>
+          <ul>
+            <li>Create URL builder utility to centralize route generation</li>
+            <li>
+              Add mode validation that throws on invalid
+              <code>MODE</code> values
+            </li>
+            <li>Add mode-specific E2E tests</li>
+            <li>Add explanatory messaging for redirect flows</li>
+          </ul>
 
-                <h3>Medium Priority (Technical Debt)</h3>
-                <ul>
-                    <li>Consolidate duplicate auth validation functions</li>
-                    <li>Add <code>not-found.tsx</code> pages with appropriate messaging</li>
-                    <li>Add JSDoc clarifying parameter semantics</li>
-                    <li>Consider visual indicators for URL segment meaning</li>
-                </ul>
+          <h3>Medium Priority (Technical Debt)</h3>
+          <ul>
+            <li>Consolidate duplicate auth validation functions</li>
+            <li>
+              Add <code>not-found.tsx</code> pages with appropriate messaging
+            </li>
+            <li>Add JSDoc clarifying parameter semantics</li>
+            <li>Consider visual indicators for URL segment meaning</li>
+          </ul>
 
-                <h3>The Niggling Concern - Addressed</h3>
-                <p>The semantic overloading of <code>[slug]</code> is the core trade-off. It's acceptable given the Next.js constraint, but requires discipline:</p>
-                <ul>
-                    <li>Clear documentation at layout entry points</li>
-                    <li>Centralized URL building (not scattered string interpolation)</li>
-                    <li>Comprehensive E2E tests for both modes</li>
-                </ul>
-                <p>The architecture holds together. The critical <code>/w/</code> bug shows the importance of thorough testing when making sweeping changes.</p>
+          <h3>The Niggling Concern - Addressed</h3>
+          <p>
+            The semantic overloading of <code>[slug]</code> is the core
+            trade-off. It's acceptable given the Next.js constraint, but
+            requires discipline:
+          </p>
+          <ul>
+            <li>Clear documentation at layout entry points</li>
+            <li>
+              Centralized URL building (not scattered string interpolation)
+            </li>
+            <li>Comprehensive E2E tests for both modes</li>
+          </ul>
+          <p>
+            The architecture holds together. The critical <code>/w/</code> bug
+            shows the importance of thorough testing when making sweeping
+            changes.
+          </p>
+        </div>
+      </div>
+
+      <!-- Section Divider -->
+      <div
+        style="
+          background: #f8f9fa;
+          padding: 30px;
+          border-top: 2px solid #667eea;
+          border-bottom: 2px solid #667eea;
+        "
+      >
+        <h2 style="color: #667eea; margin-bottom: 10px">
+          Alternative Proposal Discussion
+        </h2>
+        <p style="color: #6c757d">
+          <strong>Question from Product:</strong> "Does it make more sense to
+          just allow a single teamspace to exist in single-tenant mode? We can
+          enforce a constraint where the user doesn't get to choose it - we just
+          use a sensible fixed name that's the same across all single-tenant
+          instances."
+        </p>
+      </div>
+
+      <div class="messages">
+        <!-- QA Response to Alternative -->
+        <div class="message">
+          <div class="avatar qa">QA</div>
+          <div class="message-content">
+            <div class="message-header">
+              <span class="agent-name">QA Architect</span>
+              <span class="agent-role">Response to Alternative Proposal</span>
+              <span class="timestamp">Just now</span>
             </div>
-        </div>
+            <div class="message-text">
+              <div class="verdict safe">
+                STRONGLY RECOMMEND - This eliminates the semantic ambiguity
+                completely.
+              </div>
 
-        <!-- Section Divider -->
-        <div style="background: #f8f9fa; padding: 30px; border-top: 2px solid #667eea; border-bottom: 2px solid #667eea;">
-            <h2 style="color: #667eea; margin-bottom: 10px;">Alternative Proposal Discussion</h2>
-            <p style="color: #6c757d;"><strong>Question from Product:</strong> "Does it make more sense to just allow a single teamspace to exist in single-tenant mode? We can enforce a constraint where the user doesn't get to choose it - we just use a sensible fixed name that's the same across all single-tenant instances."</p>
-        </div>
-
-        <div class="messages">
-            <!-- QA Response to Alternative -->
-            <div class="message">
-                <div class="avatar qa">QA</div>
-                <div class="message-content">
-                    <div class="message-header">
-                        <span class="agent-name">QA Architect</span>
-                        <span class="agent-role">Response to Alternative Proposal</span>
-                        <span class="timestamp">Just now</span>
-                    </div>
-                    <div class="message-text">
-                        <div class="verdict safe">STRONGLY RECOMMEND - This eliminates the semantic ambiguity completely.</div>
-
-                        <h3>Does This Eliminate Semantic Ambiguity?</h3>
-                        <p><strong>Yes, completely.</strong> The alternative establishes a clear invariant:</p>
-                        <pre>/t/[teamspace]/[project]/...
+              <h3>Does This Eliminate Semantic Ambiguity?</h3>
+              <p>
+                <strong>Yes, completely.</strong> The alternative establishes a
+                clear invariant:
+              </p>
+              <pre>
+/t/[teamspace]/[project]/...
      ↑            ↑
      Always a     Always a
-     teamspace    project</pre>
-                        <p>When reading any route handler, developers can reason about parameters without consulting deployment configuration.</p>
+     teamspace    project</pre
+              >
+              <p>
+                When reading any route handler, developers can reason about
+                parameters without consulting deployment configuration.
+              </p>
 
-                        <h3>Testing Implications</h3>
-                        <table>
-                            <tr><th>Aspect</th><th>Current</th><th>Unified</th></tr>
-                            <tr><td>Route parameter tests</td><td>Need two test suites</td><td>Single test suite</td></tr>
-                            <tr><td>E2E URL assertions</td><td>Must branch on MODE</td><td>Same patterns</td></tr>
-                            <tr><td>Mocking complexity</td><td>Must mock mode detection</td><td>Standard data mocking</td></tr>
-                        </table>
+              <h3>Testing Implications</h3>
+              <table>
+                <tr>
+                  <th>Aspect</th>
+                  <th>Current</th>
+                  <th>Unified</th>
+                </tr>
+                <tr>
+                  <td>Route parameter tests</td>
+                  <td>Need two test suites</td>
+                  <td>Single test suite</td>
+                </tr>
+                <tr>
+                  <td>E2E URL assertions</td>
+                  <td>Must branch on MODE</td>
+                  <td>Same patterns</td>
+                </tr>
+                <tr>
+                  <td>Mocking complexity</td>
+                  <td>Must mock mode detection</td>
+                  <td>Standard data mocking</td>
+                </tr>
+              </table>
 
-                        <h3>What Gets Simpler</h3>
-                        <pre>// GONE: Mode detection in layouts
+              <h3>What Gets Simpler</h3>
+              <pre>
+// GONE: Mode detection in layouts
 const isMultiTenant = process.env.MODE === 'multi-tenant';
 const workspaceId = isMultiTenant ? params.teamspace : params.slug;
 
 // GONE: Conditional URL building
 const baseUrl = isMultiTenant
   ? `/t/${teamspace}/${project}`
-  : `/t/${project}`;</pre>
+  : `/t/${project}`;</pre
+              >
 
-                        <p>The removed complexity is <strong>pervasive</strong> (routing, layouts, middleware, URL helpers, tests). The added complexity is <strong>localised</strong> (one constraint check, one auto-creation step). Clear win.</p>
+              <p>
+                The removed complexity is <strong>pervasive</strong> (routing,
+                layouts, middleware, URL helpers, tests). The added complexity
+                is <strong>localised</strong> (one constraint check, one
+                auto-creation step). Clear win.
+              </p>
 
-                        <h3>Implementation Suggestions</h3>
-                        <ol>
-                            <li>Choose a reserved slug: <code>_</code> (underscore) or <code>workspace</code></li>
-                            <li>Add constraint at repository layer, not route handler</li>
-                            <li>Return 404 for non-default teamspace requests in single-tenant (don't silently redirect)</li>
-                        </ol>
+              <h3>Implementation Suggestions</h3>
+              <ol>
+                <li>
+                  Choose a reserved slug: <code>_</code> (underscore) or
+                  <code>workspace</code>
+                </li>
+                <li>Add constraint at repository layer, not route handler</li>
+                <li>
+                  Return 404 for non-default teamspace requests in single-tenant
+                  (don't silently redirect)
+                </li>
+              </ol>
 
-                        <p><em>"Make the easy path the correct path. With the unified approach, there's nothing to remember - the URL structure tells you what it means."</em></p>
-                    </div>
-                </div>
+              <p>
+                <em
+                  >"Make the easy path the correct path. With the unified
+                  approach, there's nothing to remember - the URL structure
+                  tells you what it means."</em
+                >
+              </p>
             </div>
+          </div>
+        </div>
 
-            <!-- TRON Response to Alternative -->
-            <div class="message">
-                <div class="avatar tron">TR</div>
-                <div class="message-content">
-                    <div class="message-header">
-                        <span class="agent-name">TRON</span>
-                        <span class="agent-role">Response to Alternative Proposal</span>
-                        <span class="timestamp">Just now</span>
-                    </div>
-                    <div class="message-text">
-                        <div class="verdict safe">STRONGLY RECOMMEND - Significantly better for users.</div>
-
-                        <h3>Is <code>/t/workspace/my-project/videos</code> Confusing?</h3>
-                        <p><strong>Minimally, and far less confusing than the alternative.</strong> Most users never notice URLs. Those who do are typically technical and will understand "workspace" as a sensible placeholder.</p>
-
-                        <h3>Recommended Slug: <code>workspace</code></h3>
-                        <table>
-                            <tr><th>Option</th><th>Pros</th><th>Cons</th></tr>
-                            <tr><td><code>default</code></td><td>Common convention</td><td>Feels like a placeholder</td></tr>
-                            <tr><td><code>main</code></td><td>Short, familiar</td><td>Confused with project name</td></tr>
-                            <tr><td><code>workspace</code></td><td>Self-descriptive</td><td>Slightly longer</td></tr>
-                        </table>
-                        <p><strong><code>workspace</code> wins</strong> - it answers "what is this?" without explanation.</p>
-
-                        <h3>The Migration Path Win</h3>
-                        <p>When a solo creator's channel grows:</p>
-                        <table>
-                            <tr><th>Current Approach</th><th>Unified Approach</th></tr>
-                            <tr><td>All URLs change structure</td><td>URLs remain valid</td></tr>
-                            <tr><td>All bookmarks break</td><td>Bookmarks work</td></tr>
-                            <tr><td>Mental model must rebuild</td><td>Mental model extends</td></tr>
-                        </table>
-                        <p>This is the <strong>exact growth path</strong> Streamline Studio is designed for.</p>
-
-                        <h3>Implementation UX Details</h3>
-                        <ul>
-                            <li><strong>Hide teamspace UI</strong> in single-tenant mode - don't show a selector with one option</li>
-                            <li><strong>Allow workspace rename</strong> - let users personalize even in single-tenant</li>
-                            <li><strong>Setup wizard</strong> - don't mention teamspaces in single-tenant setup</li>
-                            <li><strong>Breadcrumbs</strong> - start at project level, not workspace</li>
-                        </ul>
-
-                        <p><em>"This is exactly the kind of decision where developer convenience and user experience align. Fight for the user - in this case, that means fighting for consistency."</em></p>
-                    </div>
-                </div>
+        <!-- TRON Response to Alternative -->
+        <div class="message">
+          <div class="avatar tron">TR</div>
+          <div class="message-content">
+            <div class="message-header">
+              <span class="agent-name">TRON</span>
+              <span class="agent-role">Response to Alternative Proposal</span>
+              <span class="timestamp">Just now</span>
             </div>
+            <div class="message-text">
+              <div class="verdict safe">
+                STRONGLY RECOMMEND - Significantly better for users.
+              </div>
 
-            <!-- Security Response to Alternative -->
-            <div class="message">
-                <div class="avatar security">S</div>
-                <div class="message-content">
-                    <div class="message-header">
-                        <span class="agent-name">Security Architect</span>
-                        <span class="agent-role">Response to Alternative Proposal</span>
-                        <span class="timestamp">Just now</span>
-                    </div>
-                    <div class="message-text">
-                        <div class="verdict safe">RECOMMEND - Security-neutral to slightly positive.</div>
+              <h3>Is <code>/t/workspace/my-project/videos</code> Confusing?</h3>
+              <p>
+                <strong
+                  >Minimally, and far less confusing than the
+                  alternative.</strong
+                >
+                Most users never notice URLs. Those who do are typically
+                technical and will understand "workspace" as a sensible
+                placeholder.
+              </p>
 
-                        <h3>Fixed Slug Security Risk: LOW</h3>
-                        <p>The predictable <code>/t/workspace/</code> slug is <strong>not a meaningful security risk</strong>:</p>
-                        <ul>
-                            <li>Slugs are not secrets - they appear in URLs, bookmarks, shared links</li>
-                            <li>The slug alone grants no access - auth still gates all resources</li>
-                            <li>Attackers can fingerprint single-tenant via other signals anyway</li>
-                        </ul>
+              <h3>Recommended Slug: <code>workspace</code></h3>
+              <table>
+                <tr>
+                  <th>Option</th>
+                  <th>Pros</th>
+                  <th>Cons</th>
+                </tr>
+                <tr>
+                  <td><code>default</code></td>
+                  <td>Common convention</td>
+                  <td>Feels like a placeholder</td>
+                </tr>
+                <tr>
+                  <td><code>main</code></td>
+                  <td>Short, familiar</td>
+                  <td>Confused with project name</td>
+                </tr>
+                <tr>
+                  <td><code>workspace</code></td>
+                  <td>Self-descriptive</td>
+                  <td>Slightly longer</td>
+                </tr>
+              </table>
+              <p>
+                <strong><code>workspace</code> wins</strong> - it answers "what
+                is this?" without explanation.
+              </p>
 
-                        <h3>Authorization Complexity Comparison</h3>
-                        <pre>// CURRENT: Two code paths = two places for bugs
+              <h3>The Migration Path Win</h3>
+              <p>When a solo creator's channel grows:</p>
+              <table>
+                <tr>
+                  <th>Current Approach</th>
+                  <th>Unified Approach</th>
+                </tr>
+                <tr>
+                  <td>All URLs change structure</td>
+                  <td>URLs remain valid</td>
+                </tr>
+                <tr>
+                  <td>All bookmarks break</td>
+                  <td>Bookmarks work</td>
+                </tr>
+                <tr>
+                  <td>Mental model must rebuild</td>
+                  <td>Mental model extends</td>
+                </tr>
+              </table>
+              <p>
+                This is the <strong>exact growth path</strong> Streamline Studio
+                is designed for.
+              </p>
+
+              <h3>Implementation UX Details</h3>
+              <ul>
+                <li>
+                  <strong>Hide teamspace UI</strong> in single-tenant mode -
+                  don't show a selector with one option
+                </li>
+                <li>
+                  <strong>Allow workspace rename</strong> - let users
+                  personalize even in single-tenant
+                </li>
+                <li>
+                  <strong>Setup wizard</strong> - don't mention teamspaces in
+                  single-tenant setup
+                </li>
+                <li>
+                  <strong>Breadcrumbs</strong> - start at project level, not
+                  workspace
+                </li>
+              </ul>
+
+              <p>
+                <em
+                  >"This is exactly the kind of decision where developer
+                  convenience and user experience align. Fight for the user - in
+                  this case, that means fighting for consistency."</em
+                >
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security Response to Alternative -->
+        <div class="message">
+          <div class="avatar security">S</div>
+          <div class="message-content">
+            <div class="message-header">
+              <span class="agent-name">Security Architect</span>
+              <span class="agent-role">Response to Alternative Proposal</span>
+              <span class="timestamp">Just now</span>
+            </div>
+            <div class="message-text">
+              <div class="verdict safe">
+                RECOMMEND - Security-neutral to slightly positive.
+              </div>
+
+              <h3>Fixed Slug Security Risk: LOW</h3>
+              <p>
+                The predictable <code>/t/workspace/</code> slug is
+                <strong>not a meaningful security risk</strong>:
+              </p>
+              <ul>
+                <li>
+                  Slugs are not secrets - they appear in URLs, bookmarks, shared
+                  links
+                </li>
+                <li>
+                  The slug alone grants no access - auth still gates all
+                  resources
+                </li>
+                <li>
+                  Attackers can fingerprint single-tenant via other signals
+                  anyway
+                </li>
+              </ul>
+
+              <h3>Authorization Complexity Comparison</h3>
+              <pre>
+// CURRENT: Two code paths = two places for bugs
 if (isMultiTenant()) {
   // path 1
 } else {
@@ -672,75 +1049,151 @@ if (isMultiTenant()) {
 // PROPOSED: Single authorization pattern
 const teamspace = await getTeamspace(params.teamspace);
 const project = await getProject(params.project, teamspace.id);
-// One code path, one mental model</pre>
+// One code path, one mental model</pre
+              >
 
-                        <h3>Secure Constraint Enforcement (3 Layers)</h3>
-                        <ol>
-                            <li><strong>Database:</strong> Trigger that prevents second teamspace in single-tenant</li>
-                            <li><strong>Repository:</strong> Business logic check in <code>createTeamspace()</code></li>
-                            <li><strong>API:</strong> tRPC endpoint returns FORBIDDEN in single-tenant mode</li>
-                        </ol>
+              <h3>Secure Constraint Enforcement (3 Layers)</h3>
+              <ol>
+                <li>
+                  <strong>Database:</strong> Trigger that prevents second
+                  teamspace in single-tenant
+                </li>
+                <li>
+                  <strong>Repository:</strong> Business logic check in
+                  <code>createTeamspace()</code>
+                </li>
+                <li>
+                  <strong>API:</strong> tRPC endpoint returns FORBIDDEN in
+                  single-tenant mode
+                </li>
+              </ol>
 
-                        <h3>Migration Security</h3>
-                        <p>When migrating single-to-multi tenant:</p>
-                        <ul>
-                            <li>Require admin re-authentication</li>
-                            <li>Audit log the transition</li>
-                            <li>Optionally invalidate all sessions</li>
-                            <li>Allow renaming <code>workspace</code> to custom slug</li>
-                        </ul>
+              <h3>Migration Security</h3>
+              <p>When migrating single-to-multi tenant:</p>
+              <ul>
+                <li>Require admin re-authentication</li>
+                <li>Audit log the transition</li>
+                <li>Optionally invalidate all sessions</li>
+                <li>Allow renaming <code>workspace</code> to custom slug</li>
+              </ul>
 
-                        <h3>Security Trade-off Summary</h3>
-                        <table>
-                            <tr><th>Aspect</th><th>Current</th><th>Unified</th><th>Winner</th></tr>
-                            <tr><td>Auth complexity</td><td>Higher (two paths)</td><td>Lower (one path)</td><td>Unified</td></tr>
-                            <tr><td>Testing surface</td><td>Larger</td><td>Smaller</td><td>Unified</td></tr>
-                            <tr><td>URL predictability</td><td>Variable</td><td>Fixed</td><td>Neutral</td></tr>
-                        </table>
+              <h3>Security Trade-off Summary</h3>
+              <table>
+                <tr>
+                  <th>Aspect</th>
+                  <th>Current</th>
+                  <th>Unified</th>
+                  <th>Winner</th>
+                </tr>
+                <tr>
+                  <td>Auth complexity</td>
+                  <td>Higher (two paths)</td>
+                  <td>Lower (one path)</td>
+                  <td>Unified</td>
+                </tr>
+                <tr>
+                  <td>Testing surface</td>
+                  <td>Larger</td>
+                  <td>Smaller</td>
+                  <td>Unified</td>
+                </tr>
+                <tr>
+                  <td>URL predictability</td>
+                  <td>Variable</td>
+                  <td>Fixed</td>
+                  <td>Neutral</td>
+                </tr>
+              </table>
 
-                        <p><em>"The security benefits of simplified authorization logic outweigh the negligible risks of a predictable slug."</em></p>
-                    </div>
-                </div>
+              <p>
+                <em
+                  >"The security benefits of simplified authorization logic
+                  outweigh the negligible risks of a predictable slug."</em
+                >
+              </p>
             </div>
+          </div>
         </div>
+      </div>
 
-        <!-- Final Consensus -->
-        <div class="consensus">
-            <h2>Final Team Consensus</h2>
-            <div class="consensus-content">
-                <h3>UNANIMOUS: Adopt the Unified Approach</h3>
-                <p>All three reviewers strongly recommend the single-teamspace approach for single-tenant mode.</p>
+      <!-- Final Consensus -->
+      <div class="consensus">
+        <h2>Final Team Consensus</h2>
+        <div class="consensus-content">
+          <h3>UNANIMOUS: Adopt the Unified Approach</h3>
+          <p>
+            All three reviewers strongly recommend the single-teamspace approach
+            for single-tenant mode.
+          </p>
 
-                <h3>Key Benefits</h3>
-                <ul>
-                    <li><strong>Eliminates semantic ambiguity</strong> - <code>[teamspace]</code> always means teamspace</li>
-                    <li><strong>One mental model</strong> - same URL structure everywhere</li>
-                    <li><strong>Simpler codebase</strong> - removes pervasive mode-checking logic</li>
-                    <li><strong>Better testing</strong> - single test suite, no mode branching</li>
-                    <li><strong>Clean migration path</strong> - bookmarks survive single→multi transition</li>
-                    <li><strong>Reduced auth complexity</strong> - one authorization path, fewer bugs</li>
-                </ul>
+          <h3>Key Benefits</h3>
+          <ul>
+            <li>
+              <strong>Eliminates semantic ambiguity</strong> -
+              <code>[teamspace]</code> always means teamspace
+            </li>
+            <li>
+              <strong>One mental model</strong> - same URL structure everywhere
+            </li>
+            <li>
+              <strong>Simpler codebase</strong> - removes pervasive
+              mode-checking logic
+            </li>
+            <li>
+              <strong>Better testing</strong> - single test suite, no mode
+              branching
+            </li>
+            <li>
+              <strong>Clean migration path</strong> - bookmarks survive
+              single→multi transition
+            </li>
+            <li>
+              <strong>Reduced auth complexity</strong> - one authorization path,
+              fewer bugs
+            </li>
+          </ul>
 
-                <h3>Recommended Implementation</h3>
-                <ul>
-                    <li><strong>Fixed slug:</strong> <code>workspace</code> (self-descriptive, user-friendly)</li>
-                    <li><strong>UI:</strong> Hide teamspace selector in single-tenant (invisible infrastructure)</li>
-                    <li><strong>Breadcrumbs:</strong> Start at project level, not workspace</li>
-                    <li><strong>Constraint:</strong> Three-layer enforcement (DB trigger + repository + API)</li>
-                    <li><strong>Migration:</strong> Allow renaming <code>workspace</code> when upgrading to multi-tenant</li>
-                </ul>
+          <h3>Recommended Implementation</h3>
+          <ul>
+            <li>
+              <strong>Fixed slug:</strong>
+              <code>workspace</code> (self-descriptive, user-friendly)
+            </li>
+            <li>
+              <strong>UI:</strong> Hide teamspace selector in single-tenant
+              (invisible infrastructure)
+            </li>
+            <li>
+              <strong>Breadcrumbs:</strong> Start at project level, not
+              workspace
+            </li>
+            <li>
+              <strong>Constraint:</strong> Three-layer enforcement (DB trigger +
+              repository + API)
+            </li>
+            <li>
+              <strong>Migration:</strong> Allow renaming
+              <code>workspace</code> when upgrading to multi-tenant
+            </li>
+          </ul>
 
-                <h3>Next Steps</h3>
-                <ol>
-                    <li>Refactor routes to always use <code>/t/[teamspace]/[project]/...</code></li>
-                    <li>Auto-create <code>workspace</code> teamspace on single-tenant setup</li>
-                    <li>Add single-teamspace constraint enforcement</li>
-                    <li>Update providers to always expect teamspace context</li>
-                    <li>Hide teamspace UI in single-tenant mode</li>
-                    <li>Fix the <code>/w/</code> breadcrumb bug (still relevant)</li>
-                </ol>
-            </div>
+          <h3>Next Steps</h3>
+          <ol>
+            <li>
+              Refactor routes to always use
+              <code>/t/[teamspace]/[project]/...</code>
+            </li>
+            <li>
+              Auto-create <code>workspace</code> teamspace on single-tenant
+              setup
+            </li>
+            <li>Add single-teamspace constraint enforcement</li>
+            <li>Update providers to always expect teamspace context</li>
+            <li>Hide teamspace UI in single-tenant mode</li>
+            <li>Fix the <code>/w/</code> breadcrumb bug (still relevant)</li>
+          </ol>
         </div>
+      </div>
     </div>
-</body>
+  </body>
 </html>
