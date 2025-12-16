@@ -137,8 +137,10 @@ test.describe('User Login Flow', () => {
       await registerButton.waitFor({ state: 'visible' });
       await registerButton.click();
 
-      // Wait for registration to complete
-      await expect(page).toHaveURL('/', { timeout: 10000 });
+      // Wait for registration to complete - redirects to dashboard
+      await expect(page).toHaveURL(/\/t\/workspace\/.*\/videos/, {
+        timeout: 10000,
+      });
 
       // Now logout and login again
       // (For now, just clear cookies and try logging in)
@@ -155,8 +157,10 @@ test.describe('User Login Flow', () => {
       await signInButton.waitFor({ state: 'visible' });
       await signInButton.click();
 
-      // Should redirect to dashboard
-      await expect(page).toHaveURL('/', { timeout: 10000 });
+      // Should redirect to dashboard (unified routing)
+      await expect(page).toHaveURL(/\/t\/workspace\/.*\/videos/, {
+        timeout: 10000,
+      });
     });
 
     test('shows loading state during submission', async ({ page }) => {
