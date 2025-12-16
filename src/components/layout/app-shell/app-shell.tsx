@@ -4,7 +4,14 @@ import { type ReactNode, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { Video, Tag, Users, Settings, LogOut, Building2 } from 'lucide-react';
+import {
+  Tag,
+  Users,
+  Settings,
+  LogOut,
+  Building2,
+  ClipboardList,
+} from 'lucide-react';
 import { trpc } from '@/lib/trpc/client';
 import { SkipLink } from '@/components/ui/skip-link';
 import { ProjectSwitcher } from '@/components/project/project-switcher';
@@ -42,10 +49,10 @@ export interface AppShellProps {
  */
 const navigationItems = [
   {
-    name: 'Videos',
-    href: '/videos',
-    icon: 'video',
-    ariaLabel: 'Navigate to videos page',
+    name: 'Content Plan',
+    href: '/content-plan',
+    icon: 'clipboard-list',
+    ariaLabel: 'Navigate to content plan page',
     requiresPermission: null,
   },
   {
@@ -145,7 +152,7 @@ export function AppShell({
       <aside className={styles.sidebar} aria-label="Main navigation">
         <div className={styles.sidebarHeader}>
           <h1 className={styles.logo}>
-            <Link href={buildLink('/videos')}>
+            <Link href={buildLink('/content-plan')}>
               <Image
                 src="/streamline-studio-logo.png"
                 alt="Streamline Studio"
@@ -212,8 +219,8 @@ export function AppShell({
                     aria-current={isActive(item.href) ? 'page' : undefined}
                   >
                     <span className={styles.navIcon} aria-hidden="true">
-                      {item.icon === 'video' && (
-                        <Video className={styles.icon} />
+                      {item.icon === 'clipboard-list' && (
+                        <ClipboardList className={styles.icon} />
                       )}
                       {item.icon === 'tag' && <Tag className={styles.icon} />}
                       {item.icon === 'team' && (

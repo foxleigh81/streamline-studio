@@ -5,12 +5,12 @@ import { logger } from '@/lib/logger';
 import styles from './error.module.scss';
 
 /**
- * Videos Route Error Page
+ * Content Plan Route Error Page
  *
- * Error boundary for the videos list and detail pages.
+ * Error boundary for the content plan list and detail pages.
  * Provides context-specific error handling with navigation back to project.
  */
-export default function VideosError({
+export default function ContentPlanError({
   error,
   reset,
 }: {
@@ -22,7 +22,7 @@ export default function VideosError({
   // Log error with Pino structured logging
   logger.error(
     { error: error.message, digest: error.digest, stack: error.stack },
-    'Videos page error occurred'
+    'Content plan page error occurred'
   );
 
   return (
@@ -46,16 +46,16 @@ export default function VideosError({
             </svg>
           </div>
           <div className={styles.headingGroup}>
-            <h2 className={styles.heading}>Videos Error</h2>
+            <h2 className={styles.heading}>Content Plan Error</h2>
             <p className={styles.subheading}>
-              There was a problem loading videos
+              There was a problem loading content plan
             </p>
           </div>
         </div>
 
         <div className={styles.errorDetails}>
           <p className={styles.errorMessage}>
-            {error.message || 'Failed to load videos'}
+            {error.message || 'Failed to load content plan'}
           </p>
           {error.digest && (
             <p className={styles.errorDigest}>Error ID: {error.digest}</p>

@@ -156,7 +156,7 @@ export function ProjectSwitcher({
     setIsOpen(false);
     if (slug !== projectSlug) {
       // Always use unified routing structure
-      router.push(`/t/${effectiveTeamspaceSlug}/${slug}/videos`);
+      router.push(`/t/${effectiveTeamspaceSlug}/${slug}/content-plan`);
     }
   };
 

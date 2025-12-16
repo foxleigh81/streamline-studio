@@ -1,13 +1,13 @@
 import { Skeleton } from '@/components/ui/skeleton';
-import styles from './videos-page.module.scss';
+import styles from './content-plan-page.module.scss';
 
 /**
- * Videos Page Loading State
+ * Content Plan Loading State
  *
- * Skeleton loader displayed while video data is being fetched.
- * Matches the layout of the actual videos page.
+ * Skeleton loader displayed while content plan data is being fetched.
+ * Matches the layout of the actual content plan page.
  */
-export default function VideosLoading() {
+export default function ContentPlanLoading() {
   return (
     <div className={styles.container}>
       <span className="sr-only">Loading videos...</span>

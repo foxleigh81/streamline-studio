@@ -30,6 +30,7 @@ import {
   createSessionCookie,
 } from '@/lib/auth/session';
 import { workspaceRoleSchema } from '@/lib/schemas/workspace';
+import { logger } from '@/lib/logger';
 
 /**
  * Email validation schema
@@ -164,7 +165,7 @@ export const invitationRouter = router({
         ctx.user.name || ctx.user.email,
         invitationUrl
       ).catch((error) => {
-        console.error('[Invitation] Failed to send invitation email:', error);
+        logger.error({ error }, '[Invitation] Failed to send invitation email');
       });
 
       return {

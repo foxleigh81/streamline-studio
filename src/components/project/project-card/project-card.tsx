@@ -81,7 +81,7 @@ export function ProjectCard({
   teamspaceSlug,
   className,
 }: ProjectCardProps) {
-  const href = `/t/${teamspaceSlug}/${slug}/videos`;
+  const href = `/t/${teamspaceSlug}/${slug}/content-plan`;
 
   const roleBadgeClass = getRoleBadgeClass(role);
 

@@ -28,7 +28,7 @@ import type { BreadcrumbItem } from '@/components/ui/breadcrumb';
  * ```tsx
  * function VideoPage() {
  *   const breadcrumbs = useBreadcrumbs([
- *     { label: 'Videos', href: `/t/${teamspaceSlug}/${projectSlug}/videos` },
+ *     { label: 'Content Plan', href: `/t/${teamspaceSlug}/${projectSlug}/content-plan` },
  *     { label: videoTitle }
  *   ]);
  *
@@ -58,7 +58,7 @@ export function useBreadcrumbs(
     if (project && teamspace) {
       baseCrumbs.push({
         label: project.name,
-        href: `/t/${teamspace.slug}/${project.slug}/videos`,
+        href: `/t/${teamspace.slug}/${project.slug}/content-plan`,
       });
     }
 
@@ -78,7 +78,7 @@ export function useBreadcrumbs(
  * ```tsx
  * function VideoLink({ videoId }: { videoId: string }) {
  *   const baseUrl = useBaseUrl();
- *   return <Link href={`${baseUrl}/videos/${videoId}`}>View Video</Link>;
+ *   return <Link href={`${baseUrl}/content-plan/${videoId}`}>View Video</Link>;
  * }
  * ```
  */

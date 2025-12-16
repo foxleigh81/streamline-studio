@@ -21,6 +21,7 @@ import {
 } from '@/server/db/schema';
 import type { ProjectRole, TeamspaceRole } from '@/server/db/schema';
 import { serverEnv } from '@/lib/env';
+import { generateSlug, generateUniqueSlug } from '@/lib/utils/slug';
 
 /**
  * Map TeamspaceRole to ProjectRole
@@ -374,11 +375,8 @@ export const projectRouter = router({
         });
       }
 
-      // Generate slug from name
-      const baseSlug = input.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '');
+      // Generate slug from name using shared utility
+      const baseSlug = generateSlug(input.name, 'my-project');
 
       // Check if slug is unique, append random suffix if not
       let slug = baseSlug;
@@ -397,9 +395,8 @@ export const projectRouter = router({
           break;
         }
 
-        // Append random suffix
-        const randomSuffix = Math.random().toString(36).substring(2, 8);
-        slug = `${baseSlug}-${randomSuffix}`;
+        // Generate unique slug with random suffix
+        slug = generateUniqueSlug(baseSlug);
         attempts++;
       }
 

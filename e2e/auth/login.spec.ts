@@ -138,7 +138,7 @@ test.describe('User Login Flow', () => {
       await registerButton.click();
 
       // Wait for registration to complete - redirects to dashboard
-      await expect(page).toHaveURL(/\/t\/workspace\/.*\/videos/, {
+      await expect(page).toHaveURL(/\/t\/workspace\/.*\/content-plan/, {
         timeout: 10000,
       });
 
@@ -158,7 +158,7 @@ test.describe('User Login Flow', () => {
       await signInButton.click();
 
       // Should redirect to dashboard (unified routing)
-      await expect(page).toHaveURL(/\/t\/workspace\/.*\/videos/, {
+      await expect(page).toHaveURL(/\/t\/workspace\/.*\/content-plan/, {
         timeout: 10000,
       });
     });

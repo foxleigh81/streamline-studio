@@ -30,6 +30,8 @@ import {
   validateSetupRequirements,
 } from '@/lib/setup';
 import { DEFAULT_SINGLE_TENANT_TEAMSPACE_SLUG } from '@/server/repositories';
+import { generateSlug } from '@/lib/utils/slug';
+import { logger } from '@/lib/logger';
 
 /**
  * Email validation schema
@@ -194,11 +196,15 @@ export const setupRouter = router({
           });
 
           // Create project within the teamspace
+          // Generate slug from project name (fixes bug where all projects got 'default' slug)
+          const finalProjectName = projectName ?? 'My Project';
+          const projectSlug = generateSlug(finalProjectName, 'my-project');
+
           const projectResult = await tx
             .insert(projects)
             .values({
-              name: projectName ?? 'My Project',
-              slug: 'default',
+              name: finalProjectName,
+              slug: projectSlug,
               mode: 'single-tenant',
               teamspaceId: teamspace.id,
             })
@@ -231,7 +237,7 @@ export const setupRouter = router({
       try {
         await markSetupComplete();
       } catch (error) {
-        console.error('[Setup] Failed to mark setup as complete:', error);
+        logger.error({ error }, '[Setup] Failed to mark setup as complete');
         // This is critical - if we can't persist the flag, we should fail
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
@@ -248,12 +254,15 @@ export const setupRouter = router({
       const cookie = createSessionCookie(sessionToken);
       ctx.headers.set('Set-Cookie', cookie);
 
-      console.warn('[Setup] Initial setup completed successfully', {
-        userId: newUser.id,
-        teamspaceId: newTeamspace.id,
-        teamspaceSlug: newTeamspace.slug,
-        projectId: newProject.id,
-      });
+      logger.info(
+        {
+          userId: newUser.id,
+          teamspaceId: newTeamspace.id,
+          teamspaceSlug: newTeamspace.slug,
+          projectId: newProject.id,
+        },
+        '[Setup] Initial setup completed successfully'
+      );
 
       return {
         success: true,

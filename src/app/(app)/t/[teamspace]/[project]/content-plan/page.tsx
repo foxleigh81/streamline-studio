@@ -9,15 +9,15 @@ import type { VideoFormData } from '@/components/video/video-form-modal';
 import { Button } from '@/components/ui/button';
 import { useParams } from 'next/navigation';
 import { announce } from '@/lib/accessibility/aria';
-import styles from './videos-page.module.scss';
+import styles from './content-plan-page.module.scss';
 
 /**
- * Videos Page
+ * Content Plan Page
  *
  * Displays a grid of video cards with ability to create new videos.
  * Uses tRPC for data fetching and mutations.
  */
-export default function VideosPage() {
+export default function ContentPlanPage() {
   const params = useParams<{ teamspace: string; project: string }>();
   const projectSlug = params.project;
   const teamspaceSlug = params.teamspace;
@@ -78,7 +78,7 @@ export default function VideosPage() {
    */
   useEffect(() => {
     if (isLoadingVideos) {
-      announce('Loading videos...');
+      announce('Loading content plan...');
     } else if (videos.length > 0) {
       announce(
         `Loaded ${videos.length} video${videos.length === 1 ? '' : 's'}`
@@ -93,7 +93,7 @@ export default function VideosPage() {
       {/* Header */}
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>Videos</h1>
+          <h1 className={styles.title}>Content Plan</h1>
           <p className={styles.subtitle}>
             Manage your video projects and content pipeline
           </p>
@@ -104,8 +104,8 @@ export default function VideosPage() {
       {/* Loading State */}
       {isLoadingVideos && (
         <div className={styles.loading}>
-          <div className={styles.spinner} aria-label="Loading videos" />
-          <p>Loading videos...</p>
+          <div className={styles.spinner} aria-label="Loading content plan" />
+          <p>Loading content plan...</p>
         </div>
       )}
 

@@ -84,7 +84,7 @@ export function VideoCard({
 
   return (
     <Link
-      href={`/t/${effectiveTeamspace}/${projectSlug}/videos/${id}`}
+      href={`/t/${effectiveTeamspace}/${projectSlug}/content-plan/${id}`}
       className={cardClasses}
       onClick={handleClick}
       aria-label={`View video: ${title}`}

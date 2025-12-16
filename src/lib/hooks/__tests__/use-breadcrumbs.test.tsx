@@ -89,7 +89,7 @@ describe('useBreadcrumbs', () => {
       expect(result.current).toHaveLength(1);
       expect(result.current[0]).toEqual({
         label: 'My Project',
-        href: '/t/workspace/my-project/videos',
+        href: '/t/workspace/my-project/content-plan',
       });
     });
 
@@ -133,7 +133,10 @@ describe('useBreadcrumbs', () => {
       const { result } = renderHook(
         () =>
           useBreadcrumbs([
-            { label: 'Videos', href: '/t/workspace/my-project/videos' },
+            {
+              label: 'Content Plan',
+              href: '/t/workspace/my-project/content-plan',
+            },
             { label: 'Video Title' },
           ]),
         { wrapper }
@@ -141,8 +144,8 @@ describe('useBreadcrumbs', () => {
 
       expect(result.current).toHaveLength(3);
       expect(result.current).toEqual([
-        { label: 'My Project', href: '/t/workspace/my-project/videos' },
-        { label: 'Videos', href: '/t/workspace/my-project/videos' },
+        { label: 'My Project', href: '/t/workspace/my-project/content-plan' },
+        { label: 'Content Plan', href: '/t/workspace/my-project/content-plan' },
         { label: 'Video Title' },
       ]);
     });
@@ -226,7 +229,7 @@ describe('useBreadcrumbs', () => {
       expect(result.current).toHaveLength(2);
       expect(result.current).toEqual([
         { label: 'My Team', href: '/t/my-team' },
-        { label: 'My Project', href: '/t/my-team/my-project/videos' },
+        { label: 'My Project', href: '/t/my-team/my-project/content-plan' },
       ]);
     });
 
@@ -270,10 +273,13 @@ describe('useBreadcrumbs', () => {
       const { result } = renderHook(
         () =>
           useBreadcrumbs([
-            { label: 'Videos', href: '/t/my-team/my-project/videos' },
+            {
+              label: 'Content Plan',
+              href: '/t/my-team/my-project/content-plan',
+            },
             {
               label: 'Video Details',
-              href: '/t/my-team/my-project/videos/123',
+              href: '/t/my-team/my-project/content-plan/123',
             },
             { label: 'Script Editor' },
           ]),
@@ -283,9 +289,12 @@ describe('useBreadcrumbs', () => {
       expect(result.current).toHaveLength(5);
       expect(result.current).toEqual([
         { label: 'My Team', href: '/t/my-team' },
-        { label: 'My Project', href: '/t/my-team/my-project/videos' },
-        { label: 'Videos', href: '/t/my-team/my-project/videos' },
-        { label: 'Video Details', href: '/t/my-team/my-project/videos/123' },
+        { label: 'My Project', href: '/t/my-team/my-project/content-plan' },
+        { label: 'Content Plan', href: '/t/my-team/my-project/content-plan' },
+        {
+          label: 'Video Details',
+          href: '/t/my-team/my-project/content-plan/123',
+        },
         { label: 'Script Editor' },
       ]);
     });

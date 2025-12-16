@@ -13,6 +13,45 @@
   padding: var(--spacing-6);
 }
 
+// Branding section
+.branding {
+  margin-bottom: var(--spacing-4);
+}
+
+.logo {
+  height: auto;
+  width: auto;
+  max-height: 40px;
+}
+
+// Welcome banner (compact)
+.welcome {
+  margin-bottom: var(--spacing-6);
+  padding: var(--spacing-4);
+  background: linear-gradient(
+    135deg,
+    var(--palette-red-50) 0%,
+    var(--palette-red-100) 100%
+  );
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--palette-red-200);
+}
+
+.welcomeTitle {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--palette-red-900);
+  margin: 0 0 var(--spacing-1) 0;
+  line-height: 1.3;
+}
+
+.welcomeSubtitle {
+  font-size: var(--font-size-sm);
+  color: var(--palette-red-700);
+  margin: 0;
+  line-height: 1.4;
+}
+
 .header {
   display: flex;
   align-items: flex-start;
@@ -24,14 +63,14 @@
 .title {
   font-size: var(--font-size-3xl);
   font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
+  color: var(--color-foreground);
   margin: 0 0 var(--spacing-2) 0;
   line-height: 1.2;
 }
 
 .description {
-  font-size: var(--font-size-md);
-  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
+  color: var(--color-foreground-muted);
   margin: 0;
   line-height: 1.5;
 }
@@ -52,6 +91,27 @@
 @media (max-width: 768px) {
   .container {
     padding: var(--spacing-4);
+  }
+
+  .branding {
+    margin-bottom: var(--spacing-3);
+  }
+
+  .logo {
+    max-height: 32px;
+  }
+
+  .welcome {
+    padding: var(--spacing-3);
+    margin-bottom: var(--spacing-4);
+  }
+
+  .welcomeTitle {
+    font-size: var(--font-size-lg);
+  }
+
+  .welcomeSubtitle {
+    font-size: var(--font-size-xs);
   }
 
   .header {
@@ -77,6 +137,27 @@
 @media (max-width: 480px) {
   .container {
     padding: var(--spacing-3);
+  }
+
+  .branding {
+    margin-bottom: var(--spacing-2);
+  }
+
+  .logo {
+    max-height: 28px;
+  }
+
+  .welcome {
+    padding: var(--spacing-2);
+    margin-bottom: var(--spacing-3);
+  }
+
+  .welcomeTitle {
+    font-size: var(--font-size-base);
+  }
+
+  .welcomeSubtitle {
+    font-size: var(--font-size-xs);
   }
 
   .title {

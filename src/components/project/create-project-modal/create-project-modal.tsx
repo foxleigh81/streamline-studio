@@ -50,7 +50,7 @@ export function CreateProjectModal({
       utils.project.list.invalidate();
       // Redirect to new project using unified routing
       const effectiveTeamspace = teamspaceSlug ?? 'workspace';
-      router.push(`/t/${effectiveTeamspace}/${data.slug}/videos`);
+      router.push(`/t/${effectiveTeamspace}/${data.slug}/content-plan`);
       // Close modal
       handleClose();
     },

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { ProjectCard } from '@/components/project/project-card';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -72,11 +73,36 @@ export function TeamspaceDashboard({
   return (
     <>
       <div className={styles.container}>
+        {/* Branding header */}
+        <div className={styles.branding}>
+          <Image
+            src="/streamline-studio-logo.png"
+            alt="Streamline Studio"
+            width={180}
+            height={40}
+            className={styles.logo}
+            priority
+          />
+        </div>
+
+        {/* Welcome banner */}
+        <div className={styles.welcome}>
+          <h1 className={styles.welcomeTitle}>
+            Welcome to the {teamspaceName ?? 'Workspace'} dashboard
+          </h1>
+          <p className={styles.welcomeSubtitle}>
+            Manage your video projects and content pipeline
+          </p>
+        </div>
+
+        {/* Projects section */}
         <header className={styles.header}>
           <div>
-            <h1 className={styles.title}>{teamspaceName ?? 'Projects'}</h1>
+            <h2 className={styles.title}>Your Projects</h2>
             <p className={styles.description}>
-              Select a project to view and manage your video scripts
+              {projects.length === 1
+                ? '1 project'
+                : `${projects.length} projects`}
             </p>
           </div>
           {canCreateProject && (
