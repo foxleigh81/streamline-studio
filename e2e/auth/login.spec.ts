@@ -137,8 +137,8 @@ test.describe('User Login Flow', () => {
       await registerButton.waitFor({ state: 'visible' });
       await registerButton.click();
 
-      // Wait for registration to complete - redirects to dashboard
-      await expect(page).toHaveURL(/\/t\/workspace\/.*\/content-plan/, {
+      // Wait for registration to complete - redirects to teamspace dashboard
+      await expect(page).toHaveURL(/\/t\/workspace/, {
         timeout: 10000,
       });
 
@@ -157,8 +157,8 @@ test.describe('User Login Flow', () => {
       await signInButton.waitFor({ state: 'visible' });
       await signInButton.click();
 
-      // Should redirect to dashboard (unified routing)
-      await expect(page).toHaveURL(/\/t\/workspace\/.*\/content-plan/, {
+      // Should redirect to teamspace dashboard (unified routing)
+      await expect(page).toHaveURL(/\/t\/workspace/, {
         timeout: 10000,
       });
     });
