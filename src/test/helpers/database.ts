@@ -117,10 +117,11 @@ export async function resetTestDatabase() {
       video_categories,
       videos,
       categories,
-      project_users,
+      invitations,
+      channel_users,
       sessions,
       users,
-      projects,
+      channels,
       teamspace_users,
       teamspaces
     RESTART IDENTITY CASCADE
