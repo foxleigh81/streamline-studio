@@ -23,6 +23,25 @@ CREATE TABLE "categories" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "channel_users" (
+	"channel_id" uuid NOT NULL,
+	"user_id" uuid NOT NULL,
+	"role" "workspace_role" DEFAULT 'editor' NOT NULL,
+	"role_override" "workspace_role",
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "channel_users_channel_id_user_id_pk" PRIMARY KEY("channel_id","user_id")
+);
+--> statement-breakpoint
+CREATE TABLE "channels" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"teamspace_id" uuid,
+	"name" text NOT NULL,
+	"slug" text NOT NULL,
+	"mode" "workspace_mode" DEFAULT 'single-tenant' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "document_revisions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"document_id" uuid NOT NULL,
@@ -55,25 +74,6 @@ CREATE TABLE "invitations" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"accepted_at" timestamp with time zone,
 	CONSTRAINT "invitations_token_unique" UNIQUE("token")
-);
---> statement-breakpoint
-CREATE TABLE "project_users" (
-	"project_id" uuid NOT NULL,
-	"user_id" uuid NOT NULL,
-	"role" "workspace_role" DEFAULT 'editor' NOT NULL,
-	"role_override" "workspace_role",
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "project_users_project_id_user_id_pk" PRIMARY KEY("project_id","user_id")
-);
---> statement-breakpoint
-CREATE TABLE "projects" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"teamspace_id" uuid,
-	"name" text NOT NULL,
-	"slug" text NOT NULL,
-	"mode" "workspace_mode" DEFAULT 'single-tenant' NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "sessions" (
@@ -136,32 +136,32 @@ CREATE TABLE "videos" (
 	"created_by" uuid
 );
 --> statement-breakpoint
-ALTER TABLE "audit_log" ADD CONSTRAINT "audit_log_workspace_id_projects_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."projects"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "audit_log" ADD CONSTRAINT "audit_log_workspace_id_channels_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."channels"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "audit_log" ADD CONSTRAINT "audit_log_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "categories" ADD CONSTRAINT "categories_workspace_id_projects_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."projects"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "categories" ADD CONSTRAINT "categories_workspace_id_channels_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."channels"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "channel_users" ADD CONSTRAINT "channel_users_channel_id_channels_id_fk" FOREIGN KEY ("channel_id") REFERENCES "public"."channels"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "channel_users" ADD CONSTRAINT "channel_users_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "channels" ADD CONSTRAINT "channels_teamspace_id_teamspaces_id_fk" FOREIGN KEY ("teamspace_id") REFERENCES "public"."teamspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "document_revisions" ADD CONSTRAINT "document_revisions_document_id_documents_id_fk" FOREIGN KEY ("document_id") REFERENCES "public"."documents"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "document_revisions" ADD CONSTRAINT "document_revisions_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "documents" ADD CONSTRAINT "documents_video_id_videos_id_fk" FOREIGN KEY ("video_id") REFERENCES "public"."videos"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "documents" ADD CONSTRAINT "documents_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "invitations" ADD CONSTRAINT "invitations_workspace_id_projects_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."projects"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "invitations" ADD CONSTRAINT "invitations_workspace_id_channels_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."channels"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "invitations" ADD CONSTRAINT "invitations_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "project_users" ADD CONSTRAINT "project_users_project_id_projects_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "project_users" ADD CONSTRAINT "project_users_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "projects" ADD CONSTRAINT "projects_teamspace_id_teamspaces_id_fk" FOREIGN KEY ("teamspace_id") REFERENCES "public"."teamspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "teamspace_users" ADD CONSTRAINT "teamspace_users_teamspace_id_teamspaces_id_fk" FOREIGN KEY ("teamspace_id") REFERENCES "public"."teamspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "teamspace_users" ADD CONSTRAINT "teamspace_users_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "video_categories" ADD CONSTRAINT "video_categories_video_id_videos_id_fk" FOREIGN KEY ("video_id") REFERENCES "public"."videos"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "video_categories" ADD CONSTRAINT "video_categories_category_id_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."categories"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "videos" ADD CONSTRAINT "videos_workspace_id_projects_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."projects"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "videos" ADD CONSTRAINT "videos_workspace_id_channels_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."channels"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "videos" ADD CONSTRAINT "videos_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "idx_audit_workspace" ON "audit_log" USING btree ("workspace_id");--> statement-breakpoint
 CREATE INDEX "idx_audit_entity" ON "audit_log" USING btree ("entity_type","entity_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "channels_teamspace_slug_unique" ON "channels" USING btree ("teamspace_id","slug");--> statement-breakpoint
 CREATE INDEX "idx_revisions_document_created" ON "document_revisions" USING btree ("document_id","created_at");--> statement-breakpoint
 CREATE INDEX "idx_documents_video_type" ON "documents" USING btree ("video_id","type");--> statement-breakpoint
 CREATE INDEX "idx_invitations_workspace" ON "invitations" USING btree ("workspace_id");--> statement-breakpoint
 CREATE INDEX "idx_invitations_email" ON "invitations" USING btree ("email");--> statement-breakpoint
 CREATE INDEX "idx_invitations_token" ON "invitations" USING btree ("token");--> statement-breakpoint
-CREATE UNIQUE INDEX "projects_teamspace_slug_unique" ON "projects" USING btree ("teamspace_id","slug");--> statement-breakpoint
 CREATE INDEX "idx_videos_workspace_status" ON "videos" USING btree ("workspace_id","status");--> statement-breakpoint
 CREATE INDEX "idx_videos_workspace_due_date" ON "videos" USING btree ("workspace_id","due_date");

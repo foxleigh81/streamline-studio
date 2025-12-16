@@ -1,5 +1,5 @@
 {
-  "id": "d3504b72-c69d-4e53-9cf2-4d4daa870938",
+  "id": "49edb373-dd6b-4d84-a488-a0101f036007",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -98,10 +98,10 @@
         }
       },
       "foreignKeys": {
-        "audit_log_workspace_id_projects_id_fk": {
-          "name": "audit_log_workspace_id_projects_id_fk",
+        "audit_log_workspace_id_channels_id_fk": {
+          "name": "audit_log_workspace_id_channels_id_fk",
           "tableFrom": "audit_log",
-          "tableTo": "projects",
+          "tableTo": "channels",
           "columnsFrom": ["workspace_id"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
@@ -170,11 +170,174 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "categories_workspace_id_projects_id_fk": {
-          "name": "categories_workspace_id_projects_id_fk",
+        "categories_workspace_id_channels_id_fk": {
+          "name": "categories_workspace_id_channels_id_fk",
           "tableFrom": "categories",
-          "tableTo": "projects",
+          "tableTo": "channels",
           "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.channel_users": {
+      "name": "channel_users",
+      "schema": "",
+      "columns": {
+        "channel_id": {
+          "name": "channel_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "workspace_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'editor'"
+        },
+        "role_override": {
+          "name": "role_override",
+          "type": "workspace_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "channel_users_channel_id_channels_id_fk": {
+          "name": "channel_users_channel_id_channels_id_fk",
+          "tableFrom": "channel_users",
+          "tableTo": "channels",
+          "columnsFrom": ["channel_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "channel_users_user_id_users_id_fk": {
+          "name": "channel_users_user_id_users_id_fk",
+          "tableFrom": "channel_users",
+          "tableTo": "users",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "channel_users_channel_id_user_id_pk": {
+          "name": "channel_users_channel_id_user_id_pk",
+          "columns": ["channel_id", "user_id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.channels": {
+      "name": "channels",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "teamspace_id": {
+          "name": "teamspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mode": {
+          "name": "mode",
+          "type": "workspace_mode",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'single-tenant'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "channels_teamspace_slug_unique": {
+          "name": "channels_teamspace_slug_unique",
+          "columns": [
+            {
+              "expression": "teamspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "channels_teamspace_id_teamspaces_id_fk": {
+          "name": "channels_teamspace_id_teamspaces_id_fk",
+          "tableFrom": "channels",
+          "tableTo": "teamspaces",
+          "columnsFrom": ["teamspace_id"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
@@ -504,10 +667,10 @@
         }
       },
       "foreignKeys": {
-        "invitations_workspace_id_projects_id_fk": {
-          "name": "invitations_workspace_id_projects_id_fk",
+        "invitations_workspace_id_channels_id_fk": {
+          "name": "invitations_workspace_id_channels_id_fk",
           "tableFrom": "invitations",
-          "tableTo": "projects",
+          "tableTo": "channels",
           "columnsFrom": ["workspace_id"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
@@ -531,169 +694,6 @@
           "columns": ["token"]
         }
       },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.project_users": {
-      "name": "project_users",
-      "schema": "",
-      "columns": {
-        "project_id": {
-          "name": "project_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "role": {
-          "name": "role",
-          "type": "workspace_role",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'editor'"
-        },
-        "role_override": {
-          "name": "role_override",
-          "type": "workspace_role",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "project_users_project_id_projects_id_fk": {
-          "name": "project_users_project_id_projects_id_fk",
-          "tableFrom": "project_users",
-          "tableTo": "projects",
-          "columnsFrom": ["project_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "project_users_user_id_users_id_fk": {
-          "name": "project_users_user_id_users_id_fk",
-          "tableFrom": "project_users",
-          "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "project_users_project_id_user_id_pk": {
-          "name": "project_users_project_id_user_id_pk",
-          "columns": ["project_id", "user_id"]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.projects": {
-      "name": "projects",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "teamspace_id": {
-          "name": "teamspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "slug": {
-          "name": "slug",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "mode": {
-          "name": "mode",
-          "type": "workspace_mode",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'single-tenant'"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "projects_teamspace_slug_unique": {
-          "name": "projects_teamspace_slug_unique",
-          "columns": [
-            {
-              "expression": "teamspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "slug",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "projects_teamspace_id_teamspaces_id_fk": {
-          "name": "projects_teamspace_id_teamspaces_id_fk",
-          "tableFrom": "projects",
-          "tableTo": "teamspaces",
-          "columnsFrom": ["teamspace_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -1126,10 +1126,10 @@
         }
       },
       "foreignKeys": {
-        "videos_workspace_id_projects_id_fk": {
-          "name": "videos_workspace_id_projects_id_fk",
+        "videos_workspace_id_channels_id_fk": {
+          "name": "videos_workspace_id_channels_id_fk",
           "tableFrom": "videos",
-          "tableTo": "projects",
+          "tableTo": "channels",
           "columnsFrom": ["workspace_id"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
