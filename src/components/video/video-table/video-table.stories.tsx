@@ -171,20 +171,20 @@ export const SortByTitle: Story = {
     // Click to sort ascending (default)
     await userEvent.click(titleHeader);
 
-    // Verify first row contains the alphabetically first title
-    const firstRow = canvas.getByRole('button', {
+    // Verify first row contains the alphabetically first title (using link text)
+    const firstLink = canvas.getByRole('link', {
       name: /Building a REST API with Node.js/i,
     });
-    await expect(firstRow).toBeInTheDocument();
+    await expect(firstLink).toBeInTheDocument();
 
     // Click again to sort descending
     await userEvent.click(titleHeader);
 
     // Now TypeScript Best Practices should be first
-    const newFirstRow = canvas.getByRole('button', {
+    const newFirstLink = canvas.getByRole('link', {
       name: /TypeScript Best Practices/i,
     });
-    await expect(newFirstRow).toBeInTheDocument();
+    await expect(newFirstLink).toBeInTheDocument();
   },
 };
 
@@ -236,14 +236,14 @@ export const SortByDueDate: Story = {
     const table = canvas.getByRole('table');
     await expect(table).toBeInTheDocument();
 
-    // Videos without due dates (null) should appear first when sorting ascending
-    const rows = canvas.getAllByRole('button', { name: /View video:/i });
-    await expect(rows.length).toBeGreaterThan(0);
+    // Verify all video links are still present
+    const links = canvas.getAllByRole('link');
+    await expect(links.length).toBeGreaterThan(0);
   },
 };
 
 /**
- * Test keyboard navigation on rows
+ * Test keyboard navigation on links
  */
 export const KeyboardNavigableRows: Story = {
   args: {
@@ -253,51 +253,48 @@ export const KeyboardNavigableRows: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // Get all video rows
-    const rows = canvas.getAllByRole('button', { name: /View video:/i });
+    // Get all video links
+    const links = canvas.getAllByRole('link');
 
-    // Tab to first row
-    await userEvent.tab(); // Skip header buttons
-    await userEvent.tab();
-    await userEvent.tab();
-    await userEvent.tab();
-    await userEvent.tab(); // Should be on first row
+    // Tab through header buttons to reach first link
+    await userEvent.tab(); // First header button (title)
+    await userEvent.tab(); // Second header button (status)
+    await userEvent.tab(); // Third header button (due date)
+    await userEvent.tab(); // Fourth header button (categories)
+    await userEvent.tab(); // Should be on first video link
 
-    // Verify first row has focus
-    await expect(rows[0]).toHaveFocus();
+    // Verify first link has focus
+    await expect(links[0]).toHaveFocus();
 
-    // Press Enter should trigger navigation (no actual navigation in test)
-    await userEvent.keyboard('{Enter}');
-
-    // Row should still exist
-    await expect(rows[0]).toBeInTheDocument();
+    // Links should be navigable via keyboard
+    await expect(links[0]).toBeInTheDocument();
   },
 };
 
 /**
- * Test clicking on a row
+ * Test clicking on a video link
  */
 export const RowClickInteraction: Story = {
   args: {
     videos: fewVideos,
     channelSlug: 'my-channel',
     onRowClick: () => {
-      // Mock handler for testing
+      // Mock handler for testing - prevents actual navigation
     },
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // Get the first video row
-    const firstRow = canvas.getByRole('button', {
-      name: /View video: Introduction to Next.js 15/i,
+    // Get the first video link
+    const firstLink = canvas.getByRole('link', {
+      name: /Introduction to Next.js 15/i,
     });
 
-    // Click the row
-    await userEvent.click(firstRow);
+    // Click the link
+    await userEvent.click(firstLink);
 
-    // Row should still be visible
-    await expect(firstRow).toBeInTheDocument();
+    // Link should still be visible
+    await expect(firstLink).toBeInTheDocument();
   },
 };
 
@@ -333,13 +330,13 @@ export const AccessibilityAttributes: Story = {
     await expect(dueDateHeader).toBeInTheDocument();
     await expect(categoriesHeader).toBeInTheDocument();
 
-    // Check for video rows with proper labels
-    const rows = canvas.getAllByRole('button', { name: /View video:/i });
-    await expect(rows.length).toBe(mockVideos.length);
+    // Check for video links - one per video
+    const links = canvas.getAllByRole('link');
+    await expect(links.length).toBe(mockVideos.length);
 
-    // All rows should be focusable
-    rows.forEach((row) => {
-      expect(row).toHaveAttribute('tabIndex', '0');
+    // All links should have href attribute
+    links.forEach((link) => {
+      expect(link).toHaveAttribute('href');
     });
   },
 };
@@ -358,14 +355,15 @@ export const SortIndicator: Story = {
     // Get the title column header
     const titleHeader = canvas.getByRole('button', { name: /sort by title/i });
 
-    // Click to sort
+    // Click to sort (changes from ascending to descending)
     await userEvent.click(titleHeader);
 
     // After sorting, the header should still be present
     await expect(titleHeader).toBeInTheDocument();
 
-    // The ARIA label should indicate the current sort direction
+    // The ARIA label indicates the NEXT sort direction (what will happen on next click)
+    // After clicking, sort is descending, so next click will sort ascending
     const currentLabel = titleHeader.getAttribute('aria-label');
-    expect(currentLabel).toMatch(/descending/i);
+    expect(currentLabel).toMatch(/ascending/i);
   },
 };

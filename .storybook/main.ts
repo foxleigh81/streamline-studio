@@ -46,13 +46,26 @@ const config: StorybookConfig = {
     reactDocgen: 'react-docgen-typescript',
   },
 
-  // Vite configuration for path aliases and SCSS
+  // Vite configuration for path aliases, SCSS, and Next.js mocks
   viteFinal: async (config) => {
     config.resolve = config.resolve ?? {};
+
+    // Mock next/link with a simple <a> tag for Storybook
+    // This is needed because we use @storybook/react-vite instead of @storybook/nextjs
+    // Place next mocks first to ensure they take priority
+    const nextLinkMockPath = path.resolve(__dirname, './mocks/next-link.tsx');
+    const nextNavigationMockPath = path.resolve(
+      __dirname,
+      './mocks/next-navigation.tsx'
+    );
+
     config.resolve.alias = {
+      'next/link': nextLinkMockPath,
+      'next/navigation': nextNavigationMockPath,
       ...config.resolve.alias,
       '@': path.resolve(__dirname, '../src'),
     };
+
     return config;
   },
 };
