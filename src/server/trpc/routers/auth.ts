@@ -12,7 +12,14 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { router, publicProcedure, protectedProcedure } from '../procedures';
-import { users, channels, channelUsers } from '@/server/db/schema';
+import {
+  users,
+  channels,
+  channelUsers,
+  teamspaces,
+  teamspaceUsers,
+} from '@/server/db/schema';
+import { DEFAULT_SINGLE_TENANT_TEAMSPACE_SLUG } from '@/server/repositories';
 import {
   validatePassword,
   hashPassword,
@@ -248,6 +255,21 @@ export const authRouter = router({
               channelId: workspace.id,
               userId: user.id,
               role: 'editor', // Subsequent users get editor role
+            });
+          }
+
+          // Also add user to the default teamspace so they can access /t routes
+          const defaultTeamspace = await tx
+            .select()
+            .from(teamspaces)
+            .where(eq(teamspaces.slug, DEFAULT_SINGLE_TENANT_TEAMSPACE_SLUG))
+            .limit(1);
+
+          if (defaultTeamspace[0]) {
+            await tx.insert(teamspaceUsers).values({
+              teamspaceId: defaultTeamspace[0].id,
+              userId: user.id,
+              role: 'editor', // Subsequent users get editor role in teamspace too
             });
           }
         }
