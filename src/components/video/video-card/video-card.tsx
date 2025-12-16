@@ -12,8 +12,8 @@ import styles from './video-card.module.scss';
 export interface VideoCardProps {
   /** Video ID */
   id: string;
-  /** Workspace slug for navigation */
-  workspaceSlug: string;
+  /** Project slug for navigation */
+  projectSlug: string;
   /** Video title */
   title: string;
   /** Video status */
@@ -28,6 +28,8 @@ export interface VideoCardProps {
   onClick?: (id: string) => void;
   /** Optional className for custom styling */
   className?: string;
+  /** Optional teamspace slug (only for multi-tenant mode) */
+  teamspaceSlug?: string;
 }
 
 /**
@@ -38,7 +40,7 @@ export interface VideoCardProps {
  */
 export function VideoCard({
   id,
-  workspaceSlug,
+  projectSlug,
   title,
   status,
   dueDate,
@@ -46,6 +48,7 @@ export function VideoCard({
   categories = [],
   onClick,
   className,
+  teamspaceSlug,
 }: VideoCardProps) {
   /**
    * Format due date for display
@@ -77,9 +80,11 @@ export function VideoCard({
   const cardClasses = [styles.card, className].filter(Boolean).join(' ');
   const formattedDueDate = formatDueDate(dueDate);
 
+  const effectiveTeamspace = teamspaceSlug ?? 'workspace';
+
   return (
     <Link
-      href={`/w/${workspaceSlug}/videos/${id}`}
+      href={`/t/${effectiveTeamspace}/${projectSlug}/videos/${id}`}
       className={cardClasses}
       onClick={handleClick}
       aria-label={`View video: ${title}`}

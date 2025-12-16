@@ -42,7 +42,7 @@ type Story = StoryObj<typeof VideoCard>;
 export const Default: Story = {
   args: {
     id: '123e4567-e89b-12d3-a456-426614174000',
-    workspaceSlug: 'my-workspace',
+    projectSlug: 'my-project',
     title: 'How to Build a Next.js App',
     status: 'scripting',
     dueDate: '2025-12-15',
@@ -58,7 +58,7 @@ export const Default: Story = {
 export const IdeaStatus: Story = {
   args: {
     id: '123e4567-e89b-12d3-a456-426614174001',
-    workspaceSlug: 'my-workspace',
+    projectSlug: 'my-project',
     title: 'Video Idea: React Server Components',
     status: 'idea',
     dueDate: null,
@@ -70,7 +70,7 @@ export const IdeaStatus: Story = {
 export const PublishedStatus: Story = {
   args: {
     id: '123e4567-e89b-12d3-a456-426614174002',
-    workspaceSlug: 'my-workspace',
+    projectSlug: 'my-project',
     title: 'TypeScript Tips for Beginners',
     status: 'published',
     dueDate: '2025-12-01',
@@ -85,7 +85,7 @@ export const PublishedStatus: Story = {
 export const NoDescription: Story = {
   args: {
     id: '123e4567-e89b-12d3-a456-426614174003',
-    workspaceSlug: 'my-workspace',
+    projectSlug: 'my-project',
     title: 'Quick CSS Animation Tutorial',
     status: 'editing',
     dueDate: '2025-12-20',
@@ -96,7 +96,7 @@ export const NoDescription: Story = {
 export const NoCategories: Story = {
   args: {
     id: '123e4567-e89b-12d3-a456-426614174004',
-    workspaceSlug: 'my-workspace',
+    projectSlug: 'my-project',
     title: 'Uncategorized Video Project',
     status: 'review',
     dueDate: '2025-12-10',
@@ -108,7 +108,7 @@ export const NoCategories: Story = {
 export const NoDueDate: Story = {
   args: {
     id: '123e4567-e89b-12d3-a456-426614174005',
-    workspaceSlug: 'my-workspace',
+    projectSlug: 'my-project',
     title: 'No Deadline Project',
     status: 'filming',
     dueDate: null,
@@ -120,7 +120,7 @@ export const NoDueDate: Story = {
 export const LongTitle: Story = {
   args: {
     id: '123e4567-e89b-12d3-a456-426614174006',
-    workspaceSlug: 'my-workspace',
+    projectSlug: 'my-project',
     title:
       'An Extremely Long Video Title That Should Be Truncated After Two Lines to Maintain Card Layout',
     status: 'scripting',
@@ -134,7 +134,7 @@ export const LongTitle: Story = {
 export const ManyCategories: Story = {
   args: {
     id: '123e4567-e89b-12d3-a456-426614174007',
-    workspaceSlug: 'my-workspace',
+    projectSlug: 'my-project',
     title: 'Comprehensive Web Development Guide',
     status: 'scheduled',
     dueDate: '2026-01-01',
@@ -164,7 +164,7 @@ export const AllStatuses: Story = {
     >
       <VideoCard
         id="1"
-        workspaceSlug="my-workspace"
+        projectSlug="my-project"
         title="Idea Phase"
         status="idea"
         dueDate={null}
@@ -172,7 +172,7 @@ export const AllStatuses: Story = {
       />
       <VideoCard
         id="2"
-        workspaceSlug="my-workspace"
+        projectSlug="my-project"
         title="Scripting Phase"
         status="scripting"
         dueDate="2025-12-15"
@@ -180,7 +180,7 @@ export const AllStatuses: Story = {
       />
       <VideoCard
         id="3"
-        workspaceSlug="my-workspace"
+        projectSlug="my-project"
         title="Filming Phase"
         status="filming"
         dueDate="2025-12-18"
@@ -188,7 +188,7 @@ export const AllStatuses: Story = {
       />
       <VideoCard
         id="4"
-        workspaceSlug="my-workspace"
+        projectSlug="my-project"
         title="Editing Phase"
         status="editing"
         dueDate="2025-12-20"
@@ -196,7 +196,7 @@ export const AllStatuses: Story = {
       />
       <VideoCard
         id="5"
-        workspaceSlug="my-workspace"
+        projectSlug="my-project"
         title="Review Phase"
         status="review"
         dueDate="2025-12-22"
@@ -204,7 +204,7 @@ export const AllStatuses: Story = {
       />
       <VideoCard
         id="6"
-        workspaceSlug="my-workspace"
+        projectSlug="my-project"
         title="Scheduled Phase"
         status="scheduled"
         dueDate="2025-12-25"
@@ -212,7 +212,7 @@ export const AllStatuses: Story = {
       />
       <VideoCard
         id="7"
-        workspaceSlug="my-workspace"
+        projectSlug="my-project"
         title="Published Phase"
         status="published"
         dueDate="2025-12-01"
@@ -220,7 +220,7 @@ export const AllStatuses: Story = {
       />
       <VideoCard
         id="8"
-        workspaceSlug="my-workspace"
+        projectSlug="my-project"
         title="Archived Phase"
         status="archived"
         dueDate="2025-11-01"
@@ -240,7 +240,7 @@ export const AllStatuses: Story = {
 export const KeyboardNavigation: Story = {
   args: {
     id: '123e4567-e89b-12d3-a456-426614174008',
-    workspaceSlug: 'my-workspace',
+    projectSlug: 'my-project',
     title: 'Keyboard Accessible Card',
     status: 'scripting',
     dueDate: '2025-12-15',
@@ -264,7 +264,7 @@ export const KeyboardNavigation: Story = {
 export const ClickInteraction: Story = {
   args: {
     id: '123e4567-e89b-12d3-a456-426614174009',
-    workspaceSlug: 'my-workspace',
+    projectSlug: 'my-project',
     title: 'Clickable Card',
     status: 'editing',
     dueDate: '2025-12-20',

@@ -304,10 +304,10 @@ describe('Auth Router', () => {
       // User should be linked to workspace
       const [workspaceUser] = await db
         .select()
-        .from(schema.workspaceUsers)
-        .where(eq(schema.workspaceUsers.userId, user.id));
+        .from(schema.projectUsers)
+        .where(eq(schema.projectUsers.userId, user.id));
 
-      expect(workspaceUser?.workspaceId).toBe(workspace.id);
+      expect(workspaceUser?.projectId).toBe(workspace.id);
       expect(workspaceUser?.role).toBe('owner');
     });
   });

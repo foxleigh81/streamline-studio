@@ -13,7 +13,7 @@ import { TRPCError } from '@trpc/server';
 // eslint-disable-next-line no-restricted-imports -- Team operations require direct queries for membership validation and role checks
 import { eq, and } from 'drizzle-orm';
 import { router, workspaceProcedure, ownerProcedure } from '../procedures';
-import { workspaceUsers, users } from '@/server/db/schema';
+import { projectUsers, users } from '@/server/db/schema';
 import { workspaceRoleSchema } from '@/lib/schemas/workspace';
 
 /**
@@ -27,16 +27,16 @@ export const teamRouter = router({
   list: workspaceProcedure.query(async ({ ctx }) => {
     const members = await ctx.db
       .select({
-        userId: workspaceUsers.userId,
-        role: workspaceUsers.role,
-        joinedAt: workspaceUsers.createdAt,
+        userId: projectUsers.userId,
+        role: projectUsers.role,
+        joinedAt: projectUsers.createdAt,
         email: users.email,
         name: users.name,
       })
-      .from(workspaceUsers)
-      .innerJoin(users, eq(workspaceUsers.userId, users.id))
-      .where(eq(workspaceUsers.workspaceId, ctx.workspace.id))
-      .orderBy(workspaceUsers.createdAt);
+      .from(projectUsers)
+      .innerJoin(users, eq(projectUsers.userId, users.id))
+      .where(eq(projectUsers.projectId, ctx.workspace.id))
+      .orderBy(projectUsers.createdAt);
 
     return members;
   }),
@@ -66,11 +66,11 @@ export const teamRouter = router({
       // Verify the user is a member of this workspace
       const [existingMember] = await ctx.db
         .select()
-        .from(workspaceUsers)
+        .from(projectUsers)
         .where(
           and(
-            eq(workspaceUsers.workspaceId, ctx.workspace.id),
-            eq(workspaceUsers.userId, userId)
+            eq(projectUsers.projectId, ctx.workspace.id),
+            eq(projectUsers.userId, userId)
           )
         )
         .limit(1);
@@ -85,12 +85,12 @@ export const teamRouter = router({
       // Check if this would leave the workspace without an owner
       if (existingMember.role === 'owner' && role !== 'owner') {
         const ownerCount = await ctx.db
-          .select({ userId: workspaceUsers.userId })
-          .from(workspaceUsers)
+          .select({ userId: projectUsers.userId })
+          .from(projectUsers)
           .where(
             and(
-              eq(workspaceUsers.workspaceId, ctx.workspace.id),
-              eq(workspaceUsers.role, 'owner')
+              eq(projectUsers.projectId, ctx.workspace.id),
+              eq(projectUsers.role, 'owner')
             )
           );
 
@@ -105,12 +105,12 @@ export const teamRouter = router({
 
       // Update the role
       await ctx.db
-        .update(workspaceUsers)
+        .update(projectUsers)
         .set({ role })
         .where(
           and(
-            eq(workspaceUsers.workspaceId, ctx.workspace.id),
-            eq(workspaceUsers.userId, userId)
+            eq(projectUsers.projectId, ctx.workspace.id),
+            eq(projectUsers.userId, userId)
           )
         );
 
@@ -149,11 +149,11 @@ export const teamRouter = router({
       // Verify the user is a member of this workspace
       const [existingMember] = await ctx.db
         .select()
-        .from(workspaceUsers)
+        .from(projectUsers)
         .where(
           and(
-            eq(workspaceUsers.workspaceId, ctx.workspace.id),
-            eq(workspaceUsers.userId, userId)
+            eq(projectUsers.projectId, ctx.workspace.id),
+            eq(projectUsers.userId, userId)
           )
         )
         .limit(1);
@@ -168,12 +168,12 @@ export const teamRouter = router({
       // Check if this would leave the workspace without an owner
       if (existingMember.role === 'owner') {
         const ownerCount = await ctx.db
-          .select({ userId: workspaceUsers.userId })
-          .from(workspaceUsers)
+          .select({ userId: projectUsers.userId })
+          .from(projectUsers)
           .where(
             and(
-              eq(workspaceUsers.workspaceId, ctx.workspace.id),
-              eq(workspaceUsers.role, 'owner')
+              eq(projectUsers.projectId, ctx.workspace.id),
+              eq(projectUsers.role, 'owner')
             )
           );
 
@@ -187,11 +187,11 @@ export const teamRouter = router({
 
       // Remove the member
       await ctx.db
-        .delete(workspaceUsers)
+        .delete(projectUsers)
         .where(
           and(
-            eq(workspaceUsers.workspaceId, ctx.workspace.id),
-            eq(workspaceUsers.userId, userId)
+            eq(projectUsers.projectId, ctx.workspace.id),
+            eq(projectUsers.userId, userId)
           )
         );
 

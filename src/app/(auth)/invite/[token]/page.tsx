@@ -13,7 +13,7 @@ import styles from './invite-page.module.scss';
  * Validates invitation token and allows user to accept the invitation.
  * Handles three scenarios:
  * 1. New user: Shows registration form
- * 2. Existing user (logged in): Shows join workspace button
+ * 2. Existing user (logged in): Shows join project button
  * 3. Existing user (not logged in): Shows login prompt
  */
 export default function InvitePage() {
@@ -43,11 +43,13 @@ export default function InvitePage() {
   const acceptMutation = trpc.invitation.accept.useMutation({
     onSuccess: () => {
       // Session cookie is set server-side via HTTP-only cookie (secure)
-      // Redirect to workspace after successful acceptance
+      // Redirect to teamspace landing page, which will redirect to first project
       if (invitation?.workspaceSlug) {
-        router.push(`/w/${invitation.workspaceSlug}/videos`);
+        // Using unified routing: /t/[teamspace] will redirect to first project
+        // In single-tenant mode, this will be /t/workspace
+        router.push(`/t/workspace`);
       } else {
-        router.push('/workspaces');
+        router.push('/t');
       }
     },
     onError: (error) => {

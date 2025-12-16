@@ -184,19 +184,20 @@ async function seed() {
     await db.delete(schema.videos);
     await db.delete(schema.categories);
     await db.delete(schema.sessions);
-    await db.delete(schema.workspaceUsers);
+    await db.delete(schema.projectUsers);
     await db.delete(schema.users);
-    await db.delete(schema.workspaces);
+    await db.delete(schema.projects);
     console.log('Existing data cleaned.\n');
 
     // Create test workspace
     console.log('Creating test workspace...');
     const [workspace] = await db
-      .insert(schema.workspaces)
+      .insert(schema.projects)
       .values({
         name: TEST_WORKSPACE.name,
         slug: TEST_WORKSPACE.slug,
         mode: 'single-tenant',
+        teamspaceId: null, // TODO: Set from teamspace context in Phase 2
       })
       .returning();
 
@@ -223,8 +224,8 @@ async function seed() {
 
     // Link user to workspace as owner
     console.log('Linking user to workspace...');
-    await db.insert(schema.workspaceUsers).values({
-      workspaceId: workspace.id,
+    await db.insert(schema.projectUsers).values({
+      projectId: workspace.id,
       userId: user.id,
       role: 'owner',
     });

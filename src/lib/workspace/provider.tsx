@@ -80,7 +80,7 @@ export function WorkspaceProvider({
       //
       // For now, we'll trigger a page reload to let the server handle it
       // This ensures the x-workspace-id header is sent with subsequent requests
-      window.location.href = `/w/${workspaceId}`;
+      window.location.href = `/t/${workspaceId}`;
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Failed to switch workspace'

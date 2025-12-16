@@ -12,7 +12,7 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { router, publicProcedure, protectedProcedure } from '../procedures';
-import { users, workspaces, workspaceUsers } from '@/server/db/schema';
+import { users, projects, projectUsers } from '@/server/db/schema';
 import {
   validatePassword,
   hashPassword,
@@ -158,8 +158,8 @@ export const authRouter = router({
       if (isSingleTenant) {
         // Check if any workspace exists (indicates this is the first user)
         const existingWorkspaces = await ctx.db
-          .select({ id: workspaces.id })
-          .from(workspaces)
+          .select({ id: projects.id })
+          .from(projects)
           .limit(1);
         needsDefaultWorkspace = existingWorkspaces.length === 0;
         createNewWorkspace = needsDefaultWorkspace;
@@ -200,9 +200,9 @@ export const authRouter = router({
           // In multi-tenant, ensure slug is unique
           if (isMultiTenant) {
             const existingWorkspace = await tx
-              .select({ id: workspaces.id })
-              .from(workspaces)
-              .where(eq(workspaces.slug, slug))
+              .select({ id: projects.id })
+              .from(projects)
+              .where(eq(projects.slug, slug))
               .limit(1);
 
             if (existingWorkspace.length > 0) {
@@ -214,11 +214,12 @@ export const authRouter = router({
           }
 
           const workspaceResult = await tx
-            .insert(workspaces)
+            .insert(projects)
             .values({
               name: workspaceName ?? 'My Workspace',
               slug,
               mode: isMultiTenant ? 'multi-tenant' : 'single-tenant',
+              teamspaceId: null, // TODO: Set from teamspace context in Phase 2
             })
             .returning();
 
@@ -231,20 +232,20 @@ export const authRouter = router({
           }
 
           // Link user to workspace as owner
-          await tx.insert(workspaceUsers).values({
-            workspaceId: workspace.id,
+          await tx.insert(projectUsers).values({
+            projectId: workspace.id,
             userId: user.id,
             role: 'owner',
           });
         } else if (isSingleTenant) {
           // In single-tenant mode but workspace exists, add user to existing workspace
           // This handles subsequent users in single-tenant mode
-          const existingWorkspace = await tx.select().from(workspaces).limit(1);
+          const existingWorkspace = await tx.select().from(projects).limit(1);
 
           if (existingWorkspace[0]) {
             workspace = existingWorkspace[0];
-            await tx.insert(workspaceUsers).values({
-              workspaceId: workspace.id,
+            await tx.insert(projectUsers).values({
+              projectId: workspace.id,
               userId: user.id,
               role: 'editor', // Subsequent users get editor role
             });

@@ -12,15 +12,11 @@ import { TRPCError } from '@trpc/server';
 import { eq, and } from 'drizzle-orm';
 import { middleware } from '../trpc';
 import { db } from '@/server/db';
-import { workspaces, workspaceUsers } from '@/server/db/schema';
-import type {
-  Workspace,
-  WorkspaceUser,
-  WorkspaceRole,
-} from '@/server/db/schema';
+import { projects, projectUsers } from '@/server/db/schema';
+import type { Project, ProjectUser, ProjectRole } from '@/server/db/schema';
 import {
-  createWorkspaceRepository,
-  type WorkspaceRepository,
+  createProjectRepository,
+  type ProjectRepository,
 } from '@/server/repositories';
 import { serverEnv } from '@/lib/env';
 
@@ -28,10 +24,10 @@ import { serverEnv } from '@/lib/env';
  * Extended context with workspace information
  */
 export interface WorkspaceContext {
-  workspace: Workspace;
-  workspaceUser: WorkspaceUser;
-  workspaceRole: WorkspaceRole;
-  repository: WorkspaceRepository;
+  workspace: Project;
+  workspaceUser: ProjectUser;
+  workspaceRole: ProjectRole;
+  repository: ProjectRepository;
 }
 
 /**
@@ -40,19 +36,19 @@ export interface WorkspaceContext {
 async function resolveWorkspace(
   userId: string,
   headers: Headers
-): Promise<{ workspace: Workspace; membership: WorkspaceUser } | null> {
+): Promise<{ workspace: Project; membership: ProjectUser } | null> {
   const mode = serverEnv.MODE;
 
   if (mode === 'single-tenant') {
     // In single-tenant mode, get the user's workspace (should be exactly one)
     const result = await db
       .select({
-        workspace: workspaces,
-        membership: workspaceUsers,
+        workspace: projects,
+        membership: projectUsers,
       })
-      .from(workspaceUsers)
-      .innerJoin(workspaces, eq(workspaceUsers.workspaceId, workspaces.id))
-      .where(eq(workspaceUsers.userId, userId))
+      .from(projectUsers)
+      .innerJoin(projects, eq(projectUsers.projectId, projects.id))
+      .where(eq(projectUsers.userId, userId))
       .limit(1);
 
     const firstResult = result[0];
@@ -75,15 +71,15 @@ async function resolveWorkspace(
   // Verify user has access to this workspace
   const result = await db
     .select({
-      workspace: workspaces,
-      membership: workspaceUsers,
+      workspace: projects,
+      membership: projectUsers,
     })
-    .from(workspaceUsers)
-    .innerJoin(workspaces, eq(workspaceUsers.workspaceId, workspaces.id))
+    .from(projectUsers)
+    .innerJoin(projects, eq(projectUsers.projectId, projects.id))
     .where(
       and(
-        eq(workspaceUsers.workspaceId, workspaceId),
-        eq(workspaceUsers.userId, userId)
+        eq(projectUsers.projectId, workspaceId),
+        eq(projectUsers.userId, userId)
       )
     )
     .limit(1);
@@ -131,8 +127,8 @@ export const workspaceMiddleware = middleware(async ({ ctx, next }) => {
 
   const { workspace, membership } = resolved;
 
-  // Create workspace-scoped repository
-  const repository = createWorkspaceRepository(db, workspace.id);
+  // Create project-scoped repository
+  const repository = createProjectRepository(db, workspace.id);
 
   return next({
     ctx: {
@@ -153,8 +149,8 @@ export const workspaceMiddleware = middleware(async ({ ctx, next }) => {
  * Creates middleware that requires a specific minimum role.
  * Role hierarchy: owner > editor > viewer
  */
-export function requireRole(minimumRole: WorkspaceRole) {
-  const roleHierarchy: Record<WorkspaceRole, number> = {
+export function requireRole(minimumRole: ProjectRole) {
+  const roleHierarchy: Record<ProjectRole, number> = {
     viewer: 1,
     editor: 2,
     owner: 3,
@@ -163,7 +159,7 @@ export function requireRole(minimumRole: WorkspaceRole) {
   return middleware(async ({ ctx, next }) => {
     // This middleware should be used after workspaceMiddleware
     // so ctx should have workspaceRole
-    const role = (ctx as { workspaceRole?: WorkspaceRole }).workspaceRole;
+    const role = (ctx as { workspaceRole?: ProjectRole }).workspaceRole;
 
     if (!role) {
       throw new TRPCError({
@@ -174,6 +170,13 @@ export function requireRole(minimumRole: WorkspaceRole) {
 
     const userLevel = roleHierarchy[role];
     const requiredLevel = roleHierarchy[minimumRole];
+
+    if (userLevel === undefined || requiredLevel === undefined) {
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Invalid role configuration',
+      });
+    }
 
     if (userLevel < requiredLevel) {
       throw new TRPCError({

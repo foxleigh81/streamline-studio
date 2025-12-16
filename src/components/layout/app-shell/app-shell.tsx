@@ -4,27 +4,37 @@ import { type ReactNode, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { Video, Tag, Users, Settings, LogOut } from 'lucide-react';
+import { Video, Tag, Users, Settings, LogOut, Building2 } from 'lucide-react';
 import { trpc } from '@/lib/trpc/client';
 import { SkipLink } from '@/components/ui/skip-link';
-import { WorkspaceSwitcher } from '@/components/workspace/workspace-switcher';
-import { CreateWorkspaceModal } from '@/components/workspace/create-workspace-modal';
+import { ProjectSwitcher } from '@/components/project/project-switcher';
+import { CreateProjectModal } from '@/components/project/create-project-modal';
+import { useTeamspace } from '@/lib/teamspace';
+import { useProject } from '@/lib/project';
+import { useCanManageTeamspace } from '@/lib/permissions';
+import { isMultiTenant } from '@/lib/constants';
 import styles from './app-shell.module.scss';
 
 /**
  * App Shell Component
  *
  * Main application layout with sidebar navigation.
- * Provides workspace-scoped navigation and responsive behavior.
+ * Provides teamspace/project-scoped navigation and responsive behavior.
+ *
+ * Adapts to single-tenant vs multi-tenant deployment modes:
+ * - Single-tenant: Shows only project-level navigation
+ * - Multi-tenant: Shows full teamspace/project hierarchy
  */
 
 export interface AppShellProps {
-  /** Workspace slug for navigation links */
-  workspaceSlug: string;
+  /** Project slug for navigation links */
+  projectSlug: string;
   /** Page content */
   children: ReactNode;
   /** Optional className for custom styling */
   className?: string;
+  /** Optional teamspace slug (only for multi-tenant mode) */
+  teamspaceSlug?: string;
 }
 
 /**
@@ -36,24 +46,28 @@ const navigationItems = [
     href: '/videos',
     icon: 'video',
     ariaLabel: 'Navigate to videos page',
+    requiresPermission: null,
   },
   {
     name: 'Categories',
     href: '/categories',
     icon: 'tag',
     ariaLabel: 'Navigate to categories page',
+    requiresPermission: null,
   },
   {
     name: 'Team',
     href: '/team',
     icon: 'team',
     ariaLabel: 'Navigate to team page',
+    requiresPermission: null,
   },
   {
     name: 'Settings',
     href: '/settings',
     icon: 'settings',
     ariaLabel: 'Navigate to settings page',
+    requiresPermission: 'admin',
   },
 ] as const;
 
@@ -61,13 +75,20 @@ const navigationItems = [
  * App Shell Component
  */
 export function AppShell({
-  workspaceSlug,
+  projectSlug,
   children,
   className,
+  teamspaceSlug,
 }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // Get context data
+  const { teamspace } = useTeamspace();
+  const { project, role: projectRole } = useProject();
+  const canManageTeamspace = useCanManageTeamspace();
+  const multiTenantMode = isMultiTenant();
 
   // Logout mutation
   const logoutMutation = trpc.auth.logout.useMutation({
@@ -88,15 +109,31 @@ export function AppShell({
    * Check if a navigation item is active
    */
   const isActive = (href: string): boolean => {
-    const fullPath = `/w/${workspaceSlug}${href}`;
+    // Always use unified routing - use "workspace" as fallback for single-tenant
+    const effectiveTeamspace = teamspaceSlug ?? 'workspace';
+    const fullPath = `/t/${effectiveTeamspace}/${projectSlug}${href}`;
     return pathname === fullPath || pathname.startsWith(`${fullPath}/`);
   };
 
   /**
-   * Build full navigation link with workspace slug
+   * Build full navigation link with teamspace and project slug
+   * Uses unified routing structure for both single-tenant and multi-tenant modes
    */
   const buildLink = (href: string): string => {
-    return `/w/${workspaceSlug}${href}`;
+    // Always use unified routing - use "workspace" as fallback for single-tenant
+    const effectiveTeamspace = teamspaceSlug ?? 'workspace';
+    return `/t/${effectiveTeamspace}/${projectSlug}${href}`;
+  };
+
+  /**
+   * Check if user can see a navigation item based on permissions
+   */
+  const canSeeNavItem = (requiredPermission: 'admin' | null): boolean => {
+    if (!requiredPermission) return true;
+    if (requiredPermission === 'admin') {
+      return projectRole === 'owner';
+    }
+    return true;
   };
 
   return (
@@ -118,36 +155,78 @@ export function AppShell({
               />
             </Link>
           </h1>
-          <div className={styles.workspaceSwitcherContainer}>
-            <WorkspaceSwitcher
-              workspaceSlug={workspaceSlug}
-              onCreateWorkspace={() => setIsCreateModalOpen(true)}
+
+          {/* Teamspace info (multi-tenant only) */}
+          {multiTenantMode && teamspace && (
+            <div className={styles.teamspaceInfo}>
+              <div className={styles.teamspaceLabel}>
+                <Building2
+                  className={styles.teamspaceIcon}
+                  aria-hidden="true"
+                />
+                <span className={styles.teamspaceName}>{teamspace.name}</span>
+              </div>
+              {canManageTeamspace && (
+                <Link
+                  href={`/t/${teamspaceSlug}/settings`}
+                  className={styles.teamspaceSettingsLink}
+                  aria-label="Teamspace settings"
+                >
+                  <Settings className={styles.icon} aria-hidden="true" />
+                </Link>
+              )}
+            </div>
+          )}
+
+          {/* Project switcher */}
+          <div className={styles.projectSwitcherContainer}>
+            <ProjectSwitcher
+              projectSlug={projectSlug}
+              projectName={project?.name}
+              onCreateProject={() => setIsCreateModalOpen(true)}
+              teamspaceSlug={teamspaceSlug}
             />
           </div>
+
+          {/* Project role badge */}
+          {projectRole && (
+            <div
+              className={styles.roleBadge}
+              aria-label={`Your role: ${projectRole}`}
+            >
+              {projectRole}
+            </div>
+          )}
         </div>
 
         <nav className={styles.nav} aria-label="Primary navigation">
           <ul className={styles.navList}>
-            {navigationItems.map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={buildLink(item.href)}
-                  className={`${styles.navLink} ${isActive(item.href) ? styles.navLinkActive : ''}`}
-                  aria-label={item.ariaLabel}
-                  aria-current={isActive(item.href) ? 'page' : undefined}
-                >
-                  <span className={styles.navIcon} aria-hidden="true">
-                    {item.icon === 'video' && <Video className={styles.icon} />}
-                    {item.icon === 'tag' && <Tag className={styles.icon} />}
-                    {item.icon === 'team' && <Users className={styles.icon} />}
-                    {item.icon === 'settings' && (
-                      <Settings className={styles.icon} />
-                    )}
-                  </span>
-                  <span className={styles.navText}>{item.name}</span>
-                </Link>
-              </li>
-            ))}
+            {navigationItems
+              .filter((item) => canSeeNavItem(item.requiresPermission))
+              .map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={buildLink(item.href)}
+                    className={`${styles.navLink} ${isActive(item.href) ? styles.navLinkActive : ''}`}
+                    aria-label={item.ariaLabel}
+                    aria-current={isActive(item.href) ? 'page' : undefined}
+                  >
+                    <span className={styles.navIcon} aria-hidden="true">
+                      {item.icon === 'video' && (
+                        <Video className={styles.icon} />
+                      )}
+                      {item.icon === 'tag' && <Tag className={styles.icon} />}
+                      {item.icon === 'team' && (
+                        <Users className={styles.icon} />
+                      )}
+                      {item.icon === 'settings' && (
+                        <Settings className={styles.icon} />
+                      )}
+                    </span>
+                    <span className={styles.navText}>{item.name}</span>
+                  </Link>
+                </li>
+              ))}
           </ul>
         </nav>
 
@@ -171,8 +250,8 @@ export function AppShell({
         {children}
       </main>
 
-      {/* Create Workspace Modal */}
-      <CreateWorkspaceModal
+      {/* Create Project Modal */}
+      <CreateProjectModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
       />

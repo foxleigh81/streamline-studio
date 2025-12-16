@@ -63,9 +63,14 @@
     --color-surface-sunken: var(--palette-grey-100);
 
     /* Foreground / Text */
+    /* WCAG AA requires 4.5:1 contrast ratio for normal text */
     --color-foreground: var(--palette-grey-800);
-    --color-foreground-muted: var(--palette-grey-500);
-    --color-foreground-subtle: var(--palette-grey-400);
+    --color-foreground-muted: var(
+      --palette-grey-600
+    ); /* Improved: 5.74:1 contrast on white */
+    --color-foreground-subtle: var(
+      --palette-grey-500
+    ); /* Improved: 4.6:1 contrast on white */
 
     /* Primary (YouTube Red) - Adjusted for WCAG AA contrast */
     --color-primary: var(--palette-red-600);
@@ -86,7 +91,9 @@
 
     /* Muted */
     --color-muted: var(--palette-grey-100);
-    --color-muted-foreground: var(--palette-grey-500);
+    --color-muted-foreground: var(
+      --palette-grey-600
+    ); /* Improved contrast for WCAG AA */
 
     /* Destructive / Error */
     /* WCAG AA requires 4.5:1 contrast for small text on white background */

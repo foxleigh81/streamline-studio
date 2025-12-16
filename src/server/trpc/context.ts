@@ -3,12 +3,18 @@ import { db } from '@/server/db';
 import type {
   User,
   Session,
-  Workspace,
-  WorkspaceUser,
-  WorkspaceRole,
+  Project,
+  ProjectUser,
+  ProjectRole,
+  Teamspace,
+  TeamspaceUser,
+  TeamspaceRole,
 } from '@/server/db/schema';
 import { validateSessionToken, parseSessionToken } from '@/lib/auth/session';
-import type { WorkspaceRepository } from '@/server/repositories';
+import type {
+  ProjectRepository,
+  TeamspaceRepository,
+} from '@/server/repositories';
 
 /**
  * tRPC Context
@@ -18,22 +24,39 @@ import type { WorkspaceRepository } from '@/server/repositories';
  *
  * @see /docs/adrs/007-api-and-auth.md
  * @see /docs/adrs/008-multi-tenancy-strategy.md
+ * @see /docs/adrs/017-teamspace-hierarchy.md
  */
 
 /**
  * Context shape for all procedures
  *
- * Note: workspace, workspaceUser, workspaceRole, and repository are populated
- * by the workspaceMiddleware for workspace-scoped procedures.
+ * Note: Context is extended by middleware:
+ * - teamspaceMiddleware adds: teamspace, teamspaceUser, teamspaceRole, teamspaceRepository
+ * - projectMiddleware adds: project, projectUser, projectRole, projectRepository
+ *
+ * Legacy aliases (workspace, workspaceUser, workspaceRole, repository) are maintained
+ * for backward compatibility during transition.
  */
 export interface Context {
   db: typeof db;
   session: Session | null;
   user: User | null;
-  workspace: Workspace | null;
-  workspaceUser: WorkspaceUser | null;
-  workspaceRole: WorkspaceRole | null;
-  repository: WorkspaceRepository | null;
+  // Teamspace context (added by teamspaceMiddleware)
+  teamspace: Teamspace | null;
+  teamspaceUser: TeamspaceUser | null;
+  teamspaceRole: TeamspaceRole | null;
+  teamspaceRepository: TeamspaceRepository | null;
+  // Project context (added by projectMiddleware)
+  project: Project | null;
+  projectUser: ProjectUser | null;
+  projectRole: ProjectRole | null;
+  projectRepository: ProjectRepository | null;
+  // Legacy aliases for backward compatibility
+  workspace: Project | null;
+  workspaceUser: ProjectUser | null;
+  workspaceRole: ProjectRole | null;
+  repository: ProjectRepository | null;
+  // Request context
   req: Request;
   headers: Headers;
 }
@@ -45,19 +68,37 @@ export interface Context {
 export function createInnerContext(opts?: {
   session?: Session | null;
   user?: User | null;
-  workspace?: Workspace | null;
-  workspaceUser?: WorkspaceUser | null;
-  workspaceRole?: WorkspaceRole | null;
-  repository?: WorkspaceRepository | null;
+  teamspace?: Teamspace | null;
+  teamspaceUser?: TeamspaceUser | null;
+  teamspaceRole?: TeamspaceRole | null;
+  teamspaceRepository?: TeamspaceRepository | null;
+  project?: Project | null;
+  projectUser?: ProjectUser | null;
+  projectRole?: ProjectRole | null;
+  projectRepository?: ProjectRepository | null;
+  // Legacy aliases
+  workspace?: Project | null;
+  workspaceUser?: ProjectUser | null;
+  workspaceRole?: ProjectRole | null;
+  repository?: ProjectRepository | null;
 }): Omit<Context, 'req' | 'headers'> {
   return {
     db,
     session: opts?.session ?? null,
     user: opts?.user ?? null,
-    workspace: opts?.workspace ?? null,
-    workspaceUser: opts?.workspaceUser ?? null,
-    workspaceRole: opts?.workspaceRole ?? null,
-    repository: opts?.repository ?? null,
+    teamspace: opts?.teamspace ?? null,
+    teamspaceUser: opts?.teamspaceUser ?? null,
+    teamspaceRole: opts?.teamspaceRole ?? null,
+    teamspaceRepository: opts?.teamspaceRepository ?? null,
+    project: opts?.project ?? opts?.workspace ?? null,
+    projectUser: opts?.projectUser ?? opts?.workspaceUser ?? null,
+    projectRole: opts?.projectRole ?? opts?.workspaceRole ?? null,
+    projectRepository: opts?.projectRepository ?? opts?.repository ?? null,
+    // Legacy aliases - use project values
+    workspace: opts?.workspace ?? opts?.project ?? null,
+    workspaceUser: opts?.workspaceUser ?? opts?.projectUser ?? null,
+    workspaceRole: opts?.workspaceRole ?? opts?.projectRole ?? null,
+    repository: opts?.repository ?? opts?.projectRepository ?? null,
   };
 }
 
@@ -66,10 +107,11 @@ export function createInnerContext(opts?: {
  * Called for every tRPC request
  *
  * Validates session token from cookies and populates user context.
- * Workspace context is populated by workspaceMiddleware for workspace-scoped procedures.
+ * Teamspace and project context are populated by middleware for scoped procedures.
  *
  * @see /docs/adrs/007-api-and-auth.md
  * @see /docs/adrs/008-multi-tenancy-strategy.md
+ * @see /docs/adrs/017-teamspace-hierarchy.md
  */
 export async function createContext(
   opts: FetchCreateContextFnOptions
@@ -91,9 +133,9 @@ export async function createContext(
     user = validationResult.user;
   }
 
-  // Workspace context is NOT populated here.
-  // It's populated by workspaceMiddleware for workspace-scoped procedures.
-  // This ensures workspace access is always explicitly required via workspaceProcedure.
+  // Teamspace and project context are NOT populated here.
+  // They are populated by teamspaceMiddleware and projectMiddleware.
+  // This ensures access is always explicitly required via appropriate procedures.
   return {
     ...createInnerContext({ session, user }),
     req,

@@ -8,8 +8,9 @@ import { documentRouter } from './routers/document';
 import { revisionRouter } from './routers/revision';
 import { invitationRouter } from './routers/invitation';
 import { teamRouter } from './routers/team';
-import { workspaceRouter } from './routers/workspace';
 import { userRouter } from './routers/user';
+import { teamspaceRouter } from './routers/teamspace';
+import { projectRouter } from './routers/project';
 
 /**
  * tRPC Root Router
@@ -104,17 +105,24 @@ export const appRouter = router({
   team: teamRouter,
 
   /**
-   * Workspace router
-   * Handles workspace listing and creation
-   * @see Phase 5.3
-   */
-  workspace: workspaceRouter,
-
-  /**
    * User router
    * Handles user profile and account management
    */
   user: userRouter,
+
+  /**
+   * Teamspace router
+   * Handles teamspace operations and access control
+   * @see /docs/adrs/017-teamspace-hierarchy.md
+   */
+  teamspace: teamspaceRouter,
+
+  /**
+   * Project router
+   * Handles project operations within teamspaces (formerly workspaces)
+   * @see /docs/adrs/017-teamspace-hierarchy.md
+   */
+  project: projectRouter,
 });
 
 // Export type for client-side usage

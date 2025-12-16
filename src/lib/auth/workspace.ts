@@ -10,8 +10,8 @@
 
 import { cookies } from 'next/headers';
 import { db } from '@/server/db';
-import { workspaces, workspaceUsers } from '@/server/db/schema';
-import type { Workspace, WorkspaceUser } from '@/server/db/schema';
+import { projects, projectUsers } from '@/server/db/schema';
+import type { Project, ProjectUser } from '@/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { validateSessionToken } from './session';
 
@@ -19,8 +19,8 @@ import { validateSessionToken } from './session';
  * Result of workspace access validation
  */
 export interface WorkspaceAccessResult {
-  workspace: Workspace;
-  membership: WorkspaceUser;
+  workspace: Project;
+  membership: ProjectUser;
 }
 
 /**
@@ -68,13 +68,13 @@ export async function validateWorkspaceAccess(
 ): Promise<WorkspaceAccessResult | null> {
   const result = await db
     .select({
-      workspace: workspaces,
-      membership: workspaceUsers,
+      workspace: projects,
+      membership: projectUsers,
     })
-    .from(workspaceUsers)
-    .innerJoin(workspaces, eq(workspaceUsers.workspaceId, workspaces.id))
+    .from(projectUsers)
+    .innerJoin(projects, eq(projectUsers.projectId, projects.id))
     .where(
-      and(eq(workspaces.slug, workspaceSlug), eq(workspaceUsers.userId, userId))
+      and(eq(projects.slug, workspaceSlug), eq(projectUsers.userId, userId))
     )
     .limit(1);
 

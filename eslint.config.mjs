@@ -112,6 +112,7 @@ const eslintConfig = [
       'storybook-static/**',
       'coverage/**',
       '*.config.js',
+      'project-management/**', // Development assistance folder
     ],
   },
 ];
