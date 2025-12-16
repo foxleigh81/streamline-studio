@@ -59,7 +59,7 @@ export const teamspaceRoleEnum = pgEnum('teamspace_role', [
 
 /**
  * Video status enum
- * Represents the workflow stages of a video project
+ * Represents the workflow stages of a video
  */
 export const videoStatusEnum = pgEnum('video_status', [
   'idea',
@@ -110,13 +110,13 @@ export const teamspaces = pgTable('teamspaces', {
 });
 
 /**
- * Projects table (formerly Workspaces)
- * Represents a project within a teamspace
+ * Channels table (formerly Projects/Workspaces)
+ * Represents a channel within a teamspace
  * @see ADR-008: Multi-Tenancy Strategy
  * @see ADR-017: Teamspace Hierarchy Architecture
  */
-export const projects = pgTable(
-  'projects',
+export const channels = pgTable(
+  'channels',
   {
     id: uuid('id').primaryKey().defaultRandom(),
     teamspaceId: uuid('teamspace_id').references(() => teamspaces.id, {
@@ -133,7 +133,7 @@ export const projects = pgTable(
       .defaultNow(),
   },
   (table) => [
-    uniqueIndex('projects_teamspace_slug_unique').on(
+    uniqueIndex('channels_teamspace_slug_unique').on(
       table.teamspaceId,
       table.slug
     ),
@@ -180,17 +180,17 @@ export const teamspaceUsers = pgTable(
 );
 
 /**
- * Project Users join table
- * Links users to projects with roles
+ * Channel Users join table
+ * Links users to channels with roles
  * @see ADR-008: Multi-Tenancy Strategy
  * @see ADR-017: Teamspace Hierarchy Architecture
  */
-export const projectUsers = pgTable(
-  'project_users',
+export const channelUsers = pgTable(
+  'channel_users',
   {
-    projectId: uuid('project_id')
+    channelId: uuid('channel_id')
       .notNull()
-      .references(() => projects.id, { onDelete: 'cascade' }),
+      .references(() => channels.id, { onDelete: 'cascade' }),
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
@@ -200,12 +200,12 @@ export const projectUsers = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => [primaryKey({ columns: [table.projectId, table.userId] })]
+  (table) => [primaryKey({ columns: [table.channelId, table.userId] })]
 );
 
 /**
  * Invitations table
- * Stores pending project invitations
+ * Stores pending channel invitations
  * @see Phase 5.2: Team Management
  * @see ADR-017: Teamspace Hierarchy Architecture
  */
@@ -215,7 +215,7 @@ export const invitations = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     workspaceId: uuid('workspace_id')
       .notNull()
-      .references(() => projects.id, { onDelete: 'cascade' }),
+      .references(() => channels.id, { onDelete: 'cascade' }),
     email: text('email').notNull(),
     role: workspaceRoleEnum('role').notNull().default('editor'),
     token: text('token').notNull().unique(), // 256-bit token as hex (64 chars)
@@ -250,7 +250,7 @@ export const sessions = pgTable('sessions', {
 
 /**
  * Videos table
- * Stores video projects within projects
+ * Stores video projects within channels
  * @see ADR-017: Teamspace Hierarchy Architecture
  */
 export const videos = pgTable(
@@ -259,7 +259,7 @@ export const videos = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     workspaceId: uuid('workspace_id')
       .notNull()
-      .references(() => projects.id, { onDelete: 'cascade' }),
+      .references(() => channels.id, { onDelete: 'cascade' }),
     title: text('title').notNull(),
     description: text('description'),
     status: videoStatusEnum('status').notNull().default('idea'),
@@ -290,7 +290,7 @@ export const categories = pgTable('categories', {
   id: uuid('id').primaryKey().defaultRandom(),
   workspaceId: uuid('workspace_id')
     .notNull()
-    .references(() => projects.id, { onDelete: 'cascade' }),
+    .references(() => channels.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   color: text('color').notNull().default('#6B7280'), // Default gray (hex color)
   createdAt: timestamp('created_at', { withTimezone: true })
@@ -384,7 +384,7 @@ export const auditLog = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     workspaceId: uuid('workspace_id')
       .notNull()
-      .references(() => projects.id, { onDelete: 'cascade' }),
+      .references(() => channels.id, { onDelete: 'cascade' }),
     userId: uuid('user_id').references(() => users.id, {
       onDelete: 'set null',
     }),
@@ -408,7 +408,7 @@ export const auditLog = pgTable(
 
 export const teamspacesRelations = relations(teamspaces, ({ many }) => ({
   teamspaceUsers: many(teamspaceUsers),
-  projects: many(projects),
+  channels: many(channels),
 }));
 
 export const teamspaceUsersRelations = relations(teamspaceUsers, ({ one }) => ({
@@ -422,12 +422,12 @@ export const teamspaceUsersRelations = relations(teamspaceUsers, ({ one }) => ({
   }),
 }));
 
-export const projectsRelations = relations(projects, ({ one, many }) => ({
+export const channelsRelations = relations(channels, ({ one, many }) => ({
   teamspace: one(teamspaces, {
-    fields: [projects.teamspaceId],
+    fields: [channels.teamspaceId],
     references: [teamspaces.id],
   }),
-  projectUsers: many(projectUsers),
+  channelUsers: many(channelUsers),
   videos: many(videos),
   categories: many(categories),
   auditLogs: many(auditLog),
@@ -436,18 +436,18 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
 
 export const usersRelations = relations(users, ({ many }) => ({
   teamspaceUsers: many(teamspaceUsers),
-  projectUsers: many(projectUsers),
+  channelUsers: many(channelUsers),
   sessions: many(sessions),
   invitationsCreated: many(invitations),
 }));
 
-export const projectUsersRelations = relations(projectUsers, ({ one }) => ({
-  project: one(projects, {
-    fields: [projectUsers.projectId],
-    references: [projects.id],
+export const channelUsersRelations = relations(channelUsers, ({ one }) => ({
+  channel: one(channels, {
+    fields: [channelUsers.channelId],
+    references: [channels.id],
   }),
   user: one(users, {
-    fields: [projectUsers.userId],
+    fields: [channelUsers.userId],
     references: [users.id],
   }),
 }));
@@ -460,9 +460,9 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
 }));
 
 export const videosRelations = relations(videos, ({ one, many }) => ({
-  project: one(projects, {
+  channel: one(channels, {
     fields: [videos.workspaceId],
-    references: [projects.id],
+    references: [channels.id],
   }),
   creator: one(users, {
     fields: [videos.createdBy],
@@ -473,9 +473,9 @@ export const videosRelations = relations(videos, ({ one, many }) => ({
 }));
 
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
-  project: one(projects, {
+  channel: one(channels, {
     fields: [categories.workspaceId],
-    references: [projects.id],
+    references: [channels.id],
   }),
   videoCategories: many(videoCategories),
 }));
@@ -521,9 +521,9 @@ export const documentRevisionsRelations = relations(
 );
 
 export const invitationsRelations = relations(invitations, ({ one }) => ({
-  project: one(projects, {
+  channel: one(channels, {
     fields: [invitations.workspaceId],
-    references: [projects.id],
+    references: [channels.id],
   }),
   creator: one(users, {
     fields: [invitations.createdBy],
@@ -541,14 +541,14 @@ export type NewTeamspace = typeof teamspaces.$inferInsert;
 export type TeamspaceUser = typeof teamspaceUsers.$inferSelect;
 export type NewTeamspaceUser = typeof teamspaceUsers.$inferInsert;
 
-export type Project = typeof projects.$inferSelect;
-export type NewProject = typeof projects.$inferInsert;
+export type Channel = typeof channels.$inferSelect;
+export type NewChannel = typeof channels.$inferInsert;
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 
-export type ProjectUser = typeof projectUsers.$inferSelect;
-export type NewProjectUser = typeof projectUsers.$inferInsert;
+export type ChannelUser = typeof channelUsers.$inferSelect;
+export type NewChannelUser = typeof channelUsers.$inferInsert;
 
 export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
@@ -570,7 +570,7 @@ export type NewAuditLogEntry = typeof auditLog.$inferInsert;
 
 export type WorkspaceMode = (typeof workspaceModeEnum.enumValues)[number];
 export type WorkspaceRole = (typeof workspaceRoleEnum.enumValues)[number];
-export type ProjectRole = WorkspaceRole; // Alias for renamed tables
+export type ChannelRole = WorkspaceRole; // Alias for renamed tables
 export type TeamspaceRole = (typeof teamspaceRoleEnum.enumValues)[number];
 export type VideoStatus = (typeof videoStatusEnum.enumValues)[number];
 export type DocumentType = (typeof documentTypeEnum.enumValues)[number];

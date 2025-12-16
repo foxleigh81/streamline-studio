@@ -3,7 +3,12 @@
 import { type MouseEvent } from 'react';
 import Link from 'next/link';
 import type { VideoStatus } from '@/server/db/schema';
-import { STATUS_COLORS, STATUS_LABELS } from '@/lib/constants/status';
+import {
+  STATUS_COLORS,
+  STATUS_TEXT_COLORS,
+  STATUS_LABELS,
+} from '@/lib/constants/status';
+import { formatDueDate } from '@/lib/utils/date';
 import styles from './video-card.module.scss';
 
 /**
@@ -12,8 +17,8 @@ import styles from './video-card.module.scss';
 export interface VideoCardProps {
   /** Video ID */
   id: string;
-  /** Project slug for navigation */
-  projectSlug: string;
+  /** Channel slug for navigation */
+  channelSlug: string;
   /** Video title */
   title: string;
   /** Video status */
@@ -35,12 +40,12 @@ export interface VideoCardProps {
 /**
  * VideoCard Component
  *
- * Displays a video project card with title, status, due date, and categories.
+ * Displays a video card with title, status, due date, and categories.
  * Clicking the card navigates to the video detail page.
  */
 export function VideoCard({
   id,
-  projectSlug,
+  channelSlug,
   title,
   status,
   dueDate,
@@ -50,23 +55,6 @@ export function VideoCard({
   className,
   teamspaceSlug,
 }: VideoCardProps) {
-  /**
-   * Format due date for display
-   */
-  const formatDueDate = (date: string | null): string | null => {
-    if (!date) return null;
-    try {
-      const d = new Date(date);
-      return d.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      });
-    } catch {
-      return null;
-    }
-  };
-
   /**
    * Handle card click
    */
@@ -84,7 +72,7 @@ export function VideoCard({
 
   return (
     <Link
-      href={`/t/${effectiveTeamspace}/${projectSlug}/videos/${id}`}
+      href={`/t/${effectiveTeamspace}/${channelSlug}/content-plan/${id}`}
       className={cardClasses}
       onClick={handleClick}
       aria-label={`View video: ${title}`}
@@ -93,7 +81,10 @@ export function VideoCard({
       <div className={styles.header}>
         <span
           className={styles.statusBadge}
-          style={{ backgroundColor: STATUS_COLORS[status] }}
+          style={{
+            backgroundColor: STATUS_COLORS[status],
+            color: STATUS_TEXT_COLORS[status],
+          }}
           aria-label={`Status: ${STATUS_LABELS[status]}`}
         >
           {STATUS_LABELS[status]}

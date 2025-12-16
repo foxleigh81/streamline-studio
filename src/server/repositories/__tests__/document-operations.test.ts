@@ -1,7 +1,7 @@
 /**
- * Workspace Repository - Document Operations Tests
+ * Channel Repository - Document Operations Tests
  *
- * Tests for document CRUD operations in the ProjectRepository.
+ * Tests for document CRUD operations in the ChannelRepository.
  * Documents are scoped through their associated videos.
  *
  * @see /docs/adrs/005-testing-strategy.md
@@ -16,7 +16,7 @@ import {
   createTestVideo,
   isDatabaseAvailable,
 } from '@/test/helpers/database';
-import { ProjectRepository } from '../project-repository';
+import { ChannelRepository } from '../channel-repository';
 
 // Check database availability before running tests
 let dbAvailable = false;
@@ -25,13 +25,13 @@ beforeAll(async () => {
   dbAvailable = await isDatabaseAvailable();
 });
 
-describe('ProjectRepository - Document Operations', () => {
-  let workspace1Id: string;
-  let workspace2Id: string;
+describe('ChannelRepository - Document Operations', () => {
+  let channel1Id: string;
+  let channel2Id: string;
   let video1Id: string;
   let video2Id: string;
-  let repo1: ProjectRepository;
-  let repo2: ProjectRepository;
+  let repo1: ChannelRepository;
+  let repo2: ChannelRepository;
 
   beforeEach(async (ctx) => {
     if (!dbAvailable) {
@@ -41,19 +41,19 @@ describe('ProjectRepository - Document Operations', () => {
     await resetTestDatabase();
     const db = await getTestDatabase();
 
-    // Create workspaces
-    const workspace1 = await createTestWorkspace({ name: 'Workspace 1' });
-    const workspace2 = await createTestWorkspace({ name: 'Workspace 2' });
+    // Create channels
+    const channel1 = await createTestWorkspace({ name: 'Channel 1' });
+    const channel2 = await createTestWorkspace({ name: 'Channel 2' });
 
-    workspace1Id = workspace1.id;
-    workspace2Id = workspace2.id;
+    channel1Id = channel1.id;
+    channel2Id = channel2.id;
 
-    repo1 = new ProjectRepository(db, workspace1Id);
-    repo2 = new ProjectRepository(db, workspace2Id);
+    repo1 = new ChannelRepository(db, channel1Id);
+    repo2 = new ChannelRepository(db, channel2Id);
 
-    // Create videos in each workspace
-    const video1 = await createTestVideo(workspace1Id, { title: 'Video 1' });
-    const video2 = await createTestVideo(workspace2Id, { title: 'Video 2' });
+    // Create videos in each channel
+    const video1 = await createTestVideo(channel1Id, { title: 'Video 1' });
+    const video2 = await createTestVideo(channel2Id, { title: 'Video 2' });
 
     video1Id = video1.id;
     video2Id = video2.id;
@@ -65,7 +65,7 @@ describe('ProjectRepository - Document Operations', () => {
   });
 
   describe('createDocument', () => {
-    it('creates document for video in same workspace', async () => {
+    it('creates document for video in same channel', async () => {
       const document = await repo1.createDocument({
         videoId: video1Id,
         type: 'script',
@@ -77,7 +77,7 @@ describe('ProjectRepository - Document Operations', () => {
       expect(document.content).toBe('# Video Script\n\nThis is the script.');
     });
 
-    it('throws error for video in different workspace', async () => {
+    it('throws error for video in different channel', async () => {
       await expect(
         repo1.createDocument({
           videoId: video2Id,
@@ -118,7 +118,7 @@ describe('ProjectRepository - Document Operations', () => {
   });
 
   describe('getDocument', () => {
-    it('returns document from same workspace', async () => {
+    it('returns document from same channel', async () => {
       const created = await repo1.createDocument({
         videoId: video1Id,
         type: 'script',
@@ -131,7 +131,7 @@ describe('ProjectRepository - Document Operations', () => {
       expect(retrieved?.id).toBe(created.id);
     });
 
-    it('returns null for document in different workspace', async () => {
+    it('returns null for document in different channel', async () => {
       const created = await repo1.createDocument({
         videoId: video1Id,
         type: 'script',
@@ -178,7 +178,7 @@ describe('ProjectRepository - Document Operations', () => {
       expect(documents).toHaveLength(3);
     });
 
-    it('returns empty array for video in different workspace', async () => {
+    it('returns empty array for video in different channel', async () => {
       const documents = await repo1.getDocumentsByVideo(video2Id);
 
       expect(documents).toHaveLength(0);
@@ -224,7 +224,7 @@ describe('ProjectRepository - Document Operations', () => {
       expect(document).toBeNull();
     });
 
-    it('returns null for video in different workspace', async () => {
+    it('returns null for video in different channel', async () => {
       await repo1.createDocument({
         videoId: video1Id,
         type: 'script',
@@ -255,7 +255,7 @@ describe('ProjectRepository - Document Operations', () => {
       expect(updated?.content).toBe('Updated content');
     });
 
-    it('returns null for document in different workspace', async () => {
+    it('returns null for document in different channel', async () => {
       const document = await repo1.createDocument({
         videoId: video1Id,
         type: 'script',
@@ -305,7 +305,7 @@ describe('ProjectRepository - Document Operations', () => {
   });
 
   describe('deleteDocument', () => {
-    it('deletes document from same workspace', async () => {
+    it('deletes document from same channel', async () => {
       const document = await repo1.createDocument({
         videoId: video1Id,
         type: 'script',
@@ -320,7 +320,7 @@ describe('ProjectRepository - Document Operations', () => {
       expect(retrieved).toBeNull();
     });
 
-    it('returns false for document in different workspace', async () => {
+    it('returns false for document in different channel', async () => {
       const document = await repo1.createDocument({
         videoId: video1Id,
         type: 'script',

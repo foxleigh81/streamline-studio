@@ -1,0 +1,81 @@
+/**
+ * ViewToggle Component Styles
+ *
+ * Toggle button group for switching between Grid and Table views.
+ * Uses CSS custom properties from the theme system.
+ */
+
+.container {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-0-5);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--color-muted-foreground);
+  cursor: pointer;
+  border-radius: calc(var(--radius-md) - var(--spacing-0-5));
+  transition:
+    background-color var(--duration-fast) var(--ease-in-out),
+    color var(--duration-fast) var(--ease-in-out);
+
+  &:hover:not(:disabled) {
+    background: var(--color-muted);
+    color: var(--color-foreground);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.active {
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+
+  &:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+    color: var(--color-primary-foreground);
+  }
+}
+
+// =============================================================================
+// SIZE VARIANTS
+// =============================================================================
+
+.sizeSm {
+  .button {
+    width: 2rem;
+    height: 2rem;
+  }
+}
+
+.sizeMd {
+  .button {
+    // WCAG 2.1 AAA recommends 44px minimum for touch targets
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+}
+
+.sizeLg {
+  .button {
+    width: 3rem;
+    height: 3rem;
+  }
+}

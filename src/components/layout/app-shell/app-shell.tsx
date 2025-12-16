@@ -4,13 +4,20 @@ import { type ReactNode, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { Video, Tag, Users, Settings, LogOut, Building2 } from 'lucide-react';
+import {
+  Tag,
+  Users,
+  Settings,
+  LogOut,
+  Building2,
+  ClipboardList,
+} from 'lucide-react';
 import { trpc } from '@/lib/trpc/client';
 import { SkipLink } from '@/components/ui/skip-link';
-import { ProjectSwitcher } from '@/components/project/project-switcher';
-import { CreateProjectModal } from '@/components/project/create-project-modal';
+import { ChannelSwitcher } from '@/components/channel/channel-switcher';
+import { CreateChannelModal } from '@/components/channel/create-channel-modal';
 import { useTeamspace } from '@/lib/teamspace';
-import { useProject } from '@/lib/project';
+import { useChannel } from '@/lib/channel';
 import { useCanManageTeamspace } from '@/lib/permissions';
 import { isMultiTenant } from '@/lib/constants';
 import styles from './app-shell.module.scss';
@@ -19,16 +26,16 @@ import styles from './app-shell.module.scss';
  * App Shell Component
  *
  * Main application layout with sidebar navigation.
- * Provides teamspace/project-scoped navigation and responsive behavior.
+ * Provides teamspace/channel-scoped navigation and responsive behavior.
  *
  * Adapts to single-tenant vs multi-tenant deployment modes:
- * - Single-tenant: Shows only project-level navigation
- * - Multi-tenant: Shows full teamspace/project hierarchy
+ * - Single-tenant: Shows only channel-level navigation
+ * - Multi-tenant: Shows full teamspace/channel hierarchy
  */
 
 export interface AppShellProps {
-  /** Project slug for navigation links */
-  projectSlug: string;
+  /** Channel slug for navigation links */
+  channelSlug: string;
   /** Page content */
   children: ReactNode;
   /** Optional className for custom styling */
@@ -42,10 +49,10 @@ export interface AppShellProps {
  */
 const navigationItems = [
   {
-    name: 'Videos',
-    href: '/videos',
-    icon: 'video',
-    ariaLabel: 'Navigate to videos page',
+    name: 'Content Plan',
+    href: '/content-plan',
+    icon: 'clipboard-list',
+    ariaLabel: 'Navigate to content plan page',
     requiresPermission: null,
   },
   {
@@ -75,7 +82,7 @@ const navigationItems = [
  * App Shell Component
  */
 export function AppShell({
-  projectSlug,
+  channelSlug,
   children,
   className,
   teamspaceSlug,
@@ -86,7 +93,7 @@ export function AppShell({
 
   // Get context data
   const { teamspace } = useTeamspace();
-  const { project, role: projectRole } = useProject();
+  const { channel, role: channelRole } = useChannel();
   const canManageTeamspace = useCanManageTeamspace();
   const multiTenantMode = isMultiTenant();
 
@@ -111,18 +118,18 @@ export function AppShell({
   const isActive = (href: string): boolean => {
     // Always use unified routing - use "workspace" as fallback for single-tenant
     const effectiveTeamspace = teamspaceSlug ?? 'workspace';
-    const fullPath = `/t/${effectiveTeamspace}/${projectSlug}${href}`;
+    const fullPath = `/t/${effectiveTeamspace}/${channelSlug}${href}`;
     return pathname === fullPath || pathname.startsWith(`${fullPath}/`);
   };
 
   /**
-   * Build full navigation link with teamspace and project slug
+   * Build full navigation link with teamspace and channel slug
    * Uses unified routing structure for both single-tenant and multi-tenant modes
    */
   const buildLink = (href: string): string => {
     // Always use unified routing - use "workspace" as fallback for single-tenant
     const effectiveTeamspace = teamspaceSlug ?? 'workspace';
-    return `/t/${effectiveTeamspace}/${projectSlug}${href}`;
+    return `/t/${effectiveTeamspace}/${channelSlug}${href}`;
   };
 
   /**
@@ -131,7 +138,7 @@ export function AppShell({
   const canSeeNavItem = (requiredPermission: 'admin' | null): boolean => {
     if (!requiredPermission) return true;
     if (requiredPermission === 'admin') {
-      return projectRole === 'owner';
+      return channelRole === 'owner';
     }
     return true;
   };
@@ -145,7 +152,7 @@ export function AppShell({
       <aside className={styles.sidebar} aria-label="Main navigation">
         <div className={styles.sidebarHeader}>
           <h1 className={styles.logo}>
-            <Link href={buildLink('/videos')}>
+            <Link href={buildLink('/content-plan')}>
               <Image
                 src="/streamline-studio-logo.png"
                 alt="Streamline Studio"
@@ -178,23 +185,23 @@ export function AppShell({
             </div>
           )}
 
-          {/* Project switcher */}
-          <div className={styles.projectSwitcherContainer}>
-            <ProjectSwitcher
-              projectSlug={projectSlug}
-              projectName={project?.name}
-              onCreateProject={() => setIsCreateModalOpen(true)}
+          {/* Channel switcher */}
+          <div className={styles.channelSwitcherContainer}>
+            <ChannelSwitcher
+              channelSlug={channelSlug}
+              channelName={channel?.name}
+              onCreateChannel={() => setIsCreateModalOpen(true)}
               teamspaceSlug={teamspaceSlug}
             />
           </div>
 
-          {/* Project role badge */}
-          {projectRole && (
+          {/* Channel role badge */}
+          {channelRole && (
             <div
               className={styles.roleBadge}
-              aria-label={`Your role: ${projectRole}`}
+              aria-label={`Your role: ${channelRole}`}
             >
-              {projectRole}
+              {channelRole}
             </div>
           )}
         </div>
@@ -212,8 +219,8 @@ export function AppShell({
                     aria-current={isActive(item.href) ? 'page' : undefined}
                   >
                     <span className={styles.navIcon} aria-hidden="true">
-                      {item.icon === 'video' && (
-                        <Video className={styles.icon} />
+                      {item.icon === 'clipboard-list' && (
+                        <ClipboardList className={styles.icon} />
                       )}
                       {item.icon === 'tag' && <Tag className={styles.icon} />}
                       {item.icon === 'team' && (
@@ -250,8 +257,8 @@ export function AppShell({
         {children}
       </main>
 
-      {/* Create Project Modal */}
-      <CreateProjectModal
+      {/* Create Channel Modal */}
+      <CreateChannelModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
       />

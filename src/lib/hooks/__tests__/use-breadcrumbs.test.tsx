@@ -16,9 +16,9 @@ import {
   type TeamspaceContextValue,
 } from '@/lib/teamspace/context';
 import {
-  ProjectContext,
-  type ProjectContextValue,
-} from '@/lib/project/context';
+  ChannelContext,
+  type ChannelContextValue,
+} from '@/lib/channel/context';
 import type { ReactNode } from 'react';
 
 // Mock the constants module
@@ -60,15 +60,16 @@ describe('useBreadcrumbs', () => {
         refresh: async () => {},
       };
 
-      const mockProjectContext: ProjectContextValue = {
-        project: {
-          id: 'project-1',
-          name: 'My Project',
-          slug: 'my-project',
-          teamspaceId: 'teamspace-1',
-          mode: 'single-tenant',
-          createdAt: new Date(),
-        },
+      const mockChannelData1 = {
+        id: 'project-1',
+        name: 'My Project',
+        slug: 'my-project',
+        teamspaceId: 'teamspace-1',
+        mode: 'single-tenant' as const,
+        createdAt: new Date(),
+      };
+      const mockChannelContext: ChannelContextValue = {
+        channel: mockChannelData1,
         role: 'owner',
         isLoading: false,
         error: null,
@@ -77,9 +78,9 @@ describe('useBreadcrumbs', () => {
 
       const wrapper = ({ children }: { children: ReactNode }) => (
         <TeamspaceContext.Provider value={mockTeamspaceContext}>
-          <ProjectContext.Provider value={mockProjectContext}>
+          <ChannelContext.Provider value={mockChannelContext}>
             {children}
-          </ProjectContext.Provider>
+          </ChannelContext.Provider>
         </TeamspaceContext.Provider>
       );
 
@@ -89,7 +90,7 @@ describe('useBreadcrumbs', () => {
       expect(result.current).toHaveLength(1);
       expect(result.current[0]).toEqual({
         label: 'My Project',
-        href: '/t/workspace/my-project/videos',
+        href: '/t/workspace/my-project/content-plan',
       });
     });
 
@@ -107,15 +108,16 @@ describe('useBreadcrumbs', () => {
         refresh: async () => {},
       };
 
-      const mockProjectContext: ProjectContextValue = {
-        project: {
-          id: 'project-1',
-          name: 'My Project',
-          slug: 'my-project',
-          teamspaceId: 'teamspace-1',
-          mode: 'single-tenant',
-          createdAt: new Date(),
-        },
+      const mockChannelData1 = {
+        id: 'project-1',
+        name: 'My Project',
+        slug: 'my-project',
+        teamspaceId: 'teamspace-1',
+        mode: 'single-tenant' as const,
+        createdAt: new Date(),
+      };
+      const mockChannelContext: ChannelContextValue = {
+        channel: mockChannelData1,
         role: 'owner',
         isLoading: false,
         error: null,
@@ -124,16 +126,19 @@ describe('useBreadcrumbs', () => {
 
       const wrapper = ({ children }: { children: ReactNode }) => (
         <TeamspaceContext.Provider value={mockTeamspaceContext}>
-          <ProjectContext.Provider value={mockProjectContext}>
+          <ChannelContext.Provider value={mockChannelContext}>
             {children}
-          </ProjectContext.Provider>
+          </ChannelContext.Provider>
         </TeamspaceContext.Provider>
       );
 
       const { result } = renderHook(
         () =>
           useBreadcrumbs([
-            { label: 'Videos', href: '/t/workspace/my-project/videos' },
+            {
+              label: 'Content Plan',
+              href: '/t/workspace/my-project/content-plan',
+            },
             { label: 'Video Title' },
           ]),
         { wrapper }
@@ -141,8 +146,8 @@ describe('useBreadcrumbs', () => {
 
       expect(result.current).toHaveLength(3);
       expect(result.current).toEqual([
-        { label: 'My Project', href: '/t/workspace/my-project/videos' },
-        { label: 'Videos', href: '/t/workspace/my-project/videos' },
+        { label: 'My Project', href: '/t/workspace/my-project/content-plan' },
+        { label: 'Content Plan', href: '/t/workspace/my-project/content-plan' },
         { label: 'Video Title' },
       ]);
     });
@@ -156,8 +161,8 @@ describe('useBreadcrumbs', () => {
         refresh: async () => {},
       };
 
-      const mockProjectContext: ProjectContextValue = {
-        project: null,
+      const mockChannelContext: ChannelContextValue = {
+        channel: null,
         role: null,
         isLoading: false,
         error: null,
@@ -166,9 +171,9 @@ describe('useBreadcrumbs', () => {
 
       const wrapper = ({ children }: { children: ReactNode }) => (
         <TeamspaceContext.Provider value={mockTeamspaceContext}>
-          <ProjectContext.Provider value={mockProjectContext}>
+          <ChannelContext.Provider value={mockChannelContext}>
             {children}
-          </ProjectContext.Provider>
+          </ChannelContext.Provider>
         </TeamspaceContext.Provider>
       );
 
@@ -198,15 +203,16 @@ describe('useBreadcrumbs', () => {
         refresh: async () => {},
       };
 
-      const mockProjectContext: ProjectContextValue = {
-        project: {
-          id: 'project-1',
-          name: 'My Project',
-          slug: 'my-project',
-          teamspaceId: 'teamspace-1',
-          mode: 'multi-tenant',
-          createdAt: new Date(),
-        },
+      const mockChannelData2 = {
+        id: 'project-1',
+        name: 'My Project',
+        slug: 'my-project',
+        teamspaceId: 'teamspace-1',
+        mode: 'multi-tenant' as const,
+        createdAt: new Date(),
+      };
+      const mockChannelContext: ChannelContextValue = {
+        channel: mockChannelData2,
         role: 'owner',
         isLoading: false,
         error: null,
@@ -215,9 +221,9 @@ describe('useBreadcrumbs', () => {
 
       const wrapper = ({ children }: { children: ReactNode }) => (
         <TeamspaceContext.Provider value={mockTeamspaceContext}>
-          <ProjectContext.Provider value={mockProjectContext}>
+          <ChannelContext.Provider value={mockChannelContext}>
             {children}
-          </ProjectContext.Provider>
+          </ChannelContext.Provider>
         </TeamspaceContext.Provider>
       );
 
@@ -226,7 +232,7 @@ describe('useBreadcrumbs', () => {
       expect(result.current).toHaveLength(2);
       expect(result.current).toEqual([
         { label: 'My Team', href: '/t/my-team' },
-        { label: 'My Project', href: '/t/my-team/my-project/videos' },
+        { label: 'My Project', href: '/t/my-team/my-project/content-plan' },
       ]);
     });
 
@@ -244,15 +250,16 @@ describe('useBreadcrumbs', () => {
         refresh: async () => {},
       };
 
-      const mockProjectContext: ProjectContextValue = {
-        project: {
-          id: 'project-1',
-          name: 'My Project',
-          slug: 'my-project',
-          teamspaceId: 'teamspace-1',
-          mode: 'multi-tenant',
-          createdAt: new Date(),
-        },
+      const mockChannelData3 = {
+        id: 'project-1',
+        name: 'My Project',
+        slug: 'my-project',
+        teamspaceId: 'teamspace-1',
+        mode: 'multi-tenant' as const,
+        createdAt: new Date(),
+      };
+      const mockChannelContext: ChannelContextValue = {
+        channel: mockChannelData3,
         role: 'owner',
         isLoading: false,
         error: null,
@@ -261,19 +268,22 @@ describe('useBreadcrumbs', () => {
 
       const wrapper = ({ children }: { children: ReactNode }) => (
         <TeamspaceContext.Provider value={mockTeamspaceContext}>
-          <ProjectContext.Provider value={mockProjectContext}>
+          <ChannelContext.Provider value={mockChannelContext}>
             {children}
-          </ProjectContext.Provider>
+          </ChannelContext.Provider>
         </TeamspaceContext.Provider>
       );
 
       const { result } = renderHook(
         () =>
           useBreadcrumbs([
-            { label: 'Videos', href: '/t/my-team/my-project/videos' },
+            {
+              label: 'Content Plan',
+              href: '/t/my-team/my-project/content-plan',
+            },
             {
               label: 'Video Details',
-              href: '/t/my-team/my-project/videos/123',
+              href: '/t/my-team/my-project/content-plan/123',
             },
             { label: 'Script Editor' },
           ]),
@@ -283,9 +293,12 @@ describe('useBreadcrumbs', () => {
       expect(result.current).toHaveLength(5);
       expect(result.current).toEqual([
         { label: 'My Team', href: '/t/my-team' },
-        { label: 'My Project', href: '/t/my-team/my-project/videos' },
-        { label: 'Videos', href: '/t/my-team/my-project/videos' },
-        { label: 'Video Details', href: '/t/my-team/my-project/videos/123' },
+        { label: 'My Project', href: '/t/my-team/my-project/content-plan' },
+        { label: 'Content Plan', href: '/t/my-team/my-project/content-plan' },
+        {
+          label: 'Video Details',
+          href: '/t/my-team/my-project/content-plan/123',
+        },
         { label: 'Script Editor' },
       ]);
     });
@@ -304,8 +317,8 @@ describe('useBreadcrumbs', () => {
         refresh: async () => {},
       };
 
-      const mockProjectContext: ProjectContextValue = {
-        project: null,
+      const mockChannelContext: ChannelContextValue = {
+        channel: null,
         role: null,
         isLoading: false,
         error: null,
@@ -314,9 +327,9 @@ describe('useBreadcrumbs', () => {
 
       const wrapper = ({ children }: { children: ReactNode }) => (
         <TeamspaceContext.Provider value={mockTeamspaceContext}>
-          <ProjectContext.Provider value={mockProjectContext}>
+          <ChannelContext.Provider value={mockChannelContext}>
             {children}
-          </ProjectContext.Provider>
+          </ChannelContext.Provider>
         </TeamspaceContext.Provider>
       );
 
@@ -346,15 +359,16 @@ describe('useBaseUrl', () => {
       refresh: async () => {},
     };
 
-    const mockProjectContext: ProjectContextValue = {
-      project: {
-        id: 'project-1',
-        name: 'My Project',
-        slug: 'my-project',
-        teamspaceId: 'teamspace-1',
-        mode: 'multi-tenant',
-        createdAt: new Date(),
-      },
+    const mockChannelData4 = {
+      id: 'project-1',
+      name: 'My Project',
+      slug: 'my-project',
+      teamspaceId: 'teamspace-1',
+      mode: 'multi-tenant' as const,
+      createdAt: new Date(),
+    };
+    const mockChannelContext: ChannelContextValue = {
+      channel: mockChannelData4,
       role: 'owner',
       isLoading: false,
       error: null,
@@ -363,9 +377,9 @@ describe('useBaseUrl', () => {
 
     const wrapper = ({ children }: { children: ReactNode }) => (
       <TeamspaceContext.Provider value={mockTeamspaceContext}>
-        <ProjectContext.Provider value={mockProjectContext}>
+        <ChannelContext.Provider value={mockChannelContext}>
           {children}
-        </ProjectContext.Provider>
+        </ChannelContext.Provider>
       </TeamspaceContext.Provider>
     );
 
@@ -383,15 +397,16 @@ describe('useBaseUrl', () => {
       refresh: async () => {},
     };
 
-    const mockProjectContext: ProjectContextValue = {
-      project: {
-        id: 'project-1',
-        name: 'My Project',
-        slug: 'my-project',
-        teamspaceId: null,
-        mode: 'single-tenant',
-        createdAt: new Date(),
-      },
+    const mockChannelData5 = {
+      id: 'project-1',
+      name: 'My Project',
+      slug: 'my-project',
+      teamspaceId: null,
+      mode: 'single-tenant' as const,
+      createdAt: new Date(),
+    };
+    const mockChannelContext: ChannelContextValue = {
+      channel: mockChannelData5,
       role: 'owner',
       isLoading: false,
       error: null,
@@ -400,9 +415,9 @@ describe('useBaseUrl', () => {
 
     const wrapper = ({ children }: { children: ReactNode }) => (
       <TeamspaceContext.Provider value={mockTeamspaceContext}>
-        <ProjectContext.Provider value={mockProjectContext}>
+        <ChannelContext.Provider value={mockChannelContext}>
           {children}
-        </ProjectContext.Provider>
+        </ChannelContext.Provider>
       </TeamspaceContext.Provider>
     );
 
@@ -425,8 +440,8 @@ describe('useBaseUrl', () => {
       refresh: async () => {},
     };
 
-    const mockProjectContext: ProjectContextValue = {
-      project: null,
+    const mockChannelContext: ChannelContextValue = {
+      channel: null,
       role: null,
       isLoading: false,
       error: null,
@@ -435,9 +450,9 @@ describe('useBaseUrl', () => {
 
     const wrapper = ({ children }: { children: ReactNode }) => (
       <TeamspaceContext.Provider value={mockTeamspaceContext}>
-        <ProjectContext.Provider value={mockProjectContext}>
+        <ChannelContext.Provider value={mockChannelContext}>
           {children}
-        </ProjectContext.Provider>
+        </ChannelContext.Provider>
       </TeamspaceContext.Provider>
     );
 
@@ -446,7 +461,7 @@ describe('useBaseUrl', () => {
     expect(result.current).toBe('/');
   });
 
-  it('should return root path when both teamspace and project are null', () => {
+  it('should return root path when both teamspace and channel are null', () => {
     const mockTeamspaceContext: TeamspaceContextValue = {
       teamspace: null,
       role: null,
@@ -455,8 +470,8 @@ describe('useBaseUrl', () => {
       refresh: async () => {},
     };
 
-    const mockProjectContext: ProjectContextValue = {
-      project: null,
+    const mockChannelContext: ChannelContextValue = {
+      channel: null,
       role: null,
       isLoading: false,
       error: null,
@@ -465,9 +480,9 @@ describe('useBaseUrl', () => {
 
     const wrapper = ({ children }: { children: ReactNode }) => (
       <TeamspaceContext.Provider value={mockTeamspaceContext}>
-        <ProjectContext.Provider value={mockProjectContext}>
+        <ChannelContext.Provider value={mockChannelContext}>
           {children}
-        </ProjectContext.Provider>
+        </ChannelContext.Provider>
       </TeamspaceContext.Provider>
     );
 
@@ -490,15 +505,16 @@ describe('useBaseUrl', () => {
       refresh: async () => {},
     };
 
-    const mockProjectContext: ProjectContextValue = {
-      project: {
-        id: 'project-1',
-        name: 'My Project',
-        slug: 'my-project',
-        teamspaceId: 'teamspace-1',
-        mode: 'single-tenant',
-        createdAt: new Date(),
-      },
+    const mockChannelData6 = {
+      id: 'project-1',
+      name: 'My Project',
+      slug: 'my-project',
+      teamspaceId: 'teamspace-1',
+      mode: 'single-tenant' as const,
+      createdAt: new Date(),
+    };
+    const mockChannelContext: ChannelContextValue = {
+      channel: mockChannelData6,
       role: 'owner',
       isLoading: false,
       error: null,
@@ -507,9 +523,9 @@ describe('useBaseUrl', () => {
 
     const wrapper = ({ children }: { children: ReactNode }) => (
       <TeamspaceContext.Provider value={mockTeamspaceContext}>
-        <ProjectContext.Provider value={mockProjectContext}>
+        <ChannelContext.Provider value={mockChannelContext}>
           {children}
-        </ProjectContext.Provider>
+        </ChannelContext.Provider>
       </TeamspaceContext.Provider>
     );
 

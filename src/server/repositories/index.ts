@@ -18,12 +18,12 @@ export {
   DEFAULT_SINGLE_TENANT_TEAMSPACE_SLUG,
 } from './teamspace-repository';
 
-// Project Repository - for project-scoped operations (videos, documents, categories)
+// Channel Repository - for channel-scoped operations (videos, documents, categories)
 export {
-  ProjectRepository,
-  createProjectRepository,
+  ChannelRepository,
+  createChannelRepository,
   type PaginationOptions,
   type VideoListOptions,
   type DocumentListOptions,
   type CategoryListOptions,
-} from './project-repository';
+} from './channel-repository';

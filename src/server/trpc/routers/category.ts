@@ -9,7 +9,11 @@
 
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { router, workspaceProcedure, editorProcedure } from '../procedures';
+import {
+  router,
+  simpleChannelProcedure,
+  simpleChannelEditorProcedure,
+} from '../procedures';
 import {
   logCategoryCreated,
   logCategoryUpdated,
@@ -78,12 +82,12 @@ const categoryUpdateInput = z.object({
  */
 export const categoryRouter = router({
   /**
-   * List all categories in the workspace
+   * List all categories in the channel
    */
-  list: workspaceProcedure
+  list: simpleChannelProcedure
     .input(categoryListInput)
     .query(async ({ ctx, input }) => {
-      const categories = await ctx.repository.getCategories({
+      const categories = await ctx.channelRepository.getCategories({
         orderBy: input.orderBy,
         orderDir: input.orderDir,
         limit: input.limit,
@@ -95,10 +99,10 @@ export const categoryRouter = router({
   /**
    * Get a single category by ID
    */
-  get: workspaceProcedure
+  get: simpleChannelProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      const category = await ctx.repository.getCategory(input.id);
+      const category = await ctx.channelRepository.getCategory(input.id);
 
       if (!category) {
         throw new TRPCError({
@@ -113,16 +117,16 @@ export const categoryRouter = router({
   /**
    * Create a new category
    */
-  create: editorProcedure
+  create: simpleChannelEditorProcedure
     .input(categoryCreateInput)
     .mutation(async ({ ctx, input }) => {
-      const { repository, user } = ctx;
+      const { channelRepository, user } = ctx;
 
-      const category = await repository.createCategory(input);
+      const category = await channelRepository.createCategory(input);
 
       // Log audit trail with specific service
       await logCategoryCreated(
-        repository,
+        channelRepository,
         category.id,
         user.id,
         category.name,
@@ -135,14 +139,14 @@ export const categoryRouter = router({
   /**
    * Update a category
    */
-  update: editorProcedure
+  update: simpleChannelEditorProcedure
     .input(categoryUpdateInput)
     .mutation(async ({ ctx, input }) => {
-      const { repository, user } = ctx;
+      const { channelRepository, user } = ctx;
       const { id, ...updateData } = input;
 
       // Get current category for audit logging
-      const currentCategory = await repository.getCategory(id);
+      const currentCategory = await channelRepository.getCategory(id);
       if (!currentCategory) {
         throw new TRPCError({
           code: 'NOT_FOUND',
@@ -150,7 +154,7 @@ export const categoryRouter = router({
         });
       }
 
-      const category = await repository.updateCategory(id, updateData);
+      const category = await channelRepository.updateCategory(id, updateData);
 
       if (!category) {
         throw new TRPCError({
@@ -161,7 +165,7 @@ export const categoryRouter = router({
 
       // Log audit trail with specific service
       await logCategoryUpdated(
-        repository,
+        channelRepository,
         id,
         user.id,
         currentCategory.name,
@@ -179,13 +183,13 @@ export const categoryRouter = router({
    * The database schema has onDelete: 'cascade' for videoCategories,
    * so the join table entries will be automatically removed
    */
-  delete: editorProcedure
+  delete: simpleChannelEditorProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const { repository, user } = ctx;
+      const { channelRepository, user } = ctx;
 
       // Get category details before deletion for audit log
-      const category = await repository.getCategory(input.id);
+      const category = await channelRepository.getCategory(input.id);
       if (!category) {
         throw new TRPCError({
           code: 'NOT_FOUND',
@@ -196,7 +200,7 @@ export const categoryRouter = router({
       // Delete the category
       // The videoCategories join table entries will be automatically removed
       // due to onDelete: 'cascade' in the schema
-      const deleted = await repository.deleteCategory(input.id);
+      const deleted = await channelRepository.deleteCategory(input.id);
 
       if (!deleted) {
         throw new TRPCError({
@@ -206,7 +210,12 @@ export const categoryRouter = router({
       }
 
       // Log audit trail with specific service
-      await logCategoryDeleted(repository, input.id, user.id, category.name);
+      await logCategoryDeleted(
+        channelRepository,
+        input.id,
+        user.id,
+        category.name
+      );
 
       return { success: true };
     }),
@@ -214,7 +223,7 @@ export const categoryRouter = router({
   /**
    * Get the preset color palette
    */
-  getColorPalette: workspaceProcedure.query(() => {
+  getColorPalette: simpleChannelProcedure.query(() => {
     return CATEGORY_COLOR_PALETTE;
   }),
 });

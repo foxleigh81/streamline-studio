@@ -13,8 +13,8 @@ import { TRPCError } from '@trpc/server';
 import { router, publicProcedure } from '../procedures';
 import {
   users,
-  projects,
-  projectUsers,
+  channels,
+  channelUsers,
   teamspaces,
   teamspaceUsers,
 } from '@/server/db/schema';
@@ -30,6 +30,8 @@ import {
   validateSetupRequirements,
 } from '@/lib/setup';
 import { DEFAULT_SINGLE_TENANT_TEAMSPACE_SLUG } from '@/server/repositories';
+import { generateSlug } from '@/lib/utils/slug';
+import { logger } from '@/lib/logger';
 
 /**
  * Email validation schema
@@ -58,10 +60,10 @@ const setupInputSchema = z.object({
     .min(1, 'Name is required')
     .max(100, 'Name too long')
     .optional(),
-  projectName: z
+  channelName: z
     .string()
-    .min(1, 'Project name is required')
-    .max(100, 'Project name too long')
+    .min(1, 'Channel name is required')
+    .max(100, 'Channel name too long')
     .optional(),
 });
 
@@ -102,7 +104,7 @@ export const setupRouter = router({
   complete: publicProcedure
     .input(setupInputSchema)
     .mutation(async ({ ctx, input }): Promise<SetupResponse> => {
-      const { email, password, name, projectName } = input;
+      const { email, password, name, channelName } = input;
 
       // Check if setup is already complete
       const setupComplete = await isSetupComplete();
@@ -147,8 +149,8 @@ export const setupRouter = router({
       // Hash password
       const passwordHash = await hashPassword(password);
 
-      // Use transaction to create user, teamspace, and project atomically
-      const { newUser, newTeamspace, newProject } = await ctx.db.transaction(
+      // Use transaction to create user, teamspace, and channel atomically
+      const { newUser, newTeamspace, newChannel } = await ctx.db.transaction(
         async (tx) => {
           // Create user
           const userResult = await tx
@@ -193,28 +195,32 @@ export const setupRouter = router({
             role: 'owner',
           });
 
-          // Create project within the teamspace
-          const projectResult = await tx
-            .insert(projects)
+          // Create channel within the teamspace
+          // Generate slug from channel name (fixes bug where all channels got 'default' slug)
+          const finalChannelName = channelName ?? 'My Channel';
+          const channelSlug = generateSlug(finalChannelName, 'my-channel');
+
+          const channelResult = await tx
+            .insert(channels)
             .values({
-              name: projectName ?? 'My Project',
-              slug: 'default',
+              name: finalChannelName,
+              slug: channelSlug,
               mode: 'single-tenant',
               teamspaceId: teamspace.id,
             })
             .returning();
 
-          const project = projectResult[0];
-          if (!project) {
+          const channel = channelResult[0];
+          if (!channel) {
             throw new TRPCError({
               code: 'INTERNAL_SERVER_ERROR',
-              message: 'Failed to create project',
+              message: 'Failed to create channel',
             });
           }
 
-          // Link user to project as owner
-          await tx.insert(projectUsers).values({
-            projectId: project.id,
+          // Link user to channel as owner
+          await tx.insert(channelUsers).values({
+            channelId: channel.id,
             userId: user.id,
             role: 'owner',
           });
@@ -222,7 +228,7 @@ export const setupRouter = router({
           return {
             newUser: user,
             newTeamspace: teamspace,
-            newProject: project,
+            newChannel: channel,
           };
         }
       );
@@ -231,7 +237,7 @@ export const setupRouter = router({
       try {
         await markSetupComplete();
       } catch (error) {
-        console.error('[Setup] Failed to mark setup as complete:', error);
+        logger.error({ error }, '[Setup] Failed to mark setup as complete');
         // This is critical - if we can't persist the flag, we should fail
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
@@ -248,12 +254,15 @@ export const setupRouter = router({
       const cookie = createSessionCookie(sessionToken);
       ctx.headers.set('Set-Cookie', cookie);
 
-      console.warn('[Setup] Initial setup completed successfully', {
-        userId: newUser.id,
-        teamspaceId: newTeamspace.id,
-        teamspaceSlug: newTeamspace.slug,
-        projectId: newProject.id,
-      });
+      logger.info(
+        {
+          userId: newUser.id,
+          teamspaceId: newTeamspace.id,
+          teamspaceSlug: newTeamspace.slug,
+          channelId: newChannel.id,
+        },
+        '[Setup] Initial setup completed successfully'
+      );
 
       return {
         success: true,

@@ -157,8 +157,8 @@ test.describe('User Registration Flow', () => {
 
       await page.getByRole('button', { name: /create account/i }).click();
 
-      // Should redirect to dashboard
-      await expect(page).toHaveURL('/', { timeout: 10000 });
+      // Should redirect to teamspace dashboard
+      await expect(page).toHaveURL(/\/t\/workspace/, { timeout: 10000 });
     });
 
     test('shows loading state during submission', async ({ page }) => {

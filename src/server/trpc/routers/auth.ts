@@ -12,7 +12,14 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { router, publicProcedure, protectedProcedure } from '../procedures';
-import { users, projects, projectUsers } from '@/server/db/schema';
+import {
+  users,
+  channels,
+  channelUsers,
+  teamspaces,
+  teamspaceUsers,
+} from '@/server/db/schema';
+import { DEFAULT_SINGLE_TENANT_TEAMSPACE_SLUG } from '@/server/repositories';
 import {
   validatePassword,
   hashPassword,
@@ -158,8 +165,8 @@ export const authRouter = router({
       if (isSingleTenant) {
         // Check if any workspace exists (indicates this is the first user)
         const existingWorkspaces = await ctx.db
-          .select({ id: projects.id })
-          .from(projects)
+          .select({ id: channels.id })
+          .from(channels)
           .limit(1);
         needsDefaultWorkspace = existingWorkspaces.length === 0;
         createNewWorkspace = needsDefaultWorkspace;
@@ -200,9 +207,9 @@ export const authRouter = router({
           // In multi-tenant, ensure slug is unique
           if (isMultiTenant) {
             const existingWorkspace = await tx
-              .select({ id: projects.id })
-              .from(projects)
-              .where(eq(projects.slug, slug))
+              .select({ id: channels.id })
+              .from(channels)
+              .where(eq(channels.slug, slug))
               .limit(1);
 
             if (existingWorkspace.length > 0) {
@@ -214,7 +221,7 @@ export const authRouter = router({
           }
 
           const workspaceResult = await tx
-            .insert(projects)
+            .insert(channels)
             .values({
               name: workspaceName ?? 'My Workspace',
               slug,
@@ -232,22 +239,37 @@ export const authRouter = router({
           }
 
           // Link user to workspace as owner
-          await tx.insert(projectUsers).values({
-            projectId: workspace.id,
+          await tx.insert(channelUsers).values({
+            channelId: workspace.id,
             userId: user.id,
             role: 'owner',
           });
         } else if (isSingleTenant) {
           // In single-tenant mode but workspace exists, add user to existing workspace
           // This handles subsequent users in single-tenant mode
-          const existingWorkspace = await tx.select().from(projects).limit(1);
+          const existingWorkspace = await tx.select().from(channels).limit(1);
 
           if (existingWorkspace[0]) {
             workspace = existingWorkspace[0];
-            await tx.insert(projectUsers).values({
-              projectId: workspace.id,
+            await tx.insert(channelUsers).values({
+              channelId: workspace.id,
               userId: user.id,
               role: 'editor', // Subsequent users get editor role
+            });
+          }
+
+          // Also add user to the default teamspace so they can access /t routes
+          const defaultTeamspace = await tx
+            .select()
+            .from(teamspaces)
+            .where(eq(teamspaces.slug, DEFAULT_SINGLE_TENANT_TEAMSPACE_SLUG))
+            .limit(1);
+
+          if (defaultTeamspace[0]) {
+            await tx.insert(teamspaceUsers).values({
+              teamspaceId: defaultTeamspace[0].id,
+              userId: user.id,
+              role: 'editor', // Subsequent users get editor role in teamspace too
             });
           }
         }

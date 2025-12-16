@@ -13,12 +13,12 @@ import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   teamspaces,
   teamspaceUsers,
-  projects,
+  channels,
   type Teamspace,
   type TeamspaceUser,
   type TeamspaceRole,
-  type Project,
-  type NewProject,
+  type Channel,
+  type NewChannel,
   type NewTeamspace,
 } from '@/server/db/schema';
 import type * as schema from '@/server/db/schema';
@@ -36,7 +36,7 @@ import { isSingleTenant } from '@/lib/constants';
  * ```typescript
  * const repo = new TeamspaceRepository(db, teamspaceId);
  * const members = await repo.getTeamspaceMembers();
- * const projects = await repo.getProjects();
+ * const channels = await repo.getChannels();
  * ```
  */
 export class TeamspaceRepository {
@@ -210,38 +210,38 @@ export class TeamspaceRepository {
   }
 
   // ===========================================================================
-  // PROJECTS
+  // CHANNELS
   // ===========================================================================
 
   /**
-   * Get all projects in the teamspace
+   * Get all channels in the teamspace
    */
-  async getProjects(): Promise<Project[]> {
+  async getChannels(): Promise<Channel[]> {
     return this.db
       .select()
-      .from(projects)
-      .where(eq(projects.teamspaceId, this.teamspaceId));
+      .from(channels)
+      .where(eq(channels.teamspaceId, this.teamspaceId));
   }
 
   /**
-   * Create a project in the teamspace
+   * Create a channel in the teamspace
    */
-  async createProject(
-    data: Omit<NewProject, 'id' | 'teamspaceId' | 'createdAt' | 'updatedAt'>
-  ): Promise<Project> {
+  async createChannel(
+    data: Omit<NewChannel, 'id' | 'teamspaceId' | 'createdAt' | 'updatedAt'>
+  ): Promise<Channel> {
     const result = await this.db
-      .insert(projects)
+      .insert(channels)
       .values({
         ...data,
         teamspaceId: this.teamspaceId,
       })
       .returning();
 
-    const project = result[0];
-    if (!project) {
-      throw new Error('Failed to create project');
+    const channel = result[0];
+    if (!channel) {
+      throw new Error('Failed to create channel');
     }
-    return project;
+    return channel;
   }
 }
 

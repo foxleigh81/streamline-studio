@@ -10,7 +10,7 @@ import { invitationRouter } from './routers/invitation';
 import { teamRouter } from './routers/team';
 import { userRouter } from './routers/user';
 import { teamspaceRouter } from './routers/teamspace';
-import { projectRouter } from './routers/project';
+import { channelRouter } from './routers/channel';
 
 /**
  * tRPC Root Router
@@ -118,11 +118,11 @@ export const appRouter = router({
   teamspace: teamspaceRouter,
 
   /**
-   * Project router
-   * Handles project operations within teamspaces (formerly workspaces)
+   * Channel router
+   * Handles channel operations within teamspaces
    * @see /docs/adrs/017-teamspace-hierarchy.md
    */
-  project: projectRouter,
+  channel: channelRouter,
 });
 
 // Export type for client-side usage

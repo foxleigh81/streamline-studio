@@ -1,5 +1,5 @@
 /**
- * Workspace Repository - Category Operations Tests
+ * Channel Repository - Category Operations Tests
  *
  * Tests for category CRUD operations and video-category relationships.
  *
@@ -14,7 +14,7 @@ import {
   createTestVideo,
   isDatabaseAvailable,
 } from '@/test/helpers/database';
-import { ProjectRepository } from '../project-repository';
+import { ChannelRepository } from '../channel-repository';
 
 // Check database availability before running tests
 let dbAvailable = false;
@@ -23,11 +23,11 @@ beforeAll(async () => {
   dbAvailable = await isDatabaseAvailable();
 });
 
-describe('ProjectRepository - Category Operations', () => {
-  let workspace1Id: string;
-  let workspace2Id: string;
-  let repo1: ProjectRepository;
-  let repo2: ProjectRepository;
+describe('ChannelRepository - Category Operations', () => {
+  let channel1Id: string;
+  let channel2Id: string;
+  let repo1: ChannelRepository;
+  let repo2: ChannelRepository;
 
   beforeEach(async (ctx) => {
     if (!dbAvailable) {
@@ -37,14 +37,14 @@ describe('ProjectRepository - Category Operations', () => {
     await resetTestDatabase();
     const db = await getTestDatabase();
 
-    const workspace1 = await createTestWorkspace({ name: 'Workspace 1' });
-    const workspace2 = await createTestWorkspace({ name: 'Workspace 2' });
+    const channel1 = await createTestWorkspace({ name: 'Channel 1' });
+    const channel2 = await createTestWorkspace({ name: 'Channel 2' });
 
-    workspace1Id = workspace1.id;
-    workspace2Id = workspace2.id;
+    channel1Id = channel1.id;
+    channel2Id = channel2.id;
 
-    repo1 = new ProjectRepository(db, workspace1Id);
-    repo2 = new ProjectRepository(db, workspace2Id);
+    repo1 = new ChannelRepository(db, channel1Id);
+    repo2 = new ChannelRepository(db, channel2Id);
   });
 
   afterEach(async () => {
@@ -53,7 +53,7 @@ describe('ProjectRepository - Category Operations', () => {
   });
 
   describe('createCategory', () => {
-    it('creates category in correct workspace', async () => {
+    it('creates category in correct channel', async () => {
       const category = await repo1.createCategory({
         name: 'Tutorials',
         color: '#3498DB',
@@ -61,7 +61,7 @@ describe('ProjectRepository - Category Operations', () => {
 
       expect(category.name).toBe('Tutorials');
       expect(category.color).toBe('#3498DB');
-      expect(category.workspaceId).toBe(workspace1Id);
+      expect(category.workspaceId).toBe(channel1Id);
     });
 
     it('uses default color if not provided', async () => {
@@ -74,7 +74,7 @@ describe('ProjectRepository - Category Operations', () => {
   });
 
   describe('getCategory', () => {
-    it('returns category from same workspace', async () => {
+    it('returns category from same channel', async () => {
       const created = await repo1.createCategory({ name: 'Test' });
 
       const retrieved = await repo1.getCategory(created.id);
@@ -83,7 +83,7 @@ describe('ProjectRepository - Category Operations', () => {
       expect(retrieved?.name).toBe('Test');
     });
 
-    it('returns null for category in different workspace', async () => {
+    it('returns null for category in different channel', async () => {
       const created = await repo1.createCategory({ name: 'Test' });
 
       const retrieved = await repo2.getCategory(created.id);
@@ -100,13 +100,11 @@ describe('ProjectRepository - Category Operations', () => {
       await repo2.createCategory({ name: 'Other Workspace Category' });
     });
 
-    it('returns only categories from same workspace', async () => {
+    it('returns only categories from same channel', async () => {
       const categories = await repo1.getCategories();
 
       expect(categories).toHaveLength(3);
-      expect(categories.every((c) => c.workspaceId === workspace1Id)).toBe(
-        true
-      );
+      expect(categories.every((c) => c.workspaceId === channel1Id)).toBe(true);
     });
 
     it('orders by name ascending', async () => {
@@ -128,7 +126,7 @@ describe('ProjectRepository - Category Operations', () => {
   });
 
   describe('updateCategory', () => {
-    it('updates category in same workspace', async () => {
+    it('updates category in same channel', async () => {
       const category = await repo1.createCategory({
         name: 'Original',
         color: '#000000',
@@ -143,7 +141,7 @@ describe('ProjectRepository - Category Operations', () => {
       expect(updated?.color).toBe('#FFFFFF');
     });
 
-    it('returns null for category in different workspace', async () => {
+    it('returns null for category in different channel', async () => {
       const category = await repo1.createCategory({ name: 'Test' });
 
       const updated = await repo2.updateCategory(category.id, {
@@ -155,7 +153,7 @@ describe('ProjectRepository - Category Operations', () => {
   });
 
   describe('deleteCategory', () => {
-    it('deletes category from same workspace', async () => {
+    it('deletes category from same channel', async () => {
       const category = await repo1.createCategory({ name: 'To Delete' });
 
       const deleted = await repo1.deleteCategory(category.id);
@@ -166,7 +164,7 @@ describe('ProjectRepository - Category Operations', () => {
       expect(retrieved).toBeNull();
     });
 
-    it('returns false for category in different workspace', async () => {
+    it('returns false for category in different channel', async () => {
       const category = await repo1.createCategory({ name: 'Test' });
 
       const deleted = await repo2.deleteCategory(category.id);
@@ -181,7 +179,7 @@ describe('ProjectRepository - Category Operations', () => {
     let category2Id: string;
 
     beforeEach(async () => {
-      const video = await createTestVideo(workspace1Id, {
+      const video = await createTestVideo(channel1Id, {
         title: 'Test Video',
       });
       const category1 = await repo1.createCategory({ name: 'Category 1' });
@@ -201,8 +199,8 @@ describe('ProjectRepository - Category Operations', () => {
         expect(categoryIds).toContain(category1Id);
       });
 
-      it('throws error for video in different workspace', async () => {
-        const otherVideo = await createTestVideo(workspace2Id, {
+      it('throws error for video in different channel', async () => {
+        const otherVideo = await createTestVideo(channel2Id, {
           title: 'Other',
         });
 
@@ -211,7 +209,7 @@ describe('ProjectRepository - Category Operations', () => {
         ).rejects.toThrow('Video not found or access denied');
       });
 
-      it('throws error for category in different workspace', async () => {
+      it('throws error for category in different channel', async () => {
         const otherCategory = await repo2.createCategory({ name: 'Other' });
 
         await expect(
@@ -239,8 +237,8 @@ describe('ProjectRepository - Category Operations', () => {
         expect(categoryIds).not.toContain(category1Id);
       });
 
-      it('throws error for video in different workspace', async () => {
-        const otherVideo = await createTestVideo(workspace2Id, {
+      it('throws error for video in different channel', async () => {
+        const otherVideo = await createTestVideo(channel2Id, {
           title: 'Other',
         });
 
@@ -273,7 +271,7 @@ describe('ProjectRepository - Category Operations', () => {
         expect(categoryIds).toHaveLength(0);
       });
 
-      it('throws error for category in different workspace', async () => {
+      it('throws error for category in different channel', async () => {
         const otherCategory = await repo2.createCategory({ name: 'Other' });
 
         await expect(
@@ -294,8 +292,8 @@ describe('ProjectRepository - Category Operations', () => {
         expect(categoryIds).toContain(category2Id);
       });
 
-      it('returns empty array for video in different workspace', async () => {
-        const otherVideo = await createTestVideo(workspace2Id, {
+      it('returns empty array for video in different channel', async () => {
+        const otherVideo = await createTestVideo(channel2Id, {
           title: 'Other',
         });
 

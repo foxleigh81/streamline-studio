@@ -1,8 +1,8 @@
 /**
- * Workspace Repository - Video Operations Tests
+ * Channel Repository - Video Operations Tests
  *
- * Tests for video CRUD operations in the ProjectRepository.
- * Verifies workspace isolation, pagination, and filtering.
+ * Tests for video CRUD operations in the ChannelRepository.
+ * Verifies channel isolation, pagination, and filtering.
  *
  * @see /docs/adrs/005-testing-strategy.md
  * @see /docs/adrs/008-multi-tenancy-strategy.md
@@ -15,7 +15,7 @@ import {
   createTestWorkspace,
   isDatabaseAvailable,
 } from '@/test/helpers/database';
-import { ProjectRepository } from '../project-repository';
+import { ChannelRepository } from '../channel-repository';
 
 // Check database availability before running tests
 let dbAvailable = false;
@@ -24,11 +24,11 @@ beforeAll(async () => {
   dbAvailable = await isDatabaseAvailable();
 });
 
-describe('ProjectRepository - Video Operations', () => {
-  let workspace1Id: string;
-  let workspace2Id: string;
-  let repo1: ProjectRepository;
-  let repo2: ProjectRepository;
+describe('ChannelRepository - Video Operations', () => {
+  let channel1Id: string;
+  let channel2Id: string;
+  let repo1: ChannelRepository;
+  let repo2: ChannelRepository;
 
   beforeEach(async (ctx) => {
     if (!dbAvailable) {
@@ -38,15 +38,15 @@ describe('ProjectRepository - Video Operations', () => {
     await resetTestDatabase();
     const db = await getTestDatabase();
 
-    // Create two workspaces for isolation testing
-    const workspace1 = await createTestWorkspace({ name: 'Workspace 1' });
-    const workspace2 = await createTestWorkspace({ name: 'Workspace 2' });
+    // Create two channels for isolation testing
+    const channel1 = await createTestWorkspace({ name: 'Channel 1' });
+    const channel2 = await createTestWorkspace({ name: 'Channel 2' });
 
-    workspace1Id = workspace1.id;
-    workspace2Id = workspace2.id;
+    channel1Id = channel1.id;
+    channel2Id = channel2.id;
 
-    repo1 = new ProjectRepository(db, workspace1Id);
-    repo2 = new ProjectRepository(db, workspace2Id);
+    repo1 = new ChannelRepository(db, channel1Id);
+    repo2 = new ChannelRepository(db, channel2Id);
   });
 
   afterEach(async () => {
@@ -55,7 +55,7 @@ describe('ProjectRepository - Video Operations', () => {
   });
 
   describe('createVideo', () => {
-    it('creates video in correct workspace', async () => {
+    it('creates video in correct channel', async () => {
       const video = await repo1.createVideo({
         title: 'Test Video',
         description: 'Test description',
@@ -65,7 +65,7 @@ describe('ProjectRepository - Video Operations', () => {
       expect(video.title).toBe('Test Video');
       expect(video.description).toBe('Test description');
       expect(video.status).toBe('idea');
-      expect(video.workspaceId).toBe(workspace1Id);
+      expect(video.workspaceId).toBe(channel1Id);
     });
 
     it('sets default status to idea', async () => {
@@ -103,7 +103,7 @@ describe('ProjectRepository - Video Operations', () => {
   });
 
   describe('getVideo', () => {
-    it('returns video from same workspace', async () => {
+    it('returns video from same channel', async () => {
       const created = await repo1.createVideo({
         title: 'Video 1',
         status: 'scripting',
@@ -116,9 +116,9 @@ describe('ProjectRepository - Video Operations', () => {
       expect(retrieved?.title).toBe('Video 1');
     });
 
-    it('returns null for video from different workspace', async () => {
+    it('returns null for video from different channel', async () => {
       const video = await repo1.createVideo({
-        title: 'Workspace 1 Video',
+        title: 'Channel 1 Video',
       });
 
       const retrieved = await repo2.getVideo(video.id);
@@ -141,14 +141,14 @@ describe('ProjectRepository - Video Operations', () => {
       await repo1.createVideo({ title: 'Video 1', status: 'idea' });
       await repo1.createVideo({ title: 'Video 2', status: 'scripting' });
       await repo1.createVideo({ title: 'Video 3', status: 'idea' });
-      await repo2.createVideo({ title: 'Other Workspace Video' });
+      await repo2.createVideo({ title: 'Other Channel Video' });
     });
 
-    it('returns only videos from same workspace', async () => {
+    it('returns only videos from same channel', async () => {
       const videos = await repo1.getVideos();
 
       expect(videos).toHaveLength(3);
-      expect(videos.every((v) => v.workspaceId === workspace1Id)).toBe(true);
+      expect(videos.every((v) => v.workspaceId === channel1Id)).toBe(true);
     });
 
     it('filters by status', async () => {
@@ -190,9 +190,9 @@ describe('ProjectRepository - Video Operations', () => {
     });
 
     it('returns empty array when no videos exist', async () => {
-      const emptyWorkspace = await createTestWorkspace({ name: 'Empty' });
+      const emptyChannel = await createTestWorkspace({ name: 'Empty' });
       const db = await getTestDatabase();
-      const emptyRepo = new ProjectRepository(db, emptyWorkspace.id);
+      const emptyRepo = new ChannelRepository(db, emptyChannel.id);
 
       const videos = await emptyRepo.getVideos();
 
@@ -201,7 +201,7 @@ describe('ProjectRepository - Video Operations', () => {
   });
 
   describe('updateVideo', () => {
-    it('updates video in same workspace', async () => {
+    it('updates video in same channel', async () => {
       const video = await repo1.createVideo({
         title: 'Original Title',
         status: 'idea',
@@ -217,7 +217,7 @@ describe('ProjectRepository - Video Operations', () => {
       expect(updated?.status).toBe('filming');
     });
 
-    it('returns null when updating video from different workspace', async () => {
+    it('returns null when updating video from different channel', async () => {
       const video = await repo1.createVideo({
         title: 'Video 1',
       });
@@ -273,7 +273,7 @@ describe('ProjectRepository - Video Operations', () => {
   });
 
   describe('deleteVideo', () => {
-    it('deletes video from same workspace', async () => {
+    it('deletes video from same channel', async () => {
       const video = await repo1.createVideo({ title: 'To Delete' });
 
       const deleted = await repo1.deleteVideo(video.id);
@@ -284,7 +284,7 @@ describe('ProjectRepository - Video Operations', () => {
       expect(retrieved).toBeNull();
     });
 
-    it('returns false when deleting from different workspace', async () => {
+    it('returns false when deleting from different channel', async () => {
       const video = await repo1.createVideo({ title: 'Video 1' });
 
       const deleted = await repo2.deleteVideo(video.id);
@@ -305,23 +305,23 @@ describe('ProjectRepository - Video Operations', () => {
     });
   });
 
-  describe('Workspace Isolation', () => {
-    it('completely isolates data between workspaces', async () => {
-      // Create videos in both workspaces
-      const video1 = await repo1.createVideo({ title: 'Workspace 1 Video' });
-      const video2 = await repo2.createVideo({ title: 'Workspace 2 Video' });
+  describe('Channel Isolation', () => {
+    it('completely isolates data between channels', async () => {
+      // Create videos in both channels
+      const video1 = await repo1.createVideo({ title: 'Channel 1 Video' });
+      const video2 = await repo2.createVideo({ title: 'Channel 2 Video' });
 
       // Verify isolation
       const repo1Videos = await repo1.getVideos();
       const repo2Videos = await repo2.getVideos();
 
       expect(repo1Videos).toHaveLength(1);
-      expect(repo1Videos[0]?.title).toBe('Workspace 1 Video');
+      expect(repo1Videos[0]?.title).toBe('Channel 1 Video');
 
       expect(repo2Videos).toHaveLength(1);
-      expect(repo2Videos[0]?.title).toBe('Workspace 2 Video');
+      expect(repo2Videos[0]?.title).toBe('Channel 2 Video');
 
-      // Cross-workspace access should fail
+      // Cross-channel access should fail
       expect(await repo1.getVideo(video2.id)).toBeNull();
       expect(await repo2.getVideo(video1.id)).toBeNull();
 

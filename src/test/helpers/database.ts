@@ -117,10 +117,11 @@ export async function resetTestDatabase() {
       video_categories,
       videos,
       categories,
-      project_users,
+      invitations,
+      channel_users,
       sessions,
       users,
-      projects,
+      channels,
       teamspace_users,
       teamspaces
     RESTART IDENTITY CASCADE
@@ -140,7 +141,7 @@ export async function createTestWorkspace(
   const db = await getTestDatabase();
 
   const [workspace] = await db
-    .insert(schema.projects)
+    .insert(schema.channels)
     .values({
       name: options.name ?? 'Test Workspace',
       slug: options.slug ?? `test-${crypto.randomUUID()}`,
@@ -207,8 +208,8 @@ export async function createTestUserWithWorkspace(options: {
     name: options.name,
   });
 
-  await db.insert(schema.projectUsers).values({
-    projectId: workspace.id,
+  await db.insert(schema.channelUsers).values({
+    channelId: workspace.id,
     userId: user.id,
     role: options.role ?? 'owner',
   });

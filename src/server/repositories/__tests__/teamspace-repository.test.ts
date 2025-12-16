@@ -67,9 +67,9 @@ describe('TeamspaceRepository', () => {
       expect(TeamspaceRepository.prototype.removeMember).toBeDefined();
     });
 
-    it('has expected project methods defined', () => {
-      expect(TeamspaceRepository.prototype.getProjects).toBeDefined();
-      expect(TeamspaceRepository.prototype.createProject).toBeDefined();
+    it('has expected channel methods defined', () => {
+      expect(TeamspaceRepository.prototype.getChannels).toBeDefined();
+      expect(TeamspaceRepository.prototype.createChannel).toBeDefined();
     });
   });
 
@@ -241,42 +241,42 @@ describe.skip('TeamspaceRepository - Integration Tests (requires database)', () 
     });
   });
 
-  describe('Project isolation', () => {
-    it('getProjects only returns projects in the scoped teamspace', async () => {
+  describe('Channel isolation', () => {
+    it('getChannels only returns channels in the scoped teamspace', async () => {
       // Setup:
-      // 1. Create projectA1 and projectA2 in teamspaceA
-      // 2. Create projectB1 in teamspaceB
+      // 1. Create channelA1 and channelA2 in teamspaceA
+      // 2. Create channelB1 in teamspaceB
       // 3. Create repository scoped to teamspaceA
-      // 4. Get projects
+      // 4. Get channels
       //
-      // const projects = await repo.getProjects();
-      // expect(projects.map(p => p.id)).toContain(projectA1.id);
-      // expect(projects.map(p => p.id)).toContain(projectA2.id);
-      // expect(projects.map(p => p.id)).not.toContain(projectB1.id);
+      // const channels = await repo.getChannels();
+      // expect(channels.map(c => c.id)).toContain(channelA1.id);
+      // expect(channels.map(c => c.id)).toContain(channelA2.id);
+      // expect(channels.map(c => c.id)).not.toContain(channelB1.id);
 
       expect(true).toBe(true); // Placeholder
     });
 
-    it('createProject only creates in the scoped teamspace', async () => {
+    it('createChannel only creates in the scoped teamspace', async () => {
       // Setup:
       // 1. Create teamspaceA and teamspaceB
       // 2. Create repository scoped to teamspaceA
-      // 3. Create project via repository
-      // 4. Verify project only exists in teamspaceA
+      // 3. Create channel via repository
+      // 4. Verify channel only exists in teamspaceA
       //
       // const repo = new TeamspaceRepository(db, teamspaceA.id);
-      // const project = await repo.createProject({
-      //   name: 'Test Project',
-      //   slug: 'test-project',
+      // const channel = await repo.createChannel({
+      //   name: 'Test Channel',
+      //   slug: 'test-channel',
       //   mode: 'multi-tenant',
       // });
       //
-      // expect(project.teamspaceId).toBe(teamspaceA.id);
+      // expect(channel.teamspaceId).toBe(teamspaceA.id);
       //
-      // const projectsA = await getAllProjects(teamspaceA.id);
-      // const projectsB = await getAllProjects(teamspaceB.id);
-      // expect(projectsA.map(p => p.id)).toContain(project.id);
-      // expect(projectsB.map(p => p.id)).not.toContain(project.id);
+      // const channelsA = await getAllChannels(teamspaceA.id);
+      // const channelsB = await getAllChannels(teamspaceB.id);
+      // expect(channelsA.map(c => c.id)).toContain(channel.id);
+      // expect(channelsB.map(c => c.id)).not.toContain(channel.id);
 
       expect(true).toBe(true); // Placeholder
     });

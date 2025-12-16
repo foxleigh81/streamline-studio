@@ -158,6 +158,9 @@ jobs:
       - name: Run database migrations
         run: npm run db:migrate
 
+      - name: Seed database with test data
+        run: npm run db:seed
+
       - name: Create setup flag BEFORE build
         run: |
           mkdir -p /tmp/streamline-data

@@ -34,7 +34,7 @@ export const Default: Story = {
     items: [
       { label: 'Home', href: '/' },
       { label: 'My Team', href: '/t/my-team' },
-      { label: 'Videos' },
+      { label: 'Content Plan' },
     ],
   },
 };
@@ -56,8 +56,11 @@ export const DeepNavigation: Story = {
     items: [
       { label: 'Home', href: '/' },
       { label: 'My Team', href: '/t/my-team' },
-      { label: 'Videos', href: '/t/my-team/my-project/videos' },
-      { label: 'Video Details', href: '/t/my-team/my-project/videos/123' },
+      { label: 'Content Plan', href: '/t/my-team/my-project/content-plan' },
+      {
+        label: 'Video Details',
+        href: '/t/my-team/my-project/content-plan/123',
+      },
       { label: 'Script Editor' },
     ],
   },
@@ -68,7 +71,10 @@ export const LongLabels: Story = {
     items: [
       { label: 'Dashboard', href: '/' },
       { label: 'My Very Long Teamspace Name', href: '/t/my-team' },
-      { label: 'Video Management Area', href: '/t/my-team/my-project/videos' },
+      {
+        label: 'Content Plan Area',
+        href: '/t/my-team/my-project/content-plan',
+      },
       { label: 'Detailed Video Information Page' },
     ],
   },
@@ -113,7 +119,7 @@ export const CurrentPageMarked: Story = {
   args: {
     items: [
       { label: 'Home', href: '/' },
-      { label: 'Videos', href: '/videos' },
+      { label: 'Content Plan', href: '/content-plan' },
       { label: 'Current Video' },
     ],
   },

@@ -1,7 +1,7 @@
 /**
  * tRPC Procedure Definitions
  *
- * Defines all procedure types for the two-tier teamspace/project hierarchy.
+ * Defines all procedure types for the two-tier teamspace/channel hierarchy.
  * Separated from trpc.ts to avoid circular dependencies with middleware.
  *
  * @see /docs/adrs/007-api-and-auth.md
@@ -20,21 +20,21 @@ import {
   type TeamspaceContext,
 } from './middleware/teamspace';
 
-// Project middleware
+// Channel middleware (requires teamspace context)
 import {
-  projectMiddleware,
-  requireProjectOwner,
-  requireProjectEditor,
-  type ProjectContext,
-} from './middleware/project';
+  channelMiddleware,
+  requireChannelOwner,
+  requireChannelEditor,
+  type ChannelContext,
+} from './middleware/channel';
 
-// Legacy workspace middleware (kept for backward compatibility)
+// Simple channel middleware (single-tenant / header-based resolution)
 import {
-  workspaceMiddleware,
-  requireOwner,
-  requireEditor,
-  type WorkspaceContext,
-} from './middleware/workspace';
+  simpleChannelMiddleware,
+  requireSimpleChannelOwner,
+  requireSimpleChannelEditor,
+  type SimpleChannelContext,
+} from './middleware/simple-channel';
 
 // Re-export base procedures and router for convenience
 export { router, publicProcedure, protectedProcedure };
@@ -56,24 +56,24 @@ export { router, publicProcedure, protectedProcedure };
 export const teamspaceProcedure = protectedProcedure.use(teamspaceMiddleware);
 
 /**
- * Project procedure - requires authentication AND teamspace AND project access
+ * Channel procedure - requires authentication AND teamspace AND channel access
  *
  * This procedure:
  * 1. Verifies the user is authenticated
  * 2. Resolves the teamspace by slug (via teamspaceMiddleware)
- * 3. Resolves the project by slug within teamspace (from input)
- * 4. Verifies user has project access (direct membership OR teamspace admin)
+ * 3. Resolves the channel by slug within teamspace (from input)
+ * 4. Verifies user has channel access (direct membership OR teamspace admin)
  * 5. Calculates effective role with overrides
- * 6. Adds project-scoped repository to context
+ * 6. Adds channel-scoped repository to context
  *
- * Use this for endpoints that operate on project-scoped data
+ * Use this for endpoints that operate on channel-scoped data
  * (videos, documents, categories, etc).
  *
  * @see /docs/adrs/017-teamspace-hierarchy.md
  */
-export const projectProcedure = protectedProcedure
+export const channelProcedure = protectedProcedure
   .use(teamspaceMiddleware)
-  .use(projectMiddleware);
+  .use(channelMiddleware);
 
 /**
  * Teamspace owner procedure - requires owner role in teamspace
@@ -85,7 +85,7 @@ export const teamspaceOwnerProcedure = teamspaceProcedure.use(
 
 /**
  * Teamspace admin procedure - requires admin role or higher in teamspace
- * Use for team management operations (invite users, manage projects)
+ * Use for team management operations (invite users, manage channels)
  */
 export const teamspaceAdminProcedure = teamspaceProcedure.use(
   requireTeamspaceAdmin
@@ -100,44 +100,54 @@ export const teamspaceEditorProcedure = teamspaceProcedure.use(
 );
 
 /**
- * Project owner procedure - requires owner role in project
- * Use for destructive operations like project deletion, permission changes
+ * Channel owner procedure - requires owner role in channel
+ * Use for destructive operations like channel deletion, permission changes
  */
-export const projectOwnerProcedure = projectProcedure.use(requireProjectOwner);
+export const channelOwnerProcedure = channelProcedure.use(requireChannelOwner);
 
 /**
- * Project editor procedure - requires editor role or higher in project
+ * Channel editor procedure - requires editor role or higher in channel
  * Use for data modification operations (create/edit videos, documents)
  */
-export const projectEditorProcedure =
-  projectProcedure.use(requireProjectEditor);
+export const channelEditorProcedure =
+  channelProcedure.use(requireChannelEditor);
 
 // ==============================================================================
-// LEGACY PROCEDURES (Backward Compatibility)
+// SIMPLE CHANNEL PROCEDURES (Single-tenant / Header-based resolution)
 // ==============================================================================
 
 /**
- * @deprecated Use projectProcedure instead
- * Workspace procedure - requires authentication AND workspace access
+ * Simple channel procedure - requires authentication AND channel access
  *
- * This is kept for backward compatibility during the transition to the
- * two-tier teamspace/project hierarchy.
+ * This procedure:
+ * 1. Verifies the user is authenticated
+ * 2. Resolves the channel (from header in multi-tenant, or default in single-tenant)
+ * 3. Verifies the user is a member of the channel
+ * 4. Adds channel-scoped repository to context
+ *
+ * Use this for endpoints that need channel context without teamspace hierarchy.
  *
  * @see /docs/adrs/008-multi-tenancy-strategy.md
  */
-export const workspaceProcedure = protectedProcedure.use(workspaceMiddleware);
+export const simpleChannelProcedure = protectedProcedure.use(
+  simpleChannelMiddleware
+);
 
 /**
- * @deprecated Use projectOwnerProcedure instead
- * Owner procedure - requires owner role in workspace
+ * Simple channel owner procedure - requires owner role in channel
+ * Use for destructive operations like channel deletion, permission changes
  */
-export const ownerProcedure = workspaceProcedure.use(requireOwner);
+export const simpleChannelOwnerProcedure = simpleChannelProcedure.use(
+  requireSimpleChannelOwner
+);
 
 /**
- * @deprecated Use projectEditorProcedure instead
- * Editor procedure - requires editor role or higher
+ * Simple channel editor procedure - requires editor role or higher
+ * Use for data modification operations (create/edit videos, documents)
  */
-export const editorProcedure = workspaceProcedure.use(requireEditor);
+export const simpleChannelEditorProcedure = simpleChannelProcedure.use(
+  requireSimpleChannelEditor
+);
 
 // Re-export context types for use in routers
-export type { TeamspaceContext, ProjectContext, WorkspaceContext };
+export type { TeamspaceContext, ChannelContext, SimpleChannelContext };

@@ -9,20 +9,23 @@
  */
 
 import type {
-  ProjectRole,
+  ChannelRole,
   TeamspaceRole,
   WorkspaceRole,
 } from '@/server/db/schema';
 
 /**
- * Project role hierarchy (owner > editor > viewer)
- * Used for permission checks in project-scoped contexts
+ * Channel role hierarchy (owner > editor > viewer)
+ * Used for permission checks in channel-scoped contexts
  */
-export const PROJECT_ROLE_HIERARCHY: Record<ProjectRole, number> = {
+export const CHANNEL_ROLE_HIERARCHY: Record<ChannelRole, number> = {
   viewer: 1,
   editor: 2,
   owner: 3,
 };
+
+// Legacy alias
+export const PROJECT_ROLE_HIERARCHY = CHANNEL_ROLE_HIERARCHY;
 
 /**
  * Teamspace role hierarchy (owner > admin > editor > viewer)
