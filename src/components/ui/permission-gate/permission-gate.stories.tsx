@@ -4,8 +4,62 @@
  * Demonstrates permission-based rendering with different roles.
  */
 
+import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { PermissionGate } from './permission-gate';
+import {
+  ProjectContext,
+  type ProjectContextValue,
+} from '@/lib/project/context';
+import {
+  TeamspaceContext,
+  type TeamspaceContextValue,
+} from '@/lib/teamspace/context';
+
+/**
+ * Mock teamspace context for Storybook
+ */
+const mockTeamspaceContext: TeamspaceContextValue = {
+  teamspace: {
+    id: 'mock-teamspace-id',
+    name: 'Mock Teamspace',
+    slug: 'mock-teamspace',
+    createdAt: new Date(),
+  },
+  role: 'admin',
+  isLoading: false,
+  error: null,
+  refresh: async () => {},
+};
+
+/**
+ * Mock project context for Storybook
+ */
+const mockProjectContext: ProjectContextValue = {
+  project: {
+    id: 'mock-project-id',
+    name: 'Mock Project',
+    slug: 'mock-project',
+    teamspaceId: 'mock-teamspace-id',
+    mode: 'multi-tenant',
+    createdAt: new Date(),
+  },
+  role: 'owner',
+  isLoading: false,
+  error: null,
+  refresh: async () => {},
+};
+
+/**
+ * Decorator that provides mock context providers for permission stories
+ */
+const withMockProviders = (Story: React.ComponentType) => (
+  <TeamspaceContext.Provider value={mockTeamspaceContext}>
+    <ProjectContext.Provider value={mockProjectContext}>
+      <Story />
+    </ProjectContext.Provider>
+  </TeamspaceContext.Provider>
+);
 
 /**
  * Permission Gate allows conditional rendering based on user permissions.
@@ -22,6 +76,7 @@ const meta = {
     layout: 'centered',
   },
   tags: ['autodocs'],
+  decorators: [withMockProviders],
 } satisfies Meta<typeof PermissionGate>;
 
 export default meta;
