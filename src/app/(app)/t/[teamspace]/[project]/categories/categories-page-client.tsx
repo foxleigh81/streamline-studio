@@ -21,11 +21,7 @@ import styles from './categories-page.module.scss';
  * Manages category CRUD operations with color picker.
  * Allows users to create, update, and delete categories.
  */
-export function CategoriesPageClient({
-  workspaceSlug,
-}: {
-  workspaceSlug: string;
-}) {
+export function CategoriesPageClient({ projectSlug }: { projectSlug: string }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editColor, setEditColor] = useState<string>(PRESET_COLORS[0]);
@@ -166,7 +162,7 @@ export function CategoriesPageClient({
   };
 
   const breadcrumbItems = [
-    { label: 'Workspace', href: `/w/${workspaceSlug}` },
+    { label: 'Project', href: `/t/${projectSlug}` },
     { label: 'Categories' },
   ];
 

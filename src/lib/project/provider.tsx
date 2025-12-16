@@ -38,6 +38,10 @@ interface ProjectProviderProps {
  * Wraps project-scoped routes to provide project context.
  * Automatically fetches project data based on the route parameters.
  *
+ * Supports both multi-tenant (/t/[teamspace]/[project]) and single-tenant (/t/[project]) routes:
+ * - Multi-tenant: Uses teamspace slug from parent context and project.getBySlug
+ * - Single-tenant: Uses project slug directly from params and project.getBySlugSimple
+ *
  * IMPORTANT: Must be used inside TeamspaceProvider to access teamspace context.
  *
  * @example
@@ -58,6 +62,7 @@ export function ProjectProvider({
   children,
 }: ProjectProviderProps): React.ReactNode {
   // Get project slug from route params
+  // Always use params.project in the unified routing structure
   const params = useParams();
   const projectSlug =
     typeof params.project === 'string' ? params.project : null;
@@ -65,39 +70,80 @@ export function ProjectProvider({
   // Get teamspace slug from parent context
   const teamspaceSlug = useTeamspaceSlug();
 
-  // Fetch project data using tRPC
+  // Determine if we're in single-tenant mode (no teamspace)
+  const isSingleTenantMode = !teamspaceSlug;
+
+  // For multi-tenant mode: fetch via project.getBySlug
   const {
-    data,
-    isLoading,
-    error,
-    refetch: refresh,
+    data: multiTenantData,
+    isLoading: isLoadingMultiTenant,
+    error: multiTenantError,
+    refetch: refreshMultiTenant,
   } = trpc.project.getBySlug.useQuery(
     {
       teamspaceSlug: teamspaceSlug!,
       projectSlug: projectSlug!,
     },
     {
-      enabled: !!teamspaceSlug && !!projectSlug,
+      enabled: !isSingleTenantMode && !!teamspaceSlug && !!projectSlug,
       retry: false,
       staleTime: 5 * 60 * 1000, // 5 minutes
     }
   );
 
-  // Map the project data to our context shape
-  const project: ProjectData | null = useMemo(
-    () =>
-      data
-        ? {
-            id: data.id,
-            name: data.name,
-            slug: data.slug,
-            teamspaceId: data.teamspaceId,
-            mode: data.mode,
-            createdAt: data.createdAt,
-          }
-        : null,
-    [data]
+  // For single-tenant mode: fetch via project.getBySlugSimple
+  const {
+    data: singleTenantData,
+    isLoading: isLoadingSingleTenant,
+    error: singleTenantError,
+    refetch: refreshSingleTenant,
+  } = trpc.project.getBySlugSimple.useQuery(
+    { slug: projectSlug! },
+    {
+      enabled: isSingleTenantMode && !!projectSlug,
+      retry: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    }
   );
+
+  // Consolidate data from whichever endpoint is active
+  const data = isSingleTenantMode ? singleTenantData : multiTenantData;
+  const isLoading = isSingleTenantMode
+    ? isLoadingSingleTenant
+    : isLoadingMultiTenant;
+  const error = isSingleTenantMode ? singleTenantError : multiTenantError;
+  const refresh = isSingleTenantMode ? refreshSingleTenant : refreshMultiTenant;
+
+  // Map the project data to our context shape
+  const project: ProjectData | null = useMemo(() => {
+    if (!data) return null;
+
+    // Multi-tenant data (from project.getBySlug) has teamspaceId and createdAt
+    if (multiTenantData && !isSingleTenantMode) {
+      return {
+        id: multiTenantData.id,
+        name: multiTenantData.name,
+        slug: multiTenantData.slug,
+        teamspaceId: multiTenantData.teamspaceId,
+        mode: multiTenantData.mode,
+        createdAt: multiTenantData.createdAt,
+      };
+    }
+
+    // Single-tenant data (from project.getBySlugSimple) doesn't have all fields
+    if (singleTenantData && isSingleTenantMode) {
+      return {
+        id: singleTenantData.id,
+        name: singleTenantData.name,
+        slug: singleTenantData.slug,
+        teamspaceId: null, // Single-tenant projects have no teamspace
+        mode: singleTenantData.mode,
+        createdAt: new Date(), // project.getBySlugSimple doesn't return createdAt
+      };
+    }
+
+    return null;
+  }, [data, multiTenantData, singleTenantData, isSingleTenantMode]);
 
   const role: ProjectRole | null = data?.role ?? null;
 

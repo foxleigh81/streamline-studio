@@ -6,10 +6,13 @@ import { CategoriesPageClient } from './categories-page-client';
  * Server component that renders the categories management page.
  * Delegates to client component for interactivity.
  */
-export default function CategoriesPage({
+export default async function CategoriesPage({
   params,
 }: {
-  params: { teamspace: string; project: string };
+  params: Promise<{ teamspace: string; project: string }>;
 }) {
-  return <CategoriesPageClient workspaceSlug={params.project} />;
+  // Await params (Next.js 15 requirement)
+  const { project } = await params;
+
+  return <CategoriesPageClient projectSlug={project} />;
 }

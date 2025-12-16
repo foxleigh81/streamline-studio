@@ -8,7 +8,7 @@
  * @see /docs/adrs/017-teamspace-hierarchy.md
  */
 
-import { eq, and } from 'drizzle-orm';
+import { eq, and, count } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   teamspaces,
@@ -19,8 +19,10 @@ import {
   type TeamspaceRole,
   type Project,
   type NewProject,
+  type NewTeamspace,
 } from '@/server/db/schema';
 import type * as schema from '@/server/db/schema';
+import { isSingleTenant } from '@/lib/constants';
 
 /**
  * TeamspaceRepository - Enforces teamspace scoping on ALL queries
@@ -241,6 +243,126 @@ export class TeamspaceRepository {
     }
     return project;
   }
+}
+
+// ===========================================================================
+// GLOBAL TEAMSPACE OPERATIONS (not scoped to a specific teamspace)
+// ===========================================================================
+
+/**
+ * Reserved teamspace slugs that cannot be used in multi-tenant mode
+ */
+const RESERVED_TEAMSPACE_SLUGS = ['workspace'];
+
+/**
+ * Default teamspace slug for single-tenant mode
+ */
+export const DEFAULT_SINGLE_TENANT_TEAMSPACE_SLUG = 'workspace';
+
+/**
+ * Create a new teamspace
+ *
+ * In single-tenant mode:
+ * - Only allows creating ONE teamspace
+ * - Returns error if teamspace already exists
+ *
+ * In multi-tenant mode:
+ * - Allows creating multiple teamspaces
+ * - Prevents use of reserved slugs ('workspace')
+ *
+ * @param db - Drizzle database instance
+ * @param data - Teamspace data (name, slug, optional fields)
+ * @param creatorUserId - User ID to add as teamspace owner
+ * @returns Created teamspace with owner membership
+ * @throws Error if constraints are violated
+ */
+export async function createTeamspace(
+  db: NodePgDatabase<typeof schema>,
+  data: Omit<NewTeamspace, 'id' | 'createdAt' | 'updatedAt'>,
+  creatorUserId: string
+): Promise<{ teamspace: Teamspace; membership: TeamspaceUser }> {
+  const singleTenant = isSingleTenant();
+
+  // Single-tenant mode: Check if a teamspace already exists
+  if (singleTenant) {
+    const existingCount = await db
+      .select({ count: count() })
+      .from(teamspaces)
+      .then((result) => result[0]?.count ?? 0);
+
+    if (existingCount > 0) {
+      throw new Error(
+        'SINGLE_TENANT_CONSTRAINT: Cannot create multiple teamspaces in single-tenant mode'
+      );
+    }
+  } else {
+    // Multi-tenant mode: Check for reserved slugs
+    if (RESERVED_TEAMSPACE_SLUGS.includes(data.slug)) {
+      throw new Error(
+        `RESERVED_SLUG: The slug '${data.slug}' is reserved and cannot be used`
+      );
+    }
+  }
+
+  // Create the teamspace
+  const teamspaceResult = await db.insert(teamspaces).values(data).returning();
+
+  const teamspace = teamspaceResult[0];
+  if (!teamspace) {
+    throw new Error('Failed to create teamspace');
+  }
+
+  // Add the creator as the owner
+  const membershipResult = await db
+    .insert(teamspaceUsers)
+    .values({
+      teamspaceId: teamspace.id,
+      userId: creatorUserId,
+      role: 'owner',
+    })
+    .returning();
+
+  const membership = membershipResult[0];
+  if (!membership) {
+    // Rollback by deleting the teamspace if membership creation fails
+    await db.delete(teamspaces).where(eq(teamspaces.id, teamspace.id));
+    throw new Error('Failed to create teamspace owner membership');
+  }
+
+  return { teamspace, membership };
+}
+
+/**
+ * Check if a teamspace exists with the given slug
+ *
+ * @param db - Drizzle database instance
+ * @param slug - Teamspace slug to check
+ * @returns true if teamspace exists
+ */
+export async function teamspaceExists(
+  db: NodePgDatabase<typeof schema>,
+  slug: string
+): Promise<boolean> {
+  const result = await db
+    .select({ id: teamspaces.id })
+    .from(teamspaces)
+    .where(eq(teamspaces.slug, slug))
+    .limit(1);
+
+  return result.length > 0;
+}
+
+/**
+ * Get teamspace count (useful for single-tenant mode validation)
+ *
+ * @param db - Drizzle database instance
+ * @returns Number of teamspaces in the database
+ */
+export async function getTeamspaceCount(
+  db: NodePgDatabase<typeof schema>
+): Promise<number> {
+  const result = await db.select({ count: count() }).from(teamspaces);
+  return result[0]?.count ?? 0;
 }
 
 /**

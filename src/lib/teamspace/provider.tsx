@@ -18,6 +18,7 @@ import {
   type TeamspaceData,
 } from './context';
 import type { TeamspaceRole } from '@/server/db/schema';
+import styles from './provider.module.scss';
 
 /**
  * Props for TeamspaceProvider
@@ -32,6 +33,10 @@ interface TeamspaceProviderProps {
  *
  * Wraps teamspace-scoped routes to provide teamspace context.
  * Automatically fetches teamspace data based on the route parameter.
+ *
+ * In single-tenant mode (no teamspace slug in route), provides a default
+ * context with null teamspace data. This allows components to work in both
+ * single-tenant (/t/[project]) and multi-tenant (/t/[teamspace]/[project]) modes.
  *
  * @example
  * ```tsx
@@ -53,7 +58,7 @@ export function TeamspaceProvider({
   const teamspaceSlug =
     typeof params.teamspace === 'string' ? params.teamspace : null;
 
-  // Fetch teamspace data using tRPC
+  // Fetch teamspace data using tRPC (only if teamspace slug exists)
   const {
     data,
     isLoading,
@@ -84,6 +89,20 @@ export function TeamspaceProvider({
 
   const role: TeamspaceRole | null = data?.role ?? null;
 
+  // Default context value for single-tenant mode (no teamspace)
+  const defaultValue = useMemo<TeamspaceContextValue>(
+    () => ({
+      teamspace: null,
+      role: null,
+      isLoading: false,
+      error: null,
+      refresh: async () => {
+        // No-op for single-tenant mode
+      },
+    }),
+    []
+  );
+
   const value = useMemo<TeamspaceContextValue>(
     () => ({
       teamspace,
@@ -97,38 +116,26 @@ export function TeamspaceProvider({
     [teamspace, role, isLoading, error, refresh]
   );
 
+  // In single-tenant mode (no teamspace slug), provide default context immediately
+  if (!teamspaceSlug) {
+    return (
+      <TeamspaceContext.Provider value={defaultValue}>
+        {children}
+      </TeamspaceContext.Provider>
+    );
+  }
+
   // Show loading state while fetching teamspace data
   if (isLoading) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '60vh',
-          padding: '1rem',
-        }}
-      >
-        <div
-          style={{
-            textAlign: 'center',
-            color: 'var(--color-foreground-muted)',
-          }}
-        >
+      <div className={styles.loadingContainer}>
+        <div className={styles.loadingContent}>
           <div
-            style={{
-              width: '2rem',
-              height: '2rem',
-              margin: '0 auto 1rem',
-              border: '3px solid var(--color-border)',
-              borderTopColor: 'var(--color-primary)',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-            }}
+            className={styles.spinner}
             role="status"
             aria-label="Loading teamspace"
           />
-          <p style={{ margin: 0 }}>Loading teamspace...</p>
+          <p className={styles.loadingText}>Loading teamspace...</p>
         </div>
       </div>
     );
@@ -137,54 +144,15 @@ export function TeamspaceProvider({
   // Show error state if teamspace failed to load
   if (error) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '60vh',
-          padding: '1rem',
-        }}
-      >
-        <div
-          style={{
-            maxWidth: '28rem',
-            padding: '1.5rem',
-            textAlign: 'center',
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-destructive)',
-            borderRadius: 'var(--border-radius-lg)',
-          }}
-        >
-          <h2
-            style={{
-              margin: '0 0 0.5rem 0',
-              fontSize: 'var(--font-size-xl)',
-              color: 'var(--color-foreground)',
-            }}
-          >
-            Failed to Load Teamspace
-          </h2>
-          <p
-            style={{
-              margin: '0 0 1rem 0',
-              color: 'var(--color-foreground-muted)',
-            }}
-          >
+      <div className={styles.errorContainer}>
+        <div className={styles.errorContent}>
+          <h2 className={styles.errorHeading}>Failed to Load Teamspace</h2>
+          <p className={styles.errorMessage}>
             {error.message || 'An unexpected error occurred'}
           </p>
           <button
             onClick={() => void refresh()}
-            style={{
-              padding: '0.5rem 1.5rem',
-              fontSize: 'var(--font-size-sm)',
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-primary-foreground)',
-              background: 'var(--color-primary)',
-              border: 'none',
-              borderRadius: 'var(--border-radius-md)',
-              cursor: 'pointer',
-            }}
+            className={styles.retryButton}
             type="button"
           >
             Try Again
@@ -194,7 +162,7 @@ export function TeamspaceProvider({
     );
   }
 
-  // Only render children when teamspace data is loaded successfully
+  // Render children with teamspace context
   return (
     <TeamspaceContext.Provider value={value}>
       {children}

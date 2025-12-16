@@ -11,7 +11,13 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { router, publicProcedure } from '../procedures';
-import { users, projects, projectUsers } from '@/server/db/schema';
+import {
+  users,
+  projects,
+  projectUsers,
+  teamspaces,
+  teamspaceUsers,
+} from '@/server/db/schema';
 import { validatePassword, hashPassword } from '@/lib/auth/password';
 import {
   generateSessionToken,
@@ -23,6 +29,7 @@ import {
   markSetupComplete,
   validateSetupRequirements,
 } from '@/lib/setup';
+import { DEFAULT_SINGLE_TENANT_TEAMSPACE_SLUG } from '@/server/repositories';
 
 /**
  * Email validation schema
@@ -140,54 +147,85 @@ export const setupRouter = router({
       // Hash password
       const passwordHash = await hashPassword(password);
 
-      // Use transaction to create user and project atomically
-      const { newUser, newProject } = await ctx.db.transaction(async (tx) => {
-        // Create user
-        const userResult = await tx
-          .insert(users)
-          .values({
-            email: email.toLowerCase(),
-            passwordHash,
-            name: name ?? null,
-          })
-          .returning();
+      // Use transaction to create user, teamspace, and project atomically
+      const { newUser, newTeamspace, newProject } = await ctx.db.transaction(
+        async (tx) => {
+          // Create user
+          const userResult = await tx
+            .insert(users)
+            .values({
+              email: email.toLowerCase(),
+              passwordHash,
+              name: name ?? null,
+            })
+            .returning();
 
-        const user = userResult[0];
-        if (!user) {
-          throw new TRPCError({
-            code: 'INTERNAL_SERVER_ERROR',
-            message: 'Failed to create user account',
+          const user = userResult[0];
+          if (!user) {
+            throw new TRPCError({
+              code: 'INTERNAL_SERVER_ERROR',
+              message: 'Failed to create user account',
+            });
+          }
+
+          // Create teamspace (always created, even in single-tenant mode)
+          const teamspaceResult = await tx
+            .insert(teamspaces)
+            .values({
+              name: 'Workspace',
+              slug: DEFAULT_SINGLE_TENANT_TEAMSPACE_SLUG,
+              mode: 'single-tenant',
+            })
+            .returning();
+
+          const teamspace = teamspaceResult[0];
+          if (!teamspace) {
+            throw new TRPCError({
+              code: 'INTERNAL_SERVER_ERROR',
+              message: 'Failed to create teamspace',
+            });
+          }
+
+          // Link user to teamspace as owner
+          await tx.insert(teamspaceUsers).values({
+            teamspaceId: teamspace.id,
+            userId: user.id,
+            role: 'owner',
           });
-        }
 
-        // Create project
-        const projectResult = await tx
-          .insert(projects)
-          .values({
-            name: projectName ?? 'My Project',
-            slug: 'default',
-            mode: 'single-tenant',
-            teamspaceId: null, // Single-tenant mode doesn't require a teamspace
-          })
-          .returning();
+          // Create project within the teamspace
+          const projectResult = await tx
+            .insert(projects)
+            .values({
+              name: projectName ?? 'My Project',
+              slug: 'default',
+              mode: 'single-tenant',
+              teamspaceId: teamspace.id,
+            })
+            .returning();
 
-        const project = projectResult[0];
-        if (!project) {
-          throw new TRPCError({
-            code: 'INTERNAL_SERVER_ERROR',
-            message: 'Failed to create project',
+          const project = projectResult[0];
+          if (!project) {
+            throw new TRPCError({
+              code: 'INTERNAL_SERVER_ERROR',
+              message: 'Failed to create project',
+            });
+          }
+
+          // Link user to project as owner
+          await tx.insert(projectUsers).values({
+            projectId: project.id,
+            userId: user.id,
+            role: 'owner',
           });
+
+          return {
+            newUser: user,
+            newTeamspace: teamspace,
+            newProject: project,
+          };
         }
-
-        // Link user to project as owner
-        await tx.insert(projectUsers).values({
-          projectId: project.id,
-          userId: user.id,
-          role: 'owner',
-        });
-
-        return { newUser: user, newProject: project };
-      });
+      );
 
       // Mark setup as complete (persists to file)
       try {
@@ -212,6 +250,8 @@ export const setupRouter = router({
 
       console.warn('[Setup] Initial setup completed successfully', {
         userId: newUser.id,
+        teamspaceId: newTeamspace.id,
+        teamspaceSlug: newTeamspace.slug,
         projectId: newProject.id,
       });
 

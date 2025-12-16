@@ -3,24 +3,27 @@ import { validateRequest } from '@/lib/auth/workspace';
 import styles from './page.module.scss';
 
 /**
- * Teamspace Settings Page
+ * Settings Page
  *
- * This page will handle teamspace-level settings including:
+ * In multi-tenant mode, this handles teamspace-level settings including:
  * - Team member management across all projects
  * - Billing and subscription management
  * - Teamspace-level preferences
  *
+ * In single-tenant mode, this would handle account settings.
+ *
  * Note: This is a placeholder during the migration phase.
- * Full teamspace settings functionality will be implemented in Phase 5-6.
+ * Full settings functionality will be implemented in Phase 5-6.
  */
 
-interface TeamspaceSettingsPageProps {
-  params: { teamspace: string };
+interface SettingsPageProps {
+  params: Promise<{ teamspace: string }>;
 }
 
-export default async function TeamspaceSettingsPage({
-  params,
-}: TeamspaceSettingsPageProps) {
+export default async function SettingsPage({ params }: SettingsPageProps) {
+  // Await params (Next.js 15 requirement)
+  const { teamspace } = await params;
+
   // Validate authentication
   const { user } = await validateRequest();
   if (!user) {
@@ -29,10 +32,9 @@ export default async function TeamspaceSettingsPage({
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.heading}>Teamspace Settings</h1>
+      <h1 className={styles.heading}>Settings</h1>
       <p className={styles.teamspaceInfo}>
-        Teamspace:{' '}
-        <span className={styles.teamspaceName}>{params.teamspace}</span>
+        Workspace: <span className={styles.teamspaceName}>{teamspace}</span>
       </p>
       <div className={styles.infoCard}>
         <h2 className={styles.infoHeading}>Coming Soon</h2>

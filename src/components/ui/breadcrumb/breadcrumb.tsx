@@ -33,8 +33,8 @@ export interface BreadcrumbProps {
  * <Breadcrumb
  *   items={[
  *     { label: 'Home', href: '/' },
- *     { label: 'Workspace', href: '/w/my-workspace' },
- *     { label: 'Videos', href: '/w/my-workspace/videos' },
+ *     { label: 'My Team', href: '/t/my-team' },
+ *     { label: 'Videos', href: '/t/my-team/my-project/videos' },
  *     { label: 'Current Video' }
  *   ]}
  * />

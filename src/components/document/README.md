@@ -358,7 +358,7 @@ export const Default: Story = {
 ### Video Detail Page
 
 ```tsx
-// app/(app)/w/[slug]/videos/[id]/edit/page.tsx
+// app/(app)/t/[teamspace]/[project]/videos/[id]/edit/page.tsx
 import { DocumentEditor } from '@/components/document/document-editor';
 import { trpc } from '@/lib/trpc/server';
 

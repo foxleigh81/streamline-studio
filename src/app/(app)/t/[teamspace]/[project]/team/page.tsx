@@ -12,7 +12,7 @@ import styles from './team-page.module.scss';
 /**
  * Team Management Page
  *
- * Allows workspace owners to manage team members:
+ * Allows project owners to manage team members:
  * - View all members
  * - Change member roles
  * - Remove members
@@ -20,8 +20,8 @@ import styles from './team-page.module.scss';
  * - Revoke pending invitations
  */
 export default function TeamPage() {
-  const params = useParams<{ teamspace: string; project: string }>();
-  const workspaceSlug = params.project;
+  const params = useParams<{ slug: string; project: string }>();
+  const projectSlug = params.project;
 
   const utils = trpc.useUtils();
   const [errorMessage, setErrorMessage] = React.useState('');
@@ -31,21 +31,21 @@ export default function TeamPage() {
   // Get current user
   const { data: currentUser } = trpc.auth.whoami.useQuery();
 
-  // Get current workspace to check user role
-  const { data: workspace } = trpc.workspace.getBySlug.useQuery({
-    slug: workspaceSlug,
+  // Get current project to check user role
+  const { data: project } = trpc.project.getBySlugSimple.useQuery({
+    slug: projectSlug,
   });
 
   // Fetch team members
   const { data: members = [], isLoading: isLoadingMembers } =
     trpc.team.list.useQuery(undefined, {
-      enabled: !!workspace,
+      enabled: !!project,
     });
 
   // Fetch pending invitations (only for owners)
   const { data: pendingInvitations = [], isLoading: isLoadingInvitations } =
     trpc.invitation.list.useQuery(undefined, {
-      enabled: workspace?.role === 'owner',
+      enabled: project?.role === 'owner',
     });
 
   // Update role mutation
@@ -142,8 +142,8 @@ export default function TeamPage() {
     await revokeInvitationMutation.mutateAsync({ id: invitationId });
   };
 
-  const isOwner = workspace?.role === 'owner';
-  const isLoading = isLoadingMembers || !workspace;
+  const isOwner = project?.role === 'owner';
+  const isLoading = isLoadingMembers || !project;
 
   /**
    * Announce loading state changes to screen readers
@@ -167,7 +167,7 @@ export default function TeamPage() {
         <div>
           <h1 className={styles.title}>Team Management</h1>
           <p className={styles.subtitle}>
-            Manage team members and their access to this workspace
+            Manage team members and their access to this project
           </p>
         </div>
       </div>
@@ -228,7 +228,7 @@ export default function TeamPage() {
                 role: m.role,
                 joinedAt: m.joinedAt,
               }))}
-              currentUserRole={workspace.role}
+              currentUserRole={project.role}
               currentUserId={currentUser?.id ?? ''}
               onRoleUpdate={handleRoleUpdate}
               onRemove={handleRemove}
@@ -264,7 +264,7 @@ export default function TeamPage() {
           {!isOwner && (
             <section className={styles.section}>
               <div className={styles.infoMessage}>
-                <p>Team management is available to workspace owners.</p>
+                <p>Team management is available to project owners.</p>
               </div>
             </section>
           )}

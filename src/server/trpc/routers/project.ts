@@ -20,6 +20,7 @@ import {
   teamspaceUsers,
 } from '@/server/db/schema';
 import type { ProjectRole, TeamspaceRole } from '@/server/db/schema';
+import { serverEnv } from '@/lib/env';
 
 /**
  * Map TeamspaceRole to ProjectRole
@@ -292,6 +293,155 @@ export const projectRouter = router({
       return {
         ...project,
         role: effectiveRole,
+      };
+    }),
+
+  /**
+   * Get a specific project by slug (simple version for single-tenant mode)
+   * Verifies user has access to the project
+   * Does not require teamspace context
+   */
+  getBySlugSimple: protectedProcedure
+    .input(z.object({ slug: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const result = await ctx.db
+        .select({
+          id: projects.id,
+          name: projects.name,
+          slug: projects.slug,
+          mode: projects.mode,
+          role: projectUsers.role,
+        })
+        .from(projectUsers)
+        .innerJoin(projects, eq(projectUsers.projectId, projects.id))
+        .where(
+          and(
+            eq(projects.slug, input.slug),
+            eq(projectUsers.userId, ctx.user.id)
+          )
+        )
+        .limit(1);
+
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Project not found',
+        });
+      }
+
+      return result[0];
+    }),
+
+  /**
+   * List all projects the current user has access to (for single-tenant mode)
+   * Requires authentication
+   * Merged from workspace router
+   */
+  list: protectedProcedure.query(async ({ ctx }) => {
+    const userProjects = await ctx.db
+      .select({
+        id: projects.id,
+        name: projects.name,
+        slug: projects.slug,
+        role: projectUsers.role,
+        joinedAt: projectUsers.createdAt,
+      })
+      .from(projectUsers)
+      .innerJoin(projects, eq(projectUsers.projectId, projects.id))
+      .where(eq(projectUsers.userId, ctx.user.id))
+      .orderBy(projectUsers.createdAt);
+
+    return userProjects;
+  }),
+
+  /**
+   * Create a new project
+   * Only available in multi-tenant mode
+   * Merged from workspace router
+   */
+  create: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().min(1, 'Project name is required').max(100),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Only allow project creation in multi-tenant mode
+      if (serverEnv.MODE !== 'multi-tenant') {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Project creation is only available in multi-tenant mode',
+        });
+      }
+
+      // Generate slug from name
+      const baseSlug = input.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+
+      // Check if slug is unique, append random suffix if not
+      let slug = baseSlug;
+      let attempts = 0;
+      const maxAttempts = 10;
+
+      while (attempts < maxAttempts) {
+        const existingProject = await ctx.db
+          .select({ id: projects.id })
+          .from(projects)
+          .where(eq(projects.slug, slug))
+          .limit(1);
+
+        if (existingProject.length === 0) {
+          // Slug is unique
+          break;
+        }
+
+        // Append random suffix
+        const randomSuffix = Math.random().toString(36).substring(2, 8);
+        slug = `${baseSlug}-${randomSuffix}`;
+        attempts++;
+      }
+
+      if (attempts === maxAttempts) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to generate unique project slug',
+        });
+      }
+
+      // Create project and add user as owner in transaction
+      const result = await ctx.db.transaction(async (tx) => {
+        const [project] = await tx
+          .insert(projects)
+          .values({
+            name: input.name,
+            slug,
+            mode: 'multi-tenant',
+            teamspaceId: null, // TODO: Set from teamspace context when needed
+          })
+          .returning();
+
+        if (!project) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to create project',
+          });
+        }
+
+        await tx.insert(projectUsers).values({
+          projectId: project.id,
+          userId: ctx.user.id,
+          role: 'owner',
+        });
+
+        return project;
+      });
+
+      return {
+        id: result.id,
+        name: result.name,
+        slug: result.slug,
       };
     }),
 });

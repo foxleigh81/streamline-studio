@@ -8,7 +8,6 @@ import { documentRouter } from './routers/document';
 import { revisionRouter } from './routers/revision';
 import { invitationRouter } from './routers/invitation';
 import { teamRouter } from './routers/team';
-import { workspaceRouter } from './routers/workspace';
 import { userRouter } from './routers/user';
 import { teamspaceRouter } from './routers/teamspace';
 import { projectRouter } from './routers/project';
@@ -104,13 +103,6 @@ export const appRouter = router({
    * @see Phase 5.2
    */
   team: teamRouter,
-
-  /**
-   * Workspace router
-   * Handles workspace listing and creation
-   * @see Phase 5.3
-   */
-  workspace: workspaceRouter,
 
   /**
    * User router

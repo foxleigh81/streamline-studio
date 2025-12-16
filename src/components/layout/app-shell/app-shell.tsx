@@ -7,8 +7,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Video, Tag, Users, Settings, LogOut, Building2 } from 'lucide-react';
 import { trpc } from '@/lib/trpc/client';
 import { SkipLink } from '@/components/ui/skip-link';
-import { WorkspaceSwitcher } from '@/components/workspace/workspace-switcher';
-import { CreateWorkspaceModal } from '@/components/workspace/create-workspace-modal';
+import { ProjectSwitcher } from '@/components/project/project-switcher';
+import { CreateProjectModal } from '@/components/project/create-project-modal';
 import { useTeamspace } from '@/lib/teamspace';
 import { useProject } from '@/lib/project';
 import { useCanManageTeamspace } from '@/lib/permissions';
@@ -27,13 +27,13 @@ import styles from './app-shell.module.scss';
  */
 
 export interface AppShellProps {
-  /** Workspace slug for navigation links (maps to project slug in new structure) */
-  workspaceSlug: string;
+  /** Project slug for navigation links */
+  projectSlug: string;
   /** Page content */
   children: ReactNode;
   /** Optional className for custom styling */
   className?: string;
-  /** Optional teamspace slug (defaults to 'default' during migration) */
+  /** Optional teamspace slug (only for multi-tenant mode) */
   teamspaceSlug?: string;
 }
 
@@ -75,10 +75,10 @@ const navigationItems = [
  * App Shell Component
  */
 export function AppShell({
-  workspaceSlug,
+  projectSlug,
   children,
   className,
-  teamspaceSlug = 'default',
+  teamspaceSlug,
 }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -109,15 +109,20 @@ export function AppShell({
    * Check if a navigation item is active
    */
   const isActive = (href: string): boolean => {
-    const fullPath = `/t/${teamspaceSlug}/${workspaceSlug}${href}`;
+    // Always use unified routing - use "workspace" as fallback for single-tenant
+    const effectiveTeamspace = teamspaceSlug ?? 'workspace';
+    const fullPath = `/t/${effectiveTeamspace}/${projectSlug}${href}`;
     return pathname === fullPath || pathname.startsWith(`${fullPath}/`);
   };
 
   /**
-   * Build full navigation link with teamspace and project (workspace) slug
+   * Build full navigation link with teamspace and project slug
+   * Uses unified routing structure for both single-tenant and multi-tenant modes
    */
   const buildLink = (href: string): string => {
-    return `/t/${teamspaceSlug}/${workspaceSlug}${href}`;
+    // Always use unified routing - use "workspace" as fallback for single-tenant
+    const effectiveTeamspace = teamspaceSlug ?? 'workspace';
+    return `/t/${effectiveTeamspace}/${projectSlug}${href}`;
   };
 
   /**
@@ -174,11 +179,11 @@ export function AppShell({
           )}
 
           {/* Project switcher */}
-          <div className={styles.workspaceSwitcherContainer}>
-            <WorkspaceSwitcher
-              workspaceSlug={workspaceSlug}
-              workspaceName={project?.name}
-              onCreateWorkspace={() => setIsCreateModalOpen(true)}
+          <div className={styles.projectSwitcherContainer}>
+            <ProjectSwitcher
+              projectSlug={projectSlug}
+              projectName={project?.name}
+              onCreateProject={() => setIsCreateModalOpen(true)}
               teamspaceSlug={teamspaceSlug}
             />
           </div>
@@ -245,8 +250,8 @@ export function AppShell({
         {children}
       </main>
 
-      {/* Create Workspace Modal */}
-      <CreateWorkspaceModal
+      {/* Create Project Modal */}
+      <CreateProjectModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
       />

@@ -33,7 +33,7 @@ export const Default: Story = {
   args: {
     items: [
       { label: 'Home', href: '/' },
-      { label: 'Workspace', href: '/w/my-workspace' },
+      { label: 'My Team', href: '/t/my-team' },
       { label: 'Videos' },
     ],
   },
@@ -55,9 +55,9 @@ export const DeepNavigation: Story = {
   args: {
     items: [
       { label: 'Home', href: '/' },
-      { label: 'Workspace', href: '/w/my-workspace' },
-      { label: 'Videos', href: '/w/my-workspace/videos' },
-      { label: 'Video Details', href: '/w/my-workspace/videos/123' },
+      { label: 'My Team', href: '/t/my-team' },
+      { label: 'Videos', href: '/t/my-team/my-project/videos' },
+      { label: 'Video Details', href: '/t/my-team/my-project/videos/123' },
       { label: 'Script Editor' },
     ],
   },
@@ -67,8 +67,8 @@ export const LongLabels: Story = {
   args: {
     items: [
       { label: 'Dashboard', href: '/' },
-      { label: 'My Very Long Workspace Name', href: '/w/workspace' },
-      { label: 'Video Management Area', href: '/w/workspace/videos' },
+      { label: 'My Very Long Teamspace Name', href: '/t/my-team' },
+      { label: 'Video Management Area', href: '/t/my-team/my-project/videos' },
       { label: 'Detailed Video Information Page' },
     ],
   },
@@ -85,7 +85,7 @@ export const AccessibilityAttributes: Story = {
   args: {
     items: [
       { label: 'Home', href: '/' },
-      { label: 'Workspace', href: '/w/workspace' },
+      { label: 'My Team', href: '/t/my-team' },
       { label: 'Current Page' },
     ],
   },
@@ -133,7 +133,7 @@ export const LinksRendered: Story = {
   args: {
     items: [
       { label: 'Home', href: '/' },
-      { label: 'Workspace', href: '/w/workspace' },
+      { label: 'My Team', href: '/t/my-team' },
       { label: 'Current' },
     ],
   },
@@ -144,8 +144,8 @@ export const LinksRendered: Story = {
     const homeLink = canvas.getByRole('link', { name: 'Home' });
     expect(homeLink).toHaveAttribute('href', '/');
 
-    const workspaceLink = canvas.getByRole('link', { name: 'Workspace' });
-    expect(workspaceLink).toHaveAttribute('href', '/w/workspace');
+    const teamLink = canvas.getByRole('link', { name: 'My Team' });
+    expect(teamLink).toHaveAttribute('href', '/t/my-team');
 
     // Check that last item is NOT a link
     const links = canvas.getAllByRole('link');
@@ -160,7 +160,7 @@ export const SeparatorsHidden: Story = {
   args: {
     items: [
       { label: 'Home', href: '/' },
-      { label: 'Workspace', href: '/w/workspace' },
+      { label: 'My Team', href: '/t/my-team' },
       { label: 'Current' },
     ],
   },

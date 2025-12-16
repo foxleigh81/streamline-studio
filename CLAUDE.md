@@ -6,6 +6,15 @@
 
 **Streamline Studio** is a self-hosted video script management platform built with Next.js 15, designed for content creators to draft, organize, and manage video scripts with Markdown support.
 
+## Pre-Release Status
+
+> **IMPORTANT**: This project is in pre-release (version < 1.0.0). Until `package.json` version reaches 1.0.0:
+>
+> - **No backwards compatibility required** - breaking changes are acceptable
+> - **No migration paths needed** - can make clean breaks
+> - **No redirect middleware** - old routes can simply be removed
+> - Focus on getting the architecture right, not preserving old patterns
+
 ## Critical: Agent Workflow
 
 ### Always Use the Project Orchestrator

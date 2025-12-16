@@ -12,6 +12,10 @@
 export {
   TeamspaceRepository,
   createTeamspaceRepository,
+  createTeamspace,
+  teamspaceExists,
+  getTeamspaceCount,
+  DEFAULT_SINGLE_TENANT_TEAMSPACE_SLUG,
 } from './teamspace-repository';
 
 // Project Repository - for project-scoped operations (videos, documents, categories)

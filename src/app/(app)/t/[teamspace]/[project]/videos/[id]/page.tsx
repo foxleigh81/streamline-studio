@@ -24,7 +24,7 @@ export default function VideoDetailPage() {
     id: string;
   }>();
   const router = useRouter();
-  const workspaceSlug = params.project;
+  const projectSlug = params.project;
   const videoId = params.id;
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -78,7 +78,7 @@ export default function VideoDetailPage() {
   // Delete video mutation
   const deleteVideoMutation = trpc.video.delete.useMutation({
     onSuccess: () => {
-      router.push(`/t/${params.teamspace}/${workspaceSlug}/videos`);
+      router.push(`/t/${params.teamspace}/${projectSlug}/videos`);
     },
   });
 
@@ -185,7 +185,7 @@ export default function VideoDetailPage() {
           </p>
           <Button
             onClick={() =>
-              router.push(`/t/${params.teamspace}/${workspaceSlug}/videos`)
+              router.push(`/t/${params.teamspace}/${projectSlug}/videos`)
             }
           >
             Back to Videos

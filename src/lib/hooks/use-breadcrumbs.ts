@@ -46,7 +46,7 @@ export function useBreadcrumbs(
   return useMemo(() => {
     const baseCrumbs: BreadcrumbItem[] = [];
 
-    // Add teamspace breadcrumb in multi-tenant mode
+    // Add teamspace breadcrumb in multi-tenant mode only (hide "Workspace" in single-tenant)
     if (multiTenant && teamspace) {
       baseCrumbs.push({
         label: teamspace.name,
@@ -54,16 +54,11 @@ export function useBreadcrumbs(
       });
     }
 
-    // Add project breadcrumb
-    if (project) {
-      const projectHref =
-        multiTenant && teamspace
-          ? `/t/${teamspace.slug}/${project.slug}`
-          : `/w/${project.slug}`;
-
+    // Add project breadcrumb (always uses unified routing)
+    if (project && teamspace) {
       baseCrumbs.push({
         label: project.name,
-        href: `${projectHref}/videos`,
+        href: `/t/${teamspace.slug}/${project.slug}/videos`,
       });
     }
 
@@ -75,8 +70,9 @@ export function useBreadcrumbs(
  * Hook to get base URL for building links in the current context
  *
  * Returns the base path including teamspace and project slugs.
+ * Always uses unified routing: /t/[teamspace]/[project]
  *
- * @returns Base URL path (e.g., '/t/my-team/my-project' or '/w/my-project')
+ * @returns Base URL path (e.g., '/t/workspace/my-project' or '/t/my-team/my-project')
  *
  * @example
  * ```tsx
@@ -89,15 +85,11 @@ export function useBreadcrumbs(
 export function useBaseUrl(): string {
   const { teamspace } = useTeamspace();
   const { project } = useProject();
-  const multiTenant = isMultiTenant();
 
   return useMemo(() => {
-    if (!project) return '/';
+    if (!project || !teamspace) return '/';
 
-    if (multiTenant && teamspace) {
-      return `/t/${teamspace.slug}/${project.slug}`;
-    }
-
-    return `/w/${project.slug}`;
-  }, [teamspace, project, multiTenant]);
+    // Always use unified routing structure
+    return `/t/${teamspace.slug}/${project.slug}`;
+  }, [teamspace, project]);
 }

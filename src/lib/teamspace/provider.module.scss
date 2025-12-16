@@ -1,0 +1,84 @@
+/**
+ * Teamspace Provider Styles
+ *
+ * Loading and error states for teamspace provider.
+ * Uses CSS custom properties from the theme system.
+ *
+ * @see /docs/adrs/002-styling-solution.md
+ */
+
+.loadingContainer,
+.errorContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: var(--spacing-4);
+}
+
+.loadingContent,
+.errorContent {
+  text-align: center;
+}
+
+.loadingContent {
+  color: var(--color-foreground-muted);
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  margin: 0 auto var(--spacing-4);
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingText {
+  margin: 0;
+}
+
+.errorContent {
+  max-width: 28rem;
+  padding: var(--spacing-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-destructive);
+  border-radius: var(--border-radius-lg);
+}
+
+.errorHeading {
+  margin: 0 0 var(--spacing-2) 0;
+  font-size: var(--font-size-xl);
+  color: var(--color-foreground);
+}
+
+.errorMessage {
+  margin: 0 0 var(--spacing-4) 0;
+  color: var(--color-foreground-muted);
+}
+
+.retryButton {
+  padding: var(--spacing-2) var(--spacing-6);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-primary-foreground);
+  background: var(--color-primary);
+  border: none;
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.9;
+  }
+
+  &:active {
+    opacity: 0.8;
+  }
+}

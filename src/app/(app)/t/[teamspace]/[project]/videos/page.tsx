@@ -19,7 +19,8 @@ import styles from './videos-page.module.scss';
  */
 export default function VideosPage() {
   const params = useParams<{ teamspace: string; project: string }>();
-  const workspaceSlug = params.project;
+  const projectSlug = params.project;
+  const teamspaceSlug = params.teamspace;
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -131,7 +132,8 @@ export default function VideosPage() {
             <VideoCard
               key={video.id}
               id={video.id}
-              workspaceSlug={workspaceSlug}
+              projectSlug={projectSlug}
+              teamspaceSlug={teamspaceSlug}
               title={video.title}
               status={video.status}
               dueDate={video.dueDate}
