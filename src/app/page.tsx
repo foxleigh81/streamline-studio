@@ -71,7 +71,7 @@ export default async function HomePage() {
   // User is not logged in - show landing page
   return (
     <div className={styles.container}>
-      <div className={styles.content}>
+      <main className={styles.content}>
         <div className={styles.logoSection}>
           <Image
             src="/streamline-studio-logo.png"
@@ -116,7 +116,7 @@ export default async function HomePage() {
             access.
           </p>
         )}
-      </div>
+      </main>
 
       <footer className={styles.footer}>
         <div className={styles.footerBranding}>

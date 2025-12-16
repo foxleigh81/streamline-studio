@@ -16,9 +16,9 @@ test.describe('Application', () => {
     // Verify page title
     await expect(page).toHaveTitle('Streamline Studio');
 
-    // Verify main heading is visible
+    // Verify main heading is visible (landing page hero text)
     await expect(page.getByRole('heading', { level: 1 })).toContainText(
-      'Streamline Studio'
+      'Plan, Draft, and Manage'
     );
   });
 
