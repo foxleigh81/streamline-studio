@@ -1,0 +1,198 @@
+/**
+ * VideoTable Component Styles
+ *
+ * Sortable table for displaying videos.
+ * Uses CSS custom properties from the theme system.
+ */
+
+.tableContainer {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+
+  thead {
+    background: var(--color-surface-raised);
+    border-bottom: 1px solid var(--color-border);
+
+    th {
+      padding: 0;
+      text-align: left;
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-foreground);
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid var(--color-border);
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+
+    td {
+      padding: var(--spacing-4);
+      color: var(--color-foreground);
+    }
+  }
+}
+
+.columnHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  width: 100%;
+  padding: var(--spacing-3) var(--spacing-4);
+  background: transparent;
+  border: none;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-foreground);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-in-out),
+    color var(--duration-fast) var(--ease-in-out);
+
+  &:hover {
+    background: var(--color-muted);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: -2px;
+  }
+
+  span {
+    flex: 1;
+  }
+}
+
+.sortIcon {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.row {
+  transition: background-color var(--duration-fast) var(--ease-in-out);
+
+  &:has(.titleLink:hover) {
+    background: var(--color-surface-raised);
+  }
+}
+
+.titleCell {
+  font-weight: var(--font-weight-medium);
+  max-width: 300px;
+
+  @media (min-width: 768px) {
+    max-width: 400px;
+  }
+
+  @media (min-width: 1024px) {
+    max-width: 500px;
+  }
+}
+
+.titleLink {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-foreground);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-in-out);
+
+  &:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+.title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statusCell {
+  white-space: nowrap;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-1) var(--spacing-2);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  /* Color is set dynamically via inline styles for background and text */
+}
+
+.dueDateCell {
+  color: var(--color-muted-foreground);
+  white-space: nowrap;
+}
+
+.categoriesCell {
+  color: var(--color-muted-foreground);
+  max-width: 200px;
+
+  @media (min-width: 1024px) {
+    max-width: 300px;
+  }
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.emptyState {
+  padding: var(--spacing-8);
+  text-align: center;
+  color: var(--color-muted-foreground);
+
+  p {
+    margin: 0;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 767px) {
+  .table {
+    font-size: var(--font-size-xs);
+
+    tbody td {
+      padding: var(--spacing-3);
+    }
+  }
+
+  .columnHeader {
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-xs);
+  }
+
+  .titleCell {
+    max-width: 150px;
+  }
+
+  .categoriesCell {
+    max-width: 100px;
+  }
+}

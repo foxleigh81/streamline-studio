@@ -4,18 +4,22 @@ import { useState, useEffect } from 'react';
 import { Video } from 'lucide-react';
 import { trpc } from '@/lib/trpc/client';
 import { VideoCard } from '@/components/video/video-card';
+import { VideoTable } from '@/components/video/video-table';
+import type { VideoTableData } from '@/components/video/video-table';
 import { VideoFormModal } from '@/components/video/video-form-modal';
 import type { VideoFormData } from '@/components/video/video-form-modal';
 import { Button } from '@/components/ui/button';
+import { ViewToggle, type ViewMode } from '@/components/ui/view-toggle';
 import { useParams } from 'next/navigation';
 import { announce } from '@/lib/accessibility/aria';
+import { CONTENT_PLAN_VIEW_MODE_KEY } from '@/lib/constants/storage-keys';
 import styles from './content-plan-page.module.scss';
 
 /**
  * Content Plan Page
  *
- * Displays a grid of video cards with ability to create new videos.
- * Uses tRPC for data fetching and mutations.
+ * Displays videos in either grid or table view with ability to create new videos.
+ * Uses tRPC for data fetching and mutations. View preference is persisted to localStorage.
  */
 export default function ContentPlanPage() {
   const params = useParams<{ teamspace: string; channel: string }>();
@@ -23,6 +27,8 @@ export default function ContentPlanPage() {
   const teamspaceSlug = params.teamspace;
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [mounted, setMounted] = useState(false);
 
   // Fetch videos
   const {
@@ -62,16 +68,39 @@ export default function ContentPlanPage() {
     });
   };
 
-  /**
-   * Get category details for a video (currently unused)
-   */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const getCategoriesForVideo = (categoryIds: string[]) => {
-    return categories.filter((cat) => categoryIds.includes(cat.id));
-  };
-
   const videos = videosData?.videos ?? [];
   const hasVideos = videos.length > 0;
+
+  /**
+   * Load view mode preference from localStorage on mount
+   */
+  useEffect(() => {
+    setMounted(true);
+    const savedViewMode = localStorage.getItem(CONTENT_PLAN_VIEW_MODE_KEY);
+    if (savedViewMode === 'grid' || savedViewMode === 'table') {
+      setViewMode(savedViewMode);
+    }
+  }, []);
+
+  /**
+   * Handle view mode change and persist to localStorage
+   */
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem(CONTENT_PLAN_VIEW_MODE_KEY, mode);
+    announce(`Switched to ${mode} view`);
+  };
+
+  /**
+   * Transform videos for table display
+   */
+  const tableVideos: VideoTableData[] = videos.map((video) => ({
+    id: video.id,
+    title: video.title,
+    status: video.status,
+    dueDate: video.dueDate,
+    categories: '', // Categories will be populated when that data is available
+  }));
 
   /**
    * Announce loading state changes to screen readers
@@ -98,7 +127,14 @@ export default function ContentPlanPage() {
             Manage your videos and content pipeline
           </p>
         </div>
-        <Button onClick={() => setIsCreateModalOpen(true)}>+ New Video</Button>
+        <div className={styles.headerActions}>
+          {mounted && hasVideos && (
+            <ViewToggle value={viewMode} onChange={handleViewModeChange} />
+          )}
+          <Button onClick={() => setIsCreateModalOpen(true)}>
+            + New Video
+          </Button>
+        </div>
       </div>
 
       {/* Loading State */}
@@ -126,7 +162,7 @@ export default function ContentPlanPage() {
       )}
 
       {/* Video Grid */}
-      {!isLoadingVideos && hasVideos && (
+      {!isLoadingVideos && hasVideos && viewMode === 'grid' && (
         <div className={styles.grid}>
           {videos.map((video) => (
             <VideoCard
@@ -142,6 +178,15 @@ export default function ContentPlanPage() {
             />
           ))}
         </div>
+      )}
+
+      {/* Video Table */}
+      {!isLoadingVideos && hasVideos && viewMode === 'table' && (
+        <VideoTable
+          videos={tableVideos}
+          channelSlug={channelSlug}
+          teamspaceSlug={teamspaceSlug}
+        />
       )}
 
       {/* Create Video Modal */}

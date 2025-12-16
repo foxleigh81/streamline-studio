@@ -3,7 +3,12 @@
 import { type MouseEvent } from 'react';
 import Link from 'next/link';
 import type { VideoStatus } from '@/server/db/schema';
-import { STATUS_COLORS, STATUS_LABELS } from '@/lib/constants/status';
+import {
+  STATUS_COLORS,
+  STATUS_TEXT_COLORS,
+  STATUS_LABELS,
+} from '@/lib/constants/status';
+import { formatDueDate } from '@/lib/utils/date';
 import styles from './video-card.module.scss';
 
 /**
@@ -51,23 +56,6 @@ export function VideoCard({
   teamspaceSlug,
 }: VideoCardProps) {
   /**
-   * Format due date for display
-   */
-  const formatDueDate = (date: string | null): string | null => {
-    if (!date) return null;
-    try {
-      const d = new Date(date);
-      return d.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      });
-    } catch {
-      return null;
-    }
-  };
-
-  /**
    * Handle card click
    */
   const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
@@ -93,7 +81,10 @@ export function VideoCard({
       <div className={styles.header}>
         <span
           className={styles.statusBadge}
-          style={{ backgroundColor: STATUS_COLORS[status] }}
+          style={{
+            backgroundColor: STATUS_COLORS[status],
+            color: STATUS_TEXT_COLORS[status],
+          }}
           aria-label={`Status: ${STATUS_LABELS[status]}`}
         >
           {STATUS_LABELS[status]}

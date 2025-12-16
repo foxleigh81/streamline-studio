@@ -23,6 +23,16 @@
   }
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+
+  @media (max-width: 640px) {
+    justify-content: space-between;
+  }
+}
+
 .title {
   font-size: var(--font-size-3xl);
   font-weight: var(--font-weight-bold);
