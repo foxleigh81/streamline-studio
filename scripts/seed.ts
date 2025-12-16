@@ -33,6 +33,12 @@ const TEST_WORKSPACE = {
   slug: 'test-workspace',
 };
 
+// Single-tenant teamspace (must match DEFAULT_SINGLE_TENANT_TEAMSPACE_SLUG)
+const DEFAULT_TEAMSPACE = {
+  name: 'Workspace',
+  slug: 'workspace',
+};
+
 // Sample video statuses for variety (reference for available statuses)
 const _VIDEO_STATUSES: schema.VideoStatus[] = [
   'idea',
@@ -183,28 +189,47 @@ async function seed() {
     await db.delete(schema.videoCategories);
     await db.delete(schema.videos);
     await db.delete(schema.categories);
+    await db.delete(schema.invitations);
     await db.delete(schema.sessions);
     await db.delete(schema.channelUsers);
     await db.delete(schema.users);
     await db.delete(schema.channels);
+    await db.delete(schema.teamspaceUsers);
+    await db.delete(schema.teamspaces);
     console.log('Existing data cleaned.\n');
 
-    // Create test workspace
-    console.log('Creating test workspace...');
+    // Create default teamspace (required for single-tenant mode)
+    console.log('Creating default teamspace...');
+    const [teamspace] = await db
+      .insert(schema.teamspaces)
+      .values({
+        name: DEFAULT_TEAMSPACE.name,
+        slug: DEFAULT_TEAMSPACE.slug,
+        mode: 'single-tenant',
+      })
+      .returning();
+
+    if (!teamspace) {
+      throw new Error('Failed to create teamspace');
+    }
+    console.log(`Created teamspace: ${teamspace.name} (${teamspace.id})\n`);
+
+    // Create test channel (within the teamspace)
+    console.log('Creating test channel...');
     const [workspace] = await db
       .insert(schema.channels)
       .values({
         name: TEST_WORKSPACE.name,
         slug: TEST_WORKSPACE.slug,
         mode: 'single-tenant',
-        teamspaceId: null, // TODO: Set from teamspace context in Phase 2
+        teamspaceId: teamspace.id,
       })
       .returning();
 
     if (!workspace) {
-      throw new Error('Failed to create workspace');
+      throw new Error('Failed to create channel');
     }
-    console.log(`Created workspace: ${workspace.name} (${workspace.id})\n`);
+    console.log(`Created channel: ${workspace.name} (${workspace.id})\n`);
 
     // Create test user
     console.log('Creating test user...');
@@ -222,14 +247,23 @@ async function seed() {
     }
     console.log(`Created user: ${user.email} (${user.id})\n`);
 
-    // Link user to workspace as owner
-    console.log('Linking user to workspace...');
+    // Link user to teamspace as owner
+    console.log('Linking user to teamspace...');
+    await db.insert(schema.teamspaceUsers).values({
+      teamspaceId: teamspace.id,
+      userId: user.id,
+      role: 'owner',
+    });
+    console.log('User linked as teamspace owner.\n');
+
+    // Link user to channel as owner
+    console.log('Linking user to channel...');
     await db.insert(schema.channelUsers).values({
       channelId: workspace.id,
       userId: user.id,
       role: 'owner',
     });
-    console.log('User linked as workspace owner.\n');
+    console.log('User linked as channel owner.\n');
 
     // Create categories
     console.log('Creating categories...');
