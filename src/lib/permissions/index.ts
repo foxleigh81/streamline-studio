@@ -1,8 +1,8 @@
 /**
  * Permission Hooks
  *
- * Utility hooks for checking user permissions across teamspaces and projects.
- * These hooks combine teamspace and project contexts to provide simple permission checks.
+ * Utility hooks for checking user permissions across teamspaces and channels.
+ * These hooks combine teamspace and channel contexts to provide simple permission checks.
  *
  * @see /docs/adrs/017-teamspace-hierarchy.md
  */
@@ -10,10 +10,10 @@
 'use client';
 
 import { useTeamspaceRole as getTeamspaceRole } from '@/lib/teamspace';
-import { useProjectRole as getProjectRole } from '@/lib/project';
-import type { TeamspaceRole, ProjectRole } from '@/server/db/schema';
+import { useChannelRole as getChannelRole } from '@/lib/channel';
+import type { TeamspaceRole, ChannelRole } from '@/server/db/schema';
 import {
-  PROJECT_ROLE_HIERARCHY,
+  CHANNEL_ROLE_HIERARCHY,
   TEAMSPACE_ROLE_HIERARCHY,
 } from '@/lib/constants/roles';
 
@@ -27,23 +27,23 @@ export function useTeamspaceRole(): TeamspaceRole | null {
 }
 
 /**
- * Hook to get the current project role (effective role)
+ * Hook to get the current channel role (effective role)
  * Convenience re-export for easy access
  */
-export function useProjectRole(): ProjectRole | null {
-  // Re-export from project module
-  return getProjectRole();
+export function useChannelRole(): ChannelRole | null {
+  // Re-export from channel module
+  return getChannelRole();
 }
 
 /**
  * Hook to check if user can edit content in the current context
  *
- * This checks the effective project role, which includes:
- * - Direct project role with overrides
+ * This checks the effective channel role, which includes:
+ * - Direct channel role with overrides
  * - Inherited teamspace role
  * - Teamspace admin/owner privileges
  *
- * @returns true if user has editor or owner role in the project
+ * @returns true if user has editor or owner role in the channel
  *
  * @example
  * ```tsx
@@ -55,20 +55,26 @@ export function useProjectRole(): ProjectRole | null {
  * ```
  */
 export function useCanEdit(): boolean {
-  const projectRole = useProjectRole();
-  if (!projectRole) return false;
+  const channelRole = useChannelRole();
+  if (!channelRole) return false;
 
-  return PROJECT_ROLE_HIERARCHY[projectRole] >= PROJECT_ROLE_HIERARCHY.editor;
+  const hierarchy = CHANNEL_ROLE_HIERARCHY[channelRole];
+  const editorLevel = CHANNEL_ROLE_HIERARCHY['editor'];
+  return (
+    hierarchy !== undefined &&
+    editorLevel !== undefined &&
+    hierarchy >= editorLevel
+  );
 }
 
 /**
- * Hook to check if user can perform admin actions in the current project
+ * Hook to check if user can perform admin actions in the current channel
  *
- * @returns true if user has owner role in the project (or is teamspace admin/owner)
+ * @returns true if user has owner role in the channel (or is teamspace admin/owner)
  *
  * @example
  * ```tsx
- * function ProjectSettings() {
+ * function ChannelSettings() {
  *   const canAdmin = useCanAdmin();
  *   if (!canAdmin) return null;
  *   return <SettingsPanel />;
@@ -76,22 +82,22 @@ export function useCanEdit(): boolean {
  * ```
  */
 export function useCanAdmin(): boolean {
-  const projectRole = useProjectRole();
-  return projectRole === 'owner';
+  const channelRole = useChannelRole();
+  return channelRole === 'owner';
 }
 
 /**
- * Hook to check if user is the project owner
- * Note: Teamspace admins/owners also have owner access to all projects
+ * Hook to check if user is the channel owner
+ * Note: Teamspace admins/owners also have owner access to all channels
  *
- * @returns true if user is project owner (or teamspace admin/owner)
+ * @returns true if user is channel owner (or teamspace admin/owner)
  *
  * @example
  * ```tsx
- * function DeleteProjectButton() {
+ * function DeleteChannelButton() {
  *   const isOwner = useIsOwner();
  *   if (!isOwner) return null;
- *   return <button>Delete Project</button>;
+ *   return <button>Delete Channel</button>;
  * }
  * ```
  */
@@ -165,7 +171,7 @@ export function useIsTeamspaceOwner(): boolean {
  */
 export function usePermissions() {
   const teamspaceRole = useTeamspaceRole();
-  const projectRole = useProjectRole();
+  const channelRole = useChannelRole();
 
   return {
     // Teamspace permissions
@@ -178,13 +184,11 @@ export function usePermissions() {
       teamspaceRole === 'admin' ||
       teamspaceRole === 'owner',
 
-    // Project permissions (effective role)
-    projectRole,
-    isProjectOwner: projectRole === 'owner',
-    canAdmin: projectRole === 'owner',
-    canEdit: projectRole === 'editor' || projectRole === 'owner',
-
-    // Legacy aliases
-    isOwner: projectRole === 'owner',
+    // Channel permissions (effective role)
+    channelRole,
+    isChannelOwner: channelRole === 'owner',
+    canAdmin: channelRole === 'owner',
+    canEdit: channelRole === 'editor' || channelRole === 'owner',
+    isOwner: channelRole === 'owner',
   };
 }

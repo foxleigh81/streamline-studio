@@ -3,16 +3,16 @@ import { db } from '@/server/db';
 import type {
   User,
   Session,
-  Project,
-  ProjectUser,
-  ProjectRole,
+  Channel,
+  ChannelUser,
+  ChannelRole,
   Teamspace,
   TeamspaceUser,
   TeamspaceRole,
 } from '@/server/db/schema';
 import { validateSessionToken, parseSessionToken } from '@/lib/auth/session';
 import type {
-  ProjectRepository,
+  ChannelRepository,
   TeamspaceRepository,
 } from '@/server/repositories';
 
@@ -32,10 +32,7 @@ import type {
  *
  * Note: Context is extended by middleware:
  * - teamspaceMiddleware adds: teamspace, teamspaceUser, teamspaceRole, teamspaceRepository
- * - projectMiddleware adds: project, projectUser, projectRole, projectRepository
- *
- * Legacy aliases (workspace, workspaceUser, workspaceRole, repository) are maintained
- * for backward compatibility during transition.
+ * - channelMiddleware adds: channel, channelUser, channelRole, channelRepository
  */
 export interface Context {
   db: typeof db;
@@ -46,16 +43,11 @@ export interface Context {
   teamspaceUser: TeamspaceUser | null;
   teamspaceRole: TeamspaceRole | null;
   teamspaceRepository: TeamspaceRepository | null;
-  // Project context (added by projectMiddleware)
-  project: Project | null;
-  projectUser: ProjectUser | null;
-  projectRole: ProjectRole | null;
-  projectRepository: ProjectRepository | null;
-  // Legacy aliases for backward compatibility
-  workspace: Project | null;
-  workspaceUser: ProjectUser | null;
-  workspaceRole: ProjectRole | null;
-  repository: ProjectRepository | null;
+  // Channel context (added by channelMiddleware)
+  channel: Channel | null;
+  channelUser: ChannelUser | null;
+  channelRole: ChannelRole | null;
+  channelRepository: ChannelRepository | null;
   // Request context
   req: Request;
   headers: Headers;
@@ -72,15 +64,10 @@ export function createInnerContext(opts?: {
   teamspaceUser?: TeamspaceUser | null;
   teamspaceRole?: TeamspaceRole | null;
   teamspaceRepository?: TeamspaceRepository | null;
-  project?: Project | null;
-  projectUser?: ProjectUser | null;
-  projectRole?: ProjectRole | null;
-  projectRepository?: ProjectRepository | null;
-  // Legacy aliases
-  workspace?: Project | null;
-  workspaceUser?: ProjectUser | null;
-  workspaceRole?: ProjectRole | null;
-  repository?: ProjectRepository | null;
+  channel?: Channel | null;
+  channelUser?: ChannelUser | null;
+  channelRole?: ChannelRole | null;
+  channelRepository?: ChannelRepository | null;
 }): Omit<Context, 'req' | 'headers'> {
   return {
     db,
@@ -90,15 +77,10 @@ export function createInnerContext(opts?: {
     teamspaceUser: opts?.teamspaceUser ?? null,
     teamspaceRole: opts?.teamspaceRole ?? null,
     teamspaceRepository: opts?.teamspaceRepository ?? null,
-    project: opts?.project ?? opts?.workspace ?? null,
-    projectUser: opts?.projectUser ?? opts?.workspaceUser ?? null,
-    projectRole: opts?.projectRole ?? opts?.workspaceRole ?? null,
-    projectRepository: opts?.projectRepository ?? opts?.repository ?? null,
-    // Legacy aliases - use project values
-    workspace: opts?.workspace ?? opts?.project ?? null,
-    workspaceUser: opts?.workspaceUser ?? opts?.projectUser ?? null,
-    workspaceRole: opts?.workspaceRole ?? opts?.projectRole ?? null,
-    repository: opts?.repository ?? opts?.projectRepository ?? null,
+    channel: opts?.channel ?? null,
+    channelUser: opts?.channelUser ?? null,
+    channelRole: opts?.channelRole ?? null,
+    channelRepository: opts?.channelRepository ?? null,
   };
 }
 
@@ -107,7 +89,7 @@ export function createInnerContext(opts?: {
  * Called for every tRPC request
  *
  * Validates session token from cookies and populates user context.
- * Teamspace and project context are populated by middleware for scoped procedures.
+ * Teamspace and channel context are populated by middleware for scoped procedures.
  *
  * @see /docs/adrs/007-api-and-auth.md
  * @see /docs/adrs/008-multi-tenancy-strategy.md
@@ -133,8 +115,8 @@ export async function createContext(
     user = validationResult.user;
   }
 
-  // Teamspace and project context are NOT populated here.
-  // They are populated by teamspaceMiddleware and projectMiddleware.
+  // Teamspace and channel context are NOT populated here.
+  // They are populated by teamspaceMiddleware and channelMiddleware.
   // This ensures access is always explicitly required via appropriate procedures.
   return {
     ...createInnerContext({ session, user }),

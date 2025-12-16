@@ -10,7 +10,11 @@
 
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { router, workspaceProcedure, editorProcedure } from '../procedures';
+import {
+  router,
+  simpleChannelProcedure,
+  simpleChannelEditorProcedure,
+} from '../procedures';
 import type { VideoStatus, DocumentType } from '@/server/db/schema';
 import {
   logVideoStatusChange,
@@ -96,13 +100,13 @@ export const videoRouter = router({
   /**
    * List videos with pagination, filtering, and sorting
    */
-  list: workspaceProcedure
+  list: simpleChannelProcedure
     .input(videoListInput)
     .query(async ({ ctx, input }) => {
-      const { repository } = ctx;
+      const { channelRepository } = ctx;
       const { cursor, limit, status, categoryId, orderBy, orderDir } = input;
 
-      const videos = await repository.getVideos({
+      const videos = await channelRepository.getVideos({
         cursor,
         limit: limit + 1, // Fetch one extra to determine if there's a next page
         ...(status && { status }),
@@ -126,10 +130,10 @@ export const videoRouter = router({
   /**
    * Get a single video by ID
    */
-  get: workspaceProcedure
+  get: simpleChannelProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      const video = await ctx.repository.getVideo(input.id);
+      const video = await ctx.channelRepository.getVideo(input.id);
 
       if (!video) {
         throw new TRPCError({
@@ -139,7 +143,9 @@ export const videoRouter = router({
       }
 
       // Also get category IDs
-      const categoryIds = await ctx.repository.getVideoCategoryIds(input.id);
+      const categoryIds = await ctx.channelRepository.getVideoCategoryIds(
+        input.id
+      );
 
       return {
         ...video,
@@ -151,14 +157,14 @@ export const videoRouter = router({
    * Create a new video
    * Automatically creates all four document types (script, description, notes, thumbnail_ideas)
    */
-  create: editorProcedure
+  create: simpleChannelEditorProcedure
     .input(videoCreateInput)
     .mutation(async ({ ctx, input }) => {
-      const { repository, user } = ctx;
+      const { channelRepository, user } = ctx;
       const { categoryIds, ...videoData } = input;
 
       // Create the video
-      const video = await repository.createVideo({
+      const video = await channelRepository.createVideo({
         ...videoData,
         dueDate: videoData.dueDate ?? null,
         publishDate: videoData.publishDate ?? null,
@@ -167,13 +173,13 @@ export const videoRouter = router({
 
       // Set categories if provided
       if (categoryIds.length > 0) {
-        await repository.setVideoCategories(video.id, categoryIds);
+        await channelRepository.setVideoCategories(video.id, categoryIds);
       }
 
       // Auto-create all four document types
       const documentTypes: DocumentType[] = documentTypeValues;
       for (const type of documentTypes) {
-        await repository.createDocument({
+        await channelRepository.createDocument({
           videoId: video.id,
           type,
           content: '',
@@ -183,7 +189,7 @@ export const videoRouter = router({
       }
 
       // Log audit trail
-      await repository.createAuditLog({
+      await channelRepository.createAuditLog({
         userId: user.id,
         action: 'video.created',
         entityType: 'video',
@@ -201,14 +207,14 @@ export const videoRouter = router({
    * Update a video
    * Logs metadata changes (status, due date, publish date) to audit log
    */
-  update: editorProcedure
+  update: simpleChannelEditorProcedure
     .input(videoUpdateInput)
     .mutation(async ({ ctx, input }) => {
-      const { repository, user } = ctx;
+      const { channelRepository, user } = ctx;
       const { id, categoryIds, ...updateData } = input;
 
       // Get current video state for audit logging
-      const currentVideo = await repository.getVideo(id);
+      const currentVideo = await channelRepository.getVideo(id);
       if (!currentVideo) {
         throw new TRPCError({
           code: 'NOT_FOUND',
@@ -217,7 +223,7 @@ export const videoRouter = router({
       }
 
       // Update the video
-      const video = await repository.updateVideo(id, updateData);
+      const video = await channelRepository.updateVideo(id, updateData);
 
       if (!video) {
         throw new TRPCError({
@@ -228,7 +234,7 @@ export const videoRouter = router({
 
       // Update categories if provided
       if (categoryIds !== undefined) {
-        await repository.setVideoCategories(id, categoryIds);
+        await channelRepository.setVideoCategories(id, categoryIds);
       }
 
       // Log specific metadata changes to audit log
@@ -237,7 +243,7 @@ export const videoRouter = router({
         updateData.status !== currentVideo.status
       ) {
         await logVideoStatusChange(
-          repository,
+          channelRepository,
           id,
           user.id,
           currentVideo.status,
@@ -250,7 +256,7 @@ export const videoRouter = router({
         updateData.dueDate !== currentVideo.dueDate
       ) {
         await logVideoDueDateChange(
-          repository,
+          channelRepository,
           id,
           user.id,
           currentVideo.dueDate,
@@ -263,7 +269,7 @@ export const videoRouter = router({
         updateData.publishDate !== currentVideo.publishDate
       ) {
         await logVideoPublishDateChange(
-          repository,
+          channelRepository,
           id,
           user.id,
           currentVideo.publishDate,
@@ -272,7 +278,7 @@ export const videoRouter = router({
       }
 
       // Log general audit trail
-      await repository.createAuditLog({
+      await channelRepository.createAuditLog({
         userId: user.id,
         action: 'video.updated',
         entityType: 'video',
@@ -287,13 +293,13 @@ export const videoRouter = router({
    * Delete a video
    * Cascades to documents and category associations
    */
-  delete: editorProcedure
+  delete: simpleChannelEditorProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const { repository, user } = ctx;
+      const { channelRepository, user } = ctx;
 
       // Get video details before deletion for audit log
-      const video = await repository.getVideo(input.id);
+      const video = await channelRepository.getVideo(input.id);
       if (!video) {
         throw new TRPCError({
           code: 'NOT_FOUND',
@@ -302,7 +308,7 @@ export const videoRouter = router({
       }
 
       // Delete the video (cascades to documents and category associations)
-      const deleted = await repository.deleteVideo(input.id);
+      const deleted = await channelRepository.deleteVideo(input.id);
 
       if (!deleted) {
         throw new TRPCError({
@@ -312,7 +318,7 @@ export const videoRouter = router({
       }
 
       // Log audit trail
-      await repository.createAuditLog({
+      await channelRepository.createAuditLog({
         userId: user.id,
         action: 'video.deleted',
         entityType: 'video',

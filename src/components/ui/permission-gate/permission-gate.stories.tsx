@@ -8,9 +8,9 @@ import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { PermissionGate } from './permission-gate';
 import {
-  ProjectContext,
-  type ProjectContextValue,
-} from '@/lib/project/context';
+  ChannelContext,
+  type ChannelContextValue,
+} from '@/lib/channel/context';
 import {
   TeamspaceContext,
   type TeamspaceContextValue,
@@ -33,17 +33,19 @@ const mockTeamspaceContext: TeamspaceContextValue = {
 };
 
 /**
- * Mock project context for Storybook
+ * Mock channel context for Storybook
  */
-const mockProjectContext: ProjectContextValue = {
-  project: {
-    id: 'mock-project-id',
-    name: 'Mock Project',
-    slug: 'mock-project',
-    teamspaceId: 'mock-teamspace-id',
-    mode: 'multi-tenant',
-    createdAt: new Date(),
-  },
+const mockChannel = {
+  id: 'mock-channel-id',
+  name: 'Mock Channel',
+  slug: 'mock-channel',
+  teamspaceId: 'mock-teamspace-id',
+  mode: 'multi-tenant' as const,
+  createdAt: new Date(),
+};
+
+const mockChannelContext: ChannelContextValue = {
+  channel: mockChannel,
   role: 'owner',
   isLoading: false,
   error: null,
@@ -55,9 +57,9 @@ const mockProjectContext: ProjectContextValue = {
  */
 const withMockProviders = (Story: React.ComponentType) => (
   <TeamspaceContext.Provider value={mockTeamspaceContext}>
-    <ProjectContext.Provider value={mockProjectContext}>
+    <ChannelContext.Provider value={mockChannelContext}>
       <Story />
-    </ProjectContext.Provider>
+    </ChannelContext.Provider>
   </TeamspaceContext.Provider>
 );
 
@@ -139,7 +141,7 @@ export const WithFallback: Story = {
         }}
       >
         <strong>Owner Actions</strong>
-        <button>Delete Project</button>
+        <button>Delete Channel</button>
       </div>
     ),
     fallback: (

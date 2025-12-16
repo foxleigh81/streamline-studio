@@ -13,7 +13,7 @@ import {
   resetTestDatabase,
   createTestUserWithWorkspace,
 } from './database';
-import type { User, Project } from '@/server/db/schema';
+import type { User, Channel } from '@/server/db/schema';
 
 /**
  * Test context type
@@ -21,7 +21,7 @@ import type { User, Project } from '@/server/db/schema';
 export interface TestTRPCContext {
   db: inferAsyncReturnType<typeof getTestDatabase>;
   user: User | null;
-  workspace: Project | null;
+  workspace: Channel | null;
   headers: Headers;
   req: {
     headers: Headers;
@@ -75,7 +75,7 @@ export async function createTestTRPCContext(
   }
 
   let user: User | null = null;
-  let workspace: Project | null = null;
+  let workspace: Channel | null = null;
 
   if (options.authenticated) {
     if (options.hasWorkspace !== false) {

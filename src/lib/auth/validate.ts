@@ -1,8 +1,8 @@
 /**
  * Authentication and Access Validation
  *
- * Provides helper functions for validating user sessions and project access.
- * Used by layouts and middleware that need to check project membership.
+ * Provides helper functions for validating user sessions and channel access.
+ * Used by layouts and middleware that need to check channel membership.
  *
  * @see /docs/adrs/008-multi-tenancy-strategy.md
  * @see /docs/adrs/007-api-and-auth.md
@@ -10,17 +10,17 @@
 
 import { cookies } from 'next/headers';
 import { db } from '@/server/db';
-import { projects, projectUsers } from '@/server/db/schema';
-import type { Project, ProjectUser } from '@/server/db/schema';
+import { channels, channelUsers } from '@/server/db/schema';
+import type { Channel, ChannelUser } from '@/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { validateSessionToken } from './session';
 
 /**
- * Result of project access validation
+ * Result of channel access validation
  */
-export interface ProjectAccessResult {
-  project: Project;
-  membership: ProjectUser;
+export interface ChannelAccessResult {
+  channel: Channel;
+  membership: ChannelUser;
 }
 
 /**
@@ -52,28 +52,28 @@ export async function validateRequest(): Promise<UserValidationResult> {
 }
 
 /**
- * Validates user access to a project by slug
+ * Validates user access to a channel by slug
  *
  * Checks that:
- * 1. The project exists
- * 2. The user is a member of the project
+ * 1. The channel exists
+ * 2. The user is a member of the channel
  *
  * @param userId - The authenticated user's ID
- * @param projectSlug - The project slug to validate access for
- * @returns Project and membership info if access is valid, null otherwise
+ * @param channelSlug - The channel slug to validate access for
+ * @returns Channel and membership info if access is valid, null otherwise
  */
-export async function validateProjectAccess(
+export async function validateChannelAccess(
   userId: string,
-  projectSlug: string
-): Promise<ProjectAccessResult | null> {
+  channelSlug: string
+): Promise<ChannelAccessResult | null> {
   const result = await db
     .select({
-      project: projects,
-      membership: projectUsers,
+      channel: channels,
+      membership: channelUsers,
     })
-    .from(projectUsers)
-    .innerJoin(projects, eq(projectUsers.projectId, projects.id))
-    .where(and(eq(projects.slug, projectSlug), eq(projectUsers.userId, userId)))
+    .from(channelUsers)
+    .innerJoin(channels, eq(channelUsers.channelId, channels.id))
+    .where(and(eq(channels.slug, channelSlug), eq(channelUsers.userId, userId)))
     .limit(1);
 
   const firstResult = result[0];
@@ -82,14 +82,13 @@ export async function validateProjectAccess(
   }
 
   return {
-    project: firstResult.project,
+    channel: firstResult.channel,
     membership: firstResult.membership,
   };
 }
 
 // Re-export for backwards compatibility during migration
-// TODO: Remove these aliases after all references are updated
 export {
-  validateProjectAccess as validateWorkspaceAccess,
-  type ProjectAccessResult as WorkspaceAccessResult,
+  validateChannelAccess as validateWorkspaceAccess,
+  type ChannelAccessResult as WorkspaceAccessResult,
 };

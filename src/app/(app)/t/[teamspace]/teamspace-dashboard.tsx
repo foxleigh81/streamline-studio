@@ -2,17 +2,17 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { ProjectCard } from '@/components/project/project-card';
+import { ChannelCard } from '@/components/channel/channel-card';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { CreateProjectModal } from '@/components/project/create-project-modal';
+import { CreateChannelModal } from '@/components/channel/create-channel-modal';
 import styles from './teamspace-dashboard.module.scss';
 
 /**
  * Teamspace Dashboard Component
  *
- * Client-side component for displaying projects within a teamspace.
- * Shows project cards in a responsive grid layout.
+ * Client-side component for displaying channels within a teamspace.
+ * Shows channel cards in a responsive grid layout.
  */
 
 export interface TeamspaceDashboardProps {
@@ -20,47 +20,47 @@ export interface TeamspaceDashboardProps {
   teamspaceSlug: string;
   /** Teamspace name */
   teamspaceName?: string;
-  /** List of projects user has access to */
-  projects: Array<{
+  /** List of channels user has access to */
+  channels: Array<{
     id: string;
     name: string;
     slug: string;
     role: 'owner' | 'editor' | 'viewer';
     updatedAt: Date;
   }>;
-  /** Whether user can create projects */
-  canCreateProject: boolean;
+  /** Whether user can create channels */
+  canCreateChannel: boolean;
 }
 
 export function TeamspaceDashboard({
   teamspaceSlug,
   teamspaceName,
-  projects,
-  canCreateProject,
+  channels,
+  canCreateChannel,
 }: TeamspaceDashboardProps) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // Empty state: no projects
-  if (projects.length === 0) {
+  // Empty state: no channels
+  if (channels.length === 0) {
     return (
       <>
         <div className={styles.container}>
           <EmptyState
-            title="No projects yet"
+            title="No channels yet"
             description={
-              canCreateProject
-                ? "You don't have any projects in this teamspace yet. Create your first project to get started!"
-                : "You don't have access to any projects in this teamspace. Ask a teamspace administrator to add you to a project."
+              canCreateChannel
+                ? "You don't have any channels in this teamspace yet. Create your first channel to get started!"
+                : "You don't have access to any channels in this teamspace. Ask a teamspace administrator to add you to a channel."
             }
-            actionLabel={canCreateProject ? 'Create New Project' : undefined}
+            actionLabel={canCreateChannel ? 'Create New Channel' : undefined}
             onAction={
-              canCreateProject ? () => setIsCreateModalOpen(true) : undefined
+              canCreateChannel ? () => setIsCreateModalOpen(true) : undefined
             }
           />
         </div>
 
-        {canCreateProject && (
-          <CreateProjectModal
+        {canCreateChannel && (
+          <CreateChannelModal
             isOpen={isCreateModalOpen}
             onClose={() => setIsCreateModalOpen(false)}
           />
@@ -69,7 +69,7 @@ export function TeamspaceDashboard({
     );
   }
 
-  // Projects list
+  // Channels list
   return (
     <>
       <div className={styles.container}>
@@ -91,46 +91,46 @@ export function TeamspaceDashboard({
             Welcome to the {teamspaceName ?? 'Workspace'} dashboard
           </h1>
           <p className={styles.welcomeSubtitle}>
-            Manage your video projects and content pipeline
+            Manage your video channels and content pipeline
           </p>
         </div>
 
-        {/* Projects section */}
+        {/* Channels section */}
         <header className={styles.header}>
           <div>
-            <h2 className={styles.title}>Your Projects</h2>
+            <h2 className={styles.title}>Your Channels</h2>
             <p className={styles.description}>
-              {projects.length === 1
-                ? '1 project'
-                : `${projects.length} projects`}
+              {channels.length === 1
+                ? '1 channel'
+                : `${channels.length} channels`}
             </p>
           </div>
-          {canCreateProject && (
+          {canCreateChannel && (
             <Button
               variant="primary"
               onClick={() => setIsCreateModalOpen(true)}
             >
-              Create New Project
+              Create New Channel
             </Button>
           )}
         </header>
 
         <div className={styles.grid}>
-          {projects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              name={project.name}
-              slug={project.slug}
-              role={project.role}
-              updatedAt={project.updatedAt}
+          {channels.map((channel) => (
+            <ChannelCard
+              key={channel.id}
+              name={channel.name}
+              slug={channel.slug}
+              role={channel.role}
+              updatedAt={channel.updatedAt}
               teamspaceSlug={teamspaceSlug}
             />
           ))}
         </div>
       </div>
 
-      {canCreateProject && (
-        <CreateProjectModal
+      {canCreateChannel && (
+        <CreateChannelModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
         />

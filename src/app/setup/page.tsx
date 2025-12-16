@@ -9,12 +9,12 @@ import { Input } from '@/components/ui/input';
 import styles from './setup.module.scss';
 
 /**
- * Project name suggestions for auto-generation
+ * Channel name suggestions for auto-generation
  */
-const PROJECT_NAME_SUGGESTIONS = [
+const CHANNEL_NAME_SUGGESTIONS = [
   'My YouTube Channel',
   'Content Studio',
-  'Video Projects',
+  'Video Channel',
   'Creative Hub',
   'Production HQ',
   'Media Workshop',
@@ -25,19 +25,19 @@ const PROJECT_NAME_SUGGESTIONS = [
 ];
 
 /**
- * Generate a random project name
+ * Generate a random channel name
  */
-function generateProjectName(): string {
-  const index = Math.floor(Math.random() * PROJECT_NAME_SUGGESTIONS.length);
-  return PROJECT_NAME_SUGGESTIONS[index] ?? 'My Project';
+function generateChannelName(): string {
+  const index = Math.floor(Math.random() * CHANNEL_NAME_SUGGESTIONS.length);
+  return CHANNEL_NAME_SUGGESTIONS[index] ?? 'My Channel';
 }
 
 /**
  * Initial Setup Wizard Page
  *
- * Multi-step setup wizard for creating the initial admin user and project.
+ * Multi-step setup wizard for creating the initial admin user and channel.
  * Step 1: Create admin account
- * Step 2: Set up first project
+ * Step 2: Set up first channel
  *
  * Security Requirements (ADR-014):
  * - Must check setup completion status on mount
@@ -60,13 +60,13 @@ export default function SetupPage() {
     password: '',
     confirmPassword: '',
   });
-  const [projectName, setProjectName] = useState('');
+  const [channelName, setChannelName] = useState('');
 
   const [fieldErrors, setFieldErrors] = useState<{
     email?: string;
     password?: string;
     name?: string;
-    projectName?: string;
+    channelName?: string;
   }>({});
 
   // Check if setup is already complete
@@ -92,8 +92,8 @@ export default function SetupPage() {
     },
   });
 
-  const handleGenerateProjectName = useCallback(() => {
-    setProjectName(generateProjectName());
+  const handleGenerateChannelName = useCallback(() => {
+    setChannelName(generateChannelName());
   }, []);
 
   const validateStep1 = (): boolean => {
@@ -137,7 +137,7 @@ export default function SetupPage() {
       email: accountData.email,
       password: accountData.password,
       name: accountData.name || undefined,
-      projectName: projectName || undefined,
+      channelName: channelName || undefined,
     });
   };
 
@@ -183,7 +183,7 @@ export default function SetupPage() {
           <p className={styles.subtitle}>
             {currentStep === 1
               ? 'Create your admin account to get started.'
-              : 'Set up your first project to organize your video scripts.'}
+              : 'Set up your first channel to organize your video scripts.'}
           </p>
         </div>
 
@@ -204,7 +204,7 @@ export default function SetupPage() {
             className={`${styles.step} ${currentStep >= 2 ? styles.stepActive : ''}`}
           >
             <div className={styles.stepNumber}>2</div>
-            <span className={styles.stepLabel}>Project</span>
+            <span className={styles.stepLabel}>Channel</span>
           </div>
         </div>
 
@@ -305,49 +305,49 @@ export default function SetupPage() {
             </fieldset>
 
             <Button type="submit" variant="primary" fullWidth>
-              Continue to Project Setup
+              Continue to Channel Setup
             </Button>
           </form>
         )}
 
-        {/* Step 2: Project Setup */}
+        {/* Step 2: Channel Setup */}
         {currentStep === 2 && (
           <form onSubmit={handleStep2Submit} className={styles.form} noValidate>
             <fieldset className={styles.fieldset}>
               <legend className={styles.legend}>
                 <span className={styles.legendContent}>
                   <span className={styles.legendIcon}>📁</span>
-                  Your First Project
+                  Your First Channel
                 </span>
               </legend>
               <p className={styles.fieldsetDescription}>
-                Projects are where you organize and manage your video scripts.
-                You can create more projects later.
+                Channels are where you organize and manage your video scripts.
+                You can create more channels later.
               </p>
 
               <div className={styles.fieldGroup}>
-                <div className={styles.projectNameField}>
+                <div className={styles.channelNameField}>
                   <Input
-                    label="Project Name"
-                    name="projectName"
+                    label="Channel Name"
+                    name="channelName"
                     type="text"
                     placeholder="My YouTube Channel"
-                    value={projectName}
-                    onChange={(e) => setProjectName(e.target.value)}
-                    error={fieldErrors.projectName}
+                    value={channelName}
+                    onChange={(e) => setChannelName(e.target.value)}
+                    error={fieldErrors.channelName}
                   />
                   <Button
                     type="button"
                     variant="secondary"
-                    onClick={handleGenerateProjectName}
+                    onClick={handleGenerateChannelName}
                     className={styles.generateButton}
-                    aria-label="Generate a random project name"
+                    aria-label="Generate a random channel name"
                   >
                     🎲 Surprise me
                   </Button>
                 </div>
                 <p className={styles.fieldHint}>
-                  💡 Don&apos;t worry, you can change this later in project
+                  💡 Don&apos;t worry, you can change this later in channel
                   settings.
                 </p>
               </div>

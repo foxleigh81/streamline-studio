@@ -42,7 +42,7 @@ type Story = StoryObj<typeof VideoCard>;
 export const Default: Story = {
   args: {
     id: '123e4567-e89b-12d3-a456-426614174000',
-    projectSlug: 'my-project',
+    channelSlug: 'my-channel',
     title: 'How to Build a Next.js App',
     status: 'scripting',
     dueDate: '2025-12-15',
@@ -58,7 +58,7 @@ export const Default: Story = {
 export const IdeaStatus: Story = {
   args: {
     id: '123e4567-e89b-12d3-a456-426614174001',
-    projectSlug: 'my-project',
+    channelSlug: 'my-channel',
     title: 'Video Idea: React Server Components',
     status: 'idea',
     dueDate: null,
@@ -70,7 +70,7 @@ export const IdeaStatus: Story = {
 export const PublishedStatus: Story = {
   args: {
     id: '123e4567-e89b-12d3-a456-426614174002',
-    projectSlug: 'my-project',
+    channelSlug: 'my-channel',
     title: 'TypeScript Tips for Beginners',
     status: 'published',
     dueDate: '2025-12-01',
@@ -85,7 +85,7 @@ export const PublishedStatus: Story = {
 export const NoDescription: Story = {
   args: {
     id: '123e4567-e89b-12d3-a456-426614174003',
-    projectSlug: 'my-project',
+    channelSlug: 'my-channel',
     title: 'Quick CSS Animation Tutorial',
     status: 'editing',
     dueDate: '2025-12-20',
@@ -96,8 +96,8 @@ export const NoDescription: Story = {
 export const NoCategories: Story = {
   args: {
     id: '123e4567-e89b-12d3-a456-426614174004',
-    projectSlug: 'my-project',
-    title: 'Uncategorized Video Project',
+    channelSlug: 'my-channel',
+    title: 'Uncategorized Video',
     status: 'review',
     dueDate: '2025-12-10',
     description: 'This video has not been assigned to any categories yet.',
@@ -108,11 +108,11 @@ export const NoCategories: Story = {
 export const NoDueDate: Story = {
   args: {
     id: '123e4567-e89b-12d3-a456-426614174005',
-    projectSlug: 'my-project',
-    title: 'No Deadline Project',
+    channelSlug: 'my-channel',
+    title: 'No Deadline Video',
     status: 'filming',
     dueDate: null,
-    description: 'This project has no set deadline.',
+    description: 'This video has no set deadline.',
     categories: [{ id: '1', name: 'Flexible', color: '#14B8A6' }],
   },
 };
@@ -120,7 +120,7 @@ export const NoDueDate: Story = {
 export const LongTitle: Story = {
   args: {
     id: '123e4567-e89b-12d3-a456-426614174006',
-    projectSlug: 'my-project',
+    channelSlug: 'my-channel',
     title:
       'An Extremely Long Video Title That Should Be Truncated After Two Lines to Maintain Card Layout',
     status: 'scripting',
@@ -134,7 +134,7 @@ export const LongTitle: Story = {
 export const ManyCategories: Story = {
   args: {
     id: '123e4567-e89b-12d3-a456-426614174007',
-    projectSlug: 'my-project',
+    channelSlug: 'my-channel',
     title: 'Comprehensive Web Development Guide',
     status: 'scheduled',
     dueDate: '2026-01-01',
@@ -164,7 +164,7 @@ export const AllStatuses: Story = {
     >
       <VideoCard
         id="1"
-        projectSlug="my-project"
+        channelSlug="my-channel"
         title="Idea Phase"
         status="idea"
         dueDate={null}
@@ -172,7 +172,7 @@ export const AllStatuses: Story = {
       />
       <VideoCard
         id="2"
-        projectSlug="my-project"
+        channelSlug="my-channel"
         title="Scripting Phase"
         status="scripting"
         dueDate="2025-12-15"
@@ -180,7 +180,7 @@ export const AllStatuses: Story = {
       />
       <VideoCard
         id="3"
-        projectSlug="my-project"
+        channelSlug="my-channel"
         title="Filming Phase"
         status="filming"
         dueDate="2025-12-18"
@@ -188,7 +188,7 @@ export const AllStatuses: Story = {
       />
       <VideoCard
         id="4"
-        projectSlug="my-project"
+        channelSlug="my-channel"
         title="Editing Phase"
         status="editing"
         dueDate="2025-12-20"
@@ -196,7 +196,7 @@ export const AllStatuses: Story = {
       />
       <VideoCard
         id="5"
-        projectSlug="my-project"
+        channelSlug="my-channel"
         title="Review Phase"
         status="review"
         dueDate="2025-12-22"
@@ -204,7 +204,7 @@ export const AllStatuses: Story = {
       />
       <VideoCard
         id="6"
-        projectSlug="my-project"
+        channelSlug="my-channel"
         title="Scheduled Phase"
         status="scheduled"
         dueDate="2025-12-25"
@@ -212,7 +212,7 @@ export const AllStatuses: Story = {
       />
       <VideoCard
         id="7"
-        projectSlug="my-project"
+        channelSlug="my-channel"
         title="Published Phase"
         status="published"
         dueDate="2025-12-01"
@@ -220,7 +220,7 @@ export const AllStatuses: Story = {
       />
       <VideoCard
         id="8"
-        projectSlug="my-project"
+        channelSlug="my-channel"
         title="Archived Phase"
         status="archived"
         dueDate="2025-11-01"
@@ -240,7 +240,7 @@ export const AllStatuses: Story = {
 export const KeyboardNavigation: Story = {
   args: {
     id: '123e4567-e89b-12d3-a456-426614174008',
-    projectSlug: 'my-project',
+    channelSlug: 'my-channel',
     title: 'Keyboard Accessible Card',
     status: 'scripting',
     dueDate: '2025-12-15',
@@ -264,7 +264,7 @@ export const KeyboardNavigation: Story = {
 export const ClickInteraction: Story = {
   args: {
     id: '123e4567-e89b-12d3-a456-426614174009',
-    projectSlug: 'my-project',
+    channelSlug: 'my-channel',
     title: 'Clickable Card',
     status: 'editing',
     dueDate: '2025-12-20',

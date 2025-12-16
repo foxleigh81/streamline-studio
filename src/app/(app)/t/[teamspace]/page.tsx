@@ -2,19 +2,19 @@ import { redirect } from 'next/navigation';
 import { validateRequest } from '@/lib/auth/workspace';
 import { db } from '@/server/db';
 import {
-  projectUsers,
-  projects,
+  channelUsers,
+  channels,
   teamspaces,
   teamspaceUsers,
 } from '@/server/db/schema';
-// eslint-disable-next-line no-restricted-imports -- Landing page needs cross-project query to find user's accessible projects
+// eslint-disable-next-line no-restricted-imports -- Landing page needs cross-channel query to find user's accessible channels
 import { eq, and, desc } from 'drizzle-orm';
 import { TeamspaceDashboard } from './teamspace-dashboard';
 
 /**
  * Teamspace Landing Page
  *
- * Shows a dashboard with all projects within the teamspace.
+ * Shows a dashboard with all channels within the teamspace.
  * Works for both single-tenant and multi-tenant modes.
  *
  * Route: /t/[teamspace] (e.g., /t/workspace or /t/my-team)
@@ -54,7 +54,7 @@ export default async function TeamspacePage({ params }: TeamspacePageProps) {
     redirect('/setup');
   }
 
-  // Get user's teamspace role to determine if they can create projects
+  // Get user's teamspace role to determine if they can create channels
   const teamspaceUserResult = await db
     .select({ role: teamspaceUsers.role })
     .from(teamspaceUsers)
@@ -67,40 +67,40 @@ export default async function TeamspacePage({ params }: TeamspacePageProps) {
     .limit(1);
 
   const teamspaceRole = teamspaceUserResult[0]?.role ?? null;
-  const canCreateProject =
+  const canCreateChannel =
     teamspaceRole === 'admin' || teamspaceRole === 'owner';
 
-  // Find all accessible projects within this teamspace
-  const userProjectMemberships = await db
+  // Find all accessible channels within this teamspace
+  const userChannelMemberships = await db
     .select({
-      id: projects.id,
-      name: projects.name,
-      slug: projects.slug,
-      role: projectUsers.role,
-      updatedAt: projects.updatedAt,
+      id: channels.id,
+      name: channels.name,
+      slug: channels.slug,
+      role: channelUsers.role,
+      updatedAt: channels.updatedAt,
     })
-    .from(projectUsers)
-    .innerJoin(projects, eq(projectUsers.projectId, projects.id))
+    .from(channelUsers)
+    .innerJoin(channels, eq(channelUsers.channelId, channels.id))
     .where(
       and(
-        eq(projectUsers.userId, user.id),
-        eq(projects.teamspaceId, teamspace.id)
+        eq(channelUsers.userId, user.id),
+        eq(channels.teamspaceId, teamspace.id)
       )
     )
-    .orderBy(desc(projects.updatedAt));
+    .orderBy(desc(channels.updatedAt));
 
   // Convert database dates to JavaScript Date objects
-  const projectsWithDates = userProjectMemberships.map((project) => ({
-    ...project,
-    updatedAt: new Date(project.updatedAt),
+  const channelsWithDates = userChannelMemberships.map((channel) => ({
+    ...channel,
+    updatedAt: new Date(channel.updatedAt),
   }));
 
   return (
     <TeamspaceDashboard
       teamspaceSlug={teamspaceSlug}
       teamspaceName={teamspace.name}
-      projects={projectsWithDates}
-      canCreateProject={canCreateProject}
+      channels={channelsWithDates}
+      canCreateChannel={canCreateChannel}
     />
   );
 }

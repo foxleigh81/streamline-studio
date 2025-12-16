@@ -12,8 +12,12 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 // eslint-disable-next-line no-restricted-imports -- Team operations require direct queries for membership validation and role checks
 import { eq, and } from 'drizzle-orm';
-import { router, workspaceProcedure, ownerProcedure } from '../procedures';
-import { projectUsers, users } from '@/server/db/schema';
+import {
+  router,
+  simpleChannelProcedure,
+  simpleChannelOwnerProcedure,
+} from '../procedures';
+import { channelUsers, users } from '@/server/db/schema';
 import { workspaceRoleSchema } from '@/lib/schemas/workspace';
 
 /**
@@ -24,19 +28,19 @@ export const teamRouter = router({
    * List all members of the workspace
    * Requires workspace access (any role)
    */
-  list: workspaceProcedure.query(async ({ ctx }) => {
+  list: simpleChannelProcedure.query(async ({ ctx }) => {
     const members = await ctx.db
       .select({
-        userId: projectUsers.userId,
-        role: projectUsers.role,
-        joinedAt: projectUsers.createdAt,
+        userId: channelUsers.userId,
+        role: channelUsers.role,
+        joinedAt: channelUsers.createdAt,
         email: users.email,
         name: users.name,
       })
-      .from(projectUsers)
-      .innerJoin(users, eq(projectUsers.userId, users.id))
-      .where(eq(projectUsers.projectId, ctx.workspace.id))
-      .orderBy(projectUsers.createdAt);
+      .from(channelUsers)
+      .innerJoin(users, eq(channelUsers.userId, users.id))
+      .where(eq(channelUsers.channelId, ctx.channel.id))
+      .orderBy(channelUsers.createdAt);
 
     return members;
   }),
@@ -45,7 +49,7 @@ export const teamRouter = router({
    * Update a member's role
    * Requires owner role
    */
-  updateRole: ownerProcedure
+  updateRole: simpleChannelOwnerProcedure
     .input(
       z.object({
         userId: z.string().uuid(),
@@ -66,11 +70,11 @@ export const teamRouter = router({
       // Verify the user is a member of this workspace
       const [existingMember] = await ctx.db
         .select()
-        .from(projectUsers)
+        .from(channelUsers)
         .where(
           and(
-            eq(projectUsers.projectId, ctx.workspace.id),
-            eq(projectUsers.userId, userId)
+            eq(channelUsers.channelId, ctx.channel.id),
+            eq(channelUsers.userId, userId)
           )
         )
         .limit(1);
@@ -85,12 +89,12 @@ export const teamRouter = router({
       // Check if this would leave the workspace without an owner
       if (existingMember.role === 'owner' && role !== 'owner') {
         const ownerCount = await ctx.db
-          .select({ userId: projectUsers.userId })
-          .from(projectUsers)
+          .select({ userId: channelUsers.userId })
+          .from(channelUsers)
           .where(
             and(
-              eq(projectUsers.projectId, ctx.workspace.id),
-              eq(projectUsers.role, 'owner')
+              eq(channelUsers.channelId, ctx.channel.id),
+              eq(channelUsers.role, 'owner')
             )
           );
 
@@ -105,17 +109,17 @@ export const teamRouter = router({
 
       // Update the role
       await ctx.db
-        .update(projectUsers)
+        .update(channelUsers)
         .set({ role })
         .where(
           and(
-            eq(projectUsers.projectId, ctx.workspace.id),
-            eq(projectUsers.userId, userId)
+            eq(channelUsers.channelId, ctx.channel.id),
+            eq(channelUsers.userId, userId)
           )
         );
 
       // Log the change in audit log
-      await ctx.repository.createAuditLog({
+      await ctx.channelRepository.createAuditLog({
         userId: ctx.user.id,
         action: 'team.role_changed',
         entityType: 'workspace_user',
@@ -133,7 +137,7 @@ export const teamRouter = router({
    * Remove a member from the workspace
    * Requires owner role
    */
-  remove: ownerProcedure
+  remove: simpleChannelOwnerProcedure
     .input(z.object({ userId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       const { userId } = input;
@@ -149,11 +153,11 @@ export const teamRouter = router({
       // Verify the user is a member of this workspace
       const [existingMember] = await ctx.db
         .select()
-        .from(projectUsers)
+        .from(channelUsers)
         .where(
           and(
-            eq(projectUsers.projectId, ctx.workspace.id),
-            eq(projectUsers.userId, userId)
+            eq(channelUsers.channelId, ctx.channel.id),
+            eq(channelUsers.userId, userId)
           )
         )
         .limit(1);
@@ -168,12 +172,12 @@ export const teamRouter = router({
       // Check if this would leave the workspace without an owner
       if (existingMember.role === 'owner') {
         const ownerCount = await ctx.db
-          .select({ userId: projectUsers.userId })
-          .from(projectUsers)
+          .select({ userId: channelUsers.userId })
+          .from(channelUsers)
           .where(
             and(
-              eq(projectUsers.projectId, ctx.workspace.id),
-              eq(projectUsers.role, 'owner')
+              eq(channelUsers.channelId, ctx.channel.id),
+              eq(channelUsers.role, 'owner')
             )
           );
 
@@ -187,16 +191,16 @@ export const teamRouter = router({
 
       // Remove the member
       await ctx.db
-        .delete(projectUsers)
+        .delete(channelUsers)
         .where(
           and(
-            eq(projectUsers.projectId, ctx.workspace.id),
-            eq(projectUsers.userId, userId)
+            eq(channelUsers.channelId, ctx.channel.id),
+            eq(channelUsers.userId, userId)
           )
         );
 
       // Log the removal in audit log
-      await ctx.repository.createAuditLog({
+      await ctx.channelRepository.createAuditLog({
         userId: ctx.user.id,
         action: 'team.member_removed',
         entityType: 'workspace_user',

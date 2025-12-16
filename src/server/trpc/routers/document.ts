@@ -1,7 +1,7 @@
 /**
  * Document tRPC Router
  *
- * Handles document retrieval and updates with workspace scoping.
+ * Handles document retrieval and updates with channel scoping.
  * Documents are automatically created when a video is created,
  * so this router only handles get and update operations.
  *
@@ -12,7 +12,11 @@
 
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { router, workspaceProcedure, editorProcedure } from '../procedures';
+import {
+  router,
+  simpleChannelProcedure,
+  simpleChannelEditorProcedure,
+} from '../procedures';
 import type { DocumentType } from '@/server/db/schema';
 
 /**
@@ -80,10 +84,10 @@ export const documentRouter = router({
   /**
    * Get a document by ID
    */
-  get: workspaceProcedure
+  get: simpleChannelProcedure
     .input(documentGetInput)
     .query(async ({ ctx, input }) => {
-      const document = await ctx.repository.getDocument(input.id);
+      const document = await ctx.channelRepository.getDocument(input.id);
 
       if (!document) {
         throw new TRPCError({
@@ -99,10 +103,10 @@ export const documentRouter = router({
    * Get a document by video ID and type
    * This is the primary way to retrieve documents in the UI
    */
-  getByVideo: workspaceProcedure
+  getByVideo: simpleChannelProcedure
     .input(documentGetByVideoInput)
     .query(async ({ ctx, input }) => {
-      const document = await ctx.repository.getDocumentByVideoAndType(
+      const document = await ctx.channelRepository.getDocumentByVideoAndType(
         input.videoId,
         input.type
       );
@@ -120,10 +124,12 @@ export const documentRouter = router({
   /**
    * Get all documents for a video
    */
-  listByVideo: workspaceProcedure
+  listByVideo: simpleChannelProcedure
     .input(z.object({ videoId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      const documents = await ctx.repository.getDocumentsByVideo(input.videoId);
+      const documents = await ctx.channelRepository.getDocumentsByVideo(
+        input.videoId
+      );
       return documents;
     }),
 
@@ -138,14 +144,14 @@ export const documentRouter = router({
    *
    * @see ADR-009: Versioning and Audit Approach
    */
-  update: editorProcedure
+  update: simpleChannelEditorProcedure
     .input(documentUpdateInput)
     .mutation(async ({ ctx, input }) => {
-      const { repository, user } = ctx;
+      const { channelRepository, user } = ctx;
       const { id, content, expectedVersion } = input;
 
       // Update document with optimistic locking and revision creation
-      const result = await repository.updateDocumentWithRevision(
+      const result = await channelRepository.updateDocumentWithRevision(
         id,
         content,
         expectedVersion,
@@ -169,7 +175,7 @@ export const documentRouter = router({
       const updatedDoc = result.document;
 
       // Log audit trail
-      await repository.createAuditLog({
+      await channelRepository.createAuditLog({
         userId: user.id,
         action: 'document.updated',
         entityType: 'document',
@@ -191,14 +197,14 @@ export const documentRouter = router({
    *
    * @see ADR-010: Markdown Import/Export
    */
-  import: editorProcedure
+  import: simpleChannelEditorProcedure
     .input(documentImportInput)
     .mutation(async ({ ctx, input }) => {
-      const { repository, user } = ctx;
+      const { channelRepository, user } = ctx;
       const { id, content } = input;
 
       // Get current document
-      const currentDoc = await repository.getDocument(id);
+      const currentDoc = await channelRepository.getDocument(id);
       if (!currentDoc) {
         throw new TRPCError({
           code: 'NOT_FOUND',
@@ -207,7 +213,7 @@ export const documentRouter = router({
       }
 
       // Import creates a new version with imported content
-      const result = await repository.updateDocumentWithRevision(
+      const result = await channelRepository.updateDocumentWithRevision(
         id,
         content,
         currentDoc.version, // Use current version
@@ -226,7 +232,7 @@ export const documentRouter = router({
       }
 
       // Log audit trail
-      await repository.createAuditLog({
+      await channelRepository.createAuditLog({
         userId: user.id,
         action: 'document.imported',
         entityType: 'document',
@@ -248,11 +254,11 @@ export const documentRouter = router({
    *
    * @see ADR-010: Markdown Import/Export
    */
-  export: workspaceProcedure
+  export: simpleChannelProcedure
     .input(documentGetInput)
     .query(async ({ ctx, input }) => {
-      const { repository } = ctx;
-      const document = await repository.getDocument(input.id);
+      const { channelRepository } = ctx;
+      const document = await channelRepository.getDocument(input.id);
 
       if (!document) {
         throw new TRPCError({
@@ -262,7 +268,7 @@ export const documentRouter = router({
       }
 
       // Get video details for filename
-      const video = await repository.getVideo(document.videoId);
+      const video = await channelRepository.getVideo(document.videoId);
       if (!video) {
         throw new TRPCError({
           code: 'NOT_FOUND',

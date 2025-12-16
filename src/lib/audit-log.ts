@@ -7,14 +7,14 @@
  * @see /docs/adrs/009-versioning-and-audit.md
  */
 
-import type { ProjectRepository } from '@/server/repositories/project-repository';
+import type { ChannelRepository } from '@/server/repositories/channel-repository';
 import type { VideoStatus } from '@/server/db/schema';
 
 /**
  * Log a video status change
  */
 export async function logVideoStatusChange(
-  repository: ProjectRepository,
+  repository: ChannelRepository,
   videoId: string,
   userId: string,
   oldStatus: VideoStatus,
@@ -36,7 +36,7 @@ export async function logVideoStatusChange(
  * Log a video due date change
  */
 export async function logVideoDueDateChange(
-  repository: ProjectRepository,
+  repository: ChannelRepository,
   videoId: string,
   userId: string,
   oldDueDate: string | null,
@@ -58,7 +58,7 @@ export async function logVideoDueDateChange(
  * Log a video publish date change
  */
 export async function logVideoPublishDateChange(
-  repository: ProjectRepository,
+  repository: ChannelRepository,
   videoId: string,
   userId: string,
   oldPublishDate: string | null,
@@ -80,7 +80,7 @@ export async function logVideoPublishDateChange(
  * Log category creation
  */
 export async function logCategoryCreated(
-  repository: ProjectRepository,
+  repository: ChannelRepository,
   categoryId: string,
   userId: string,
   categoryName: string,
@@ -102,7 +102,7 @@ export async function logCategoryCreated(
  * Log category update
  */
 export async function logCategoryUpdated(
-  repository: ProjectRepository,
+  repository: ChannelRepository,
   categoryId: string,
   userId: string,
   oldName: string,
@@ -136,7 +136,7 @@ export async function logCategoryUpdated(
  * Log category deletion
  */
 export async function logCategoryDeleted(
-  repository: ProjectRepository,
+  repository: ChannelRepository,
   categoryId: string,
   userId: string,
   categoryName: string

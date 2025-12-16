@@ -12,8 +12,8 @@ import styles from './video-card.module.scss';
 export interface VideoCardProps {
   /** Video ID */
   id: string;
-  /** Project slug for navigation */
-  projectSlug: string;
+  /** Channel slug for navigation */
+  channelSlug: string;
   /** Video title */
   title: string;
   /** Video status */
@@ -35,12 +35,12 @@ export interface VideoCardProps {
 /**
  * VideoCard Component
  *
- * Displays a video project card with title, status, due date, and categories.
+ * Displays a video card with title, status, due date, and categories.
  * Clicking the card navigates to the video detail page.
  */
 export function VideoCard({
   id,
-  projectSlug,
+  channelSlug,
   title,
   status,
   dueDate,
@@ -84,7 +84,7 @@ export function VideoCard({
 
   return (
     <Link
-      href={`/t/${effectiveTeamspace}/${projectSlug}/content-plan/${id}`}
+      href={`/t/${effectiveTeamspace}/${channelSlug}/content-plan/${id}`}
       className={cardClasses}
       onClick={handleClick}
       aria-label={`View video: ${title}`}

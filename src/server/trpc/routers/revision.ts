@@ -2,14 +2,18 @@
  * Revision tRPC Router
  *
  * Handles document revision history operations.
- * All operations are workspace-scoped through the document's video.
+ * All operations are channel-scoped through the document's video.
  *
  * @see /docs/adrs/009-versioning-and-audit.md
  */
 
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { router, workspaceProcedure, editorProcedure } from '../procedures';
+import {
+  router,
+  simpleChannelProcedure,
+  simpleChannelEditorProcedure,
+} from '../procedures';
 
 /**
  * Revision list input schema
@@ -43,14 +47,14 @@ export const revisionRouter = router({
    * Returns revisions in descending order (newest first)
    * Limited to 100 revisions per page
    */
-  list: workspaceProcedure
+  list: simpleChannelProcedure
     .input(revisionListInput)
     .query(async ({ ctx, input }) => {
-      const { repository } = ctx;
+      const { channelRepository } = ctx;
       const { documentId, limit } = input;
 
-      // Verify document exists and belongs to workspace
-      const document = await repository.getDocument(documentId);
+      // Verify document exists and belongs to channel
+      const document = await channelRepository.getDocument(documentId);
       if (!document) {
         throw new TRPCError({
           code: 'NOT_FOUND',
@@ -58,9 +62,12 @@ export const revisionRouter = router({
         });
       }
 
-      const revisions = await repository.getDocumentRevisions(documentId, {
-        limit,
-      });
+      const revisions = await channelRepository.getDocumentRevisions(
+        documentId,
+        {
+          limit,
+        }
+      );
 
       return revisions;
     }),
@@ -68,11 +75,11 @@ export const revisionRouter = router({
   /**
    * Get a single revision by ID
    */
-  get: workspaceProcedure
+  get: simpleChannelProcedure
     .input(revisionGetInput)
     .query(async ({ ctx, input }) => {
-      const { repository } = ctx;
-      const revision = await repository.getDocumentRevision(input.id);
+      const { channelRepository } = ctx;
+      const revision = await channelRepository.getDocumentRevision(input.id);
 
       if (!revision) {
         throw new TRPCError({
@@ -89,21 +96,21 @@ export const revisionRouter = router({
    * Creates a new version with the content from the specified revision
    * Does not rewrite history - appends to version history
    */
-  restore: editorProcedure
+  restore: simpleChannelEditorProcedure
     .input(revisionRestoreInput)
     .mutation(async ({ ctx, input }) => {
-      const { repository, user } = ctx;
+      const { channelRepository, user } = ctx;
       const { documentId, revisionId } = input;
 
       // Restore the revision (creates new version with old content)
-      const restoredDoc = await repository.restoreDocumentRevision(
+      const restoredDoc = await channelRepository.restoreDocumentRevision(
         documentId,
         revisionId,
         user.id
       );
 
       // Log audit trail
-      await repository.createAuditLog({
+      await channelRepository.createAuditLog({
         userId: user.id,
         action: 'document.revision_restored',
         entityType: 'document',

@@ -1,8 +1,8 @@
 /**
  * Workspace Access Validation
  *
- * Provides helper functions for validating user access to workspaces.
- * Used by layouts and middleware that need to check workspace membership.
+ * Provides helper functions for validating user access to channels (workspaces).
+ * Used by layouts and middleware that need to check channel membership.
  *
  * @see /docs/adrs/008-multi-tenancy-strategy.md
  * @see /docs/adrs/007-api-and-auth.md
@@ -10,8 +10,8 @@
 
 import { cookies } from 'next/headers';
 import { db } from '@/server/db';
-import { projects, projectUsers } from '@/server/db/schema';
-import type { Project, ProjectUser } from '@/server/db/schema';
+import { channels, channelUsers } from '@/server/db/schema';
+import type { Channel, ChannelUser } from '@/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { validateSessionToken } from './session';
 
@@ -19,8 +19,8 @@ import { validateSessionToken } from './session';
  * Result of workspace access validation
  */
 export interface WorkspaceAccessResult {
-  workspace: Project;
-  membership: ProjectUser;
+  workspace: Channel;
+  membership: ChannelUser;
 }
 
 /**
@@ -52,15 +52,15 @@ export async function validateRequest(): Promise<UserValidationResult> {
 }
 
 /**
- * Validates user access to a workspace by slug
+ * Validates user access to a workspace (channel) by slug
  *
  * Checks that:
- * 1. The workspace exists
- * 2. The user is a member of the workspace
+ * 1. The channel exists
+ * 2. The user is a member of the channel
  *
  * @param userId - The authenticated user's ID
- * @param workspaceSlug - The workspace slug to validate access for
- * @returns Workspace and membership info if access is valid, null otherwise
+ * @param workspaceSlug - The channel slug to validate access for
+ * @returns Channel and membership info if access is valid, null otherwise
  */
 export async function validateWorkspaceAccess(
   userId: string,
@@ -68,13 +68,13 @@ export async function validateWorkspaceAccess(
 ): Promise<WorkspaceAccessResult | null> {
   const result = await db
     .select({
-      workspace: projects,
-      membership: projectUsers,
+      workspace: channels,
+      membership: channelUsers,
     })
-    .from(projectUsers)
-    .innerJoin(projects, eq(projectUsers.projectId, projects.id))
+    .from(channelUsers)
+    .innerJoin(channels, eq(channelUsers.channelId, channels.id))
     .where(
-      and(eq(projects.slug, workspaceSlug), eq(projectUsers.userId, userId))
+      and(eq(channels.slug, workspaceSlug), eq(channelUsers.userId, userId))
     )
     .limit(1);
 

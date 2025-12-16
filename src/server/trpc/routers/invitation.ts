@@ -13,8 +13,12 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 // eslint-disable-next-line no-restricted-imports -- Invitation operations require direct queries for public token validation (not workspace-scoped)
 import { eq, and, gt, isNull } from 'drizzle-orm';
-import { router, publicProcedure, ownerProcedure } from '../procedures';
-import { invitations, users, projectUsers, auditLog } from '@/server/db/schema';
+import {
+  router,
+  publicProcedure,
+  simpleChannelOwnerProcedure,
+} from '../procedures';
+import { invitations, users, channelUsers, auditLog } from '@/server/db/schema';
 import {
   generateInvitationToken,
   calculateInvitationExpiry,
@@ -62,7 +66,7 @@ export const invitationRouter = router({
    * Create a new invitation
    * Requires owner role
    */
-  create: ownerProcedure
+  create: simpleChannelOwnerProcedure
     .input(createInvitationInputSchema)
     .mutation(async ({ ctx, input }) => {
       const { email, role } = input;
@@ -80,11 +84,11 @@ export const invitationRouter = router({
         // Check if user is already a member of this workspace
         const existingMembership = await ctx.db
           .select()
-          .from(projectUsers)
+          .from(channelUsers)
           .where(
             and(
-              eq(projectUsers.projectId, ctx.workspace.id),
-              eq(projectUsers.userId, userId)
+              eq(channelUsers.channelId, ctx.channel.id),
+              eq(channelUsers.userId, userId)
             )
           )
           .limit(1);
@@ -103,7 +107,7 @@ export const invitationRouter = router({
         .from(invitations)
         .where(
           and(
-            eq(invitations.workspaceId, ctx.workspace.id),
+            eq(invitations.workspaceId, ctx.channel.id),
             eq(invitations.email, email.toLowerCase()),
             isNull(invitations.acceptedAt),
             gt(invitations.expiresAt, new Date()) // Not expired
@@ -127,7 +131,7 @@ export const invitationRouter = router({
       const [invitation] = await ctx.db
         .insert(invitations)
         .values({
-          workspaceId: ctx.workspace.id,
+          workspaceId: ctx.channel.id,
           email: email.toLowerCase(),
           role,
           token,
@@ -144,7 +148,7 @@ export const invitationRouter = router({
       }
 
       // Log invitation creation in audit log
-      await ctx.repository.createAuditLog({
+      await ctx.channelRepository.createAuditLog({
         userId: ctx.user.id,
         action: 'invitation.created',
         entityType: 'invitation',
@@ -161,7 +165,7 @@ export const invitationRouter = router({
       // Fire and forget - log errors but don't fail the request
       sendInvitationEmail(
         email,
-        ctx.workspace.name,
+        ctx.channel.name,
         ctx.user.name || ctx.user.email,
         invitationUrl
       ).catch((error) => {
@@ -181,7 +185,7 @@ export const invitationRouter = router({
    * List all pending invitations for the workspace
    * Requires owner role
    */
-  list: ownerProcedure.query(async ({ ctx }) => {
+  list: simpleChannelOwnerProcedure.query(async ({ ctx }) => {
     const pendingInvitations = await ctx.db
       .select({
         id: invitations.id,
@@ -194,7 +198,7 @@ export const invitationRouter = router({
       .from(invitations)
       .where(
         and(
-          eq(invitations.workspaceId, ctx.workspace.id),
+          eq(invitations.workspaceId, ctx.channel.id),
           isNull(invitations.acceptedAt)
         )
       )
@@ -207,7 +211,7 @@ export const invitationRouter = router({
    * Revoke (delete) an invitation
    * Requires owner role
    */
-  revoke: ownerProcedure
+  revoke: simpleChannelOwnerProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       const result = await ctx.db
@@ -215,7 +219,7 @@ export const invitationRouter = router({
         .where(
           and(
             eq(invitations.id, input.id),
-            eq(invitations.workspaceId, ctx.workspace.id)
+            eq(invitations.workspaceId, ctx.channel.id)
           )
         )
         .returning({ id: invitations.id, email: invitations.email });
@@ -228,7 +232,7 @@ export const invitationRouter = router({
       }
 
       // Log invitation revocation in audit log
-      await ctx.repository.createAuditLog({
+      await ctx.channelRepository.createAuditLog({
         userId: ctx.user.id,
         action: 'invitation.revoked',
         entityType: 'invitation',
@@ -301,8 +305,8 @@ export const invitationRouter = router({
       }
 
       // Get workspace name
-      const workspace = await ctx.db.query.projects.findFirst({
-        where: (projects, { eq }) => eq(projects.id, invitation.workspaceId),
+      const workspace = await ctx.db.query.channels.findFirst({
+        where: (channels, { eq }) => eq(channels.id, invitation.workspaceId),
         columns: {
           name: true,
           slug: true,
@@ -396,11 +400,11 @@ export const invitationRouter = router({
           // Check if already a member
           const existingMembership = await tx
             .select()
-            .from(projectUsers)
+            .from(channelUsers)
             .where(
               and(
-                eq(projectUsers.projectId, invitation.workspaceId),
-                eq(projectUsers.userId, userId)
+                eq(channelUsers.channelId, invitation.workspaceId),
+                eq(channelUsers.userId, userId)
               )
             )
             .limit(1);
@@ -435,8 +439,8 @@ export const invitationRouter = router({
         }
 
         // Add user to workspace
-        await tx.insert(projectUsers).values({
-          projectId: invitation.workspaceId,
+        await tx.insert(channelUsers).values({
+          channelId: invitation.workspaceId,
           userId,
           role: invitation.role,
         });

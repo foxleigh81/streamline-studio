@@ -4,7 +4,7 @@ import styles from './page.module.scss';
 /**
  * Access Denied Page
  *
- * Shown when a user tries to access a project they don't have permission for.
+ * Shown when a user tries to access a channel they don't have permission for.
  * Provides clear messaging and actionable next steps.
  *
  * @see /docs/adrs/017-teamspace-hierarchy.md
@@ -34,23 +34,23 @@ export default function AccessDeniedPage() {
           <div>
             <h1 className={styles.heading}>Access Denied</h1>
             <p className={styles.subheading}>
-              You don&apos;t have permission to access this project
+              You don&apos;t have permission to access this channel
             </p>
           </div>
         </div>
 
         <div className={styles.content}>
           <p className={styles.message}>
-            This project is private and you&apos;re not currently a member. To
+            This channel is private and you&apos;re not currently a member. To
             gain access, you&apos;ll need to be invited by a team administrator.
           </p>
 
           <div className={styles.reasons}>
             <h2 className={styles.reasonsHeading}>Why am I seeing this?</h2>
             <ul className={styles.reasonsList}>
-              <li>You&apos;re not a member of this project</li>
-              <li>Your project membership may have been removed</li>
-              <li>The project settings may have changed</li>
+              <li>You&apos;re not a member of this channel</li>
+              <li>Your channel membership may have been removed</li>
+              <li>The channel settings may have changed</li>
             </ul>
           </div>
         </div>
