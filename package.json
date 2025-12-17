@@ -22,6 +22,8 @@
     "test:smoke": "playwright test e2e/smoke",
     "test:a11y": "playwright test e2e/accessibility",
     "test:auth": "playwright test e2e/auth",
+    "test:e2e:ci-mode": "./scripts/run-e2e-ci-mode.sh",
+    "validate:ci-env": "tsx scripts/validate-ci-env.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test:storybook": "test-storybook",
