@@ -88,8 +88,8 @@ export async function loginAsUser(
   // Submit form
   await page.getByRole('button', { name: /sign in/i }).click();
 
-  // Wait for redirect to dashboard
-  await page.waitForURL('/');
+  // Wait for redirect to teamspace dashboard
+  await page.waitForURL(/\/t\/workspace/);
 }
 
 /**
@@ -146,8 +146,9 @@ export async function registerAsUser(
     await createAccountButton.click();
   }
 
-  // Wait for redirect to dashboard
-  await page.waitForURL('/');
+  // Wait for redirect to teamspace dashboard with extended timeout
+  // (parallel tests may cause slower responses)
+  await page.waitForURL(/\/t\/workspace/, { timeout: 90000 });
 }
 
 /**

@@ -1,60 +1,136 @@
 /**
  * Settings Preferences E2E Tests
  *
- * Tests the preferences settings page including:
- * - Navigation between Account and Preferences tabs
+ * Tests the preferences modal including:
+ * - Opening the modal via user menu
  * - Saving preferences
  * - Default channel selection
  * - View mode persistence
  * - Date/time format changes
  * - Unsaved changes warning
  *
+ * Note: Preferences were moved from a standalone page to a modal
+ * accessible from the user menu in the sidebar.
+ *
  * @see /docs/adrs/005-testing-strategy.md
  */
 
-import { expect } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { test as authenticatedTest } from '../helpers/fixtures';
 
-authenticatedTest.describe('Settings Preferences Page', () => {
+/**
+ * Helper to open the preferences modal
+ */
+async function openPreferencesModal(page: Page): Promise<void> {
+  // Click the user menu trigger (at bottom of sidebar)
+  const userMenuTrigger = page.getByRole('button', { name: /user menu/i });
+  await userMenuTrigger.waitFor({ state: 'visible', timeout: 10000 });
+  await userMenuTrigger.click();
+
+  // Click the Preferences menu item
+  const preferencesMenuItem = page.getByRole('menuitem', {
+    name: /preferences/i,
+  });
+  await preferencesMenuItem.waitFor({ state: 'visible' });
+  await preferencesMenuItem.click();
+
+  // Wait for modal to open
+  await page.getByRole('dialog', { name: /preferences/i }).waitFor({
+    state: 'visible',
+    timeout: 10000,
+  });
+}
+
+authenticatedTest.describe('Settings Preferences Modal', () => {
   authenticatedTest.beforeEach(async ({ authenticatedPage }) => {
-    // Navigate to preferences page
-    await authenticatedPage.goto('/t/workspace/settings/preferences');
+    // Navigate to workspace dashboard first (any authenticated page works)
+    await authenticatedPage.goto('/t/workspace');
     await authenticatedPage.waitForLoadState('networkidle');
   });
 
-  authenticatedTest.describe('Page Rendering', () => {
+  authenticatedTest.describe('Modal Opening', () => {
     authenticatedTest(
-      'renders preferences page with all sections',
+      'opens preferences modal from user menu',
       async ({ authenticatedPage }) => {
-        // Verify page heading
+        await openPreferencesModal(authenticatedPage);
+
+        // Verify modal is open with correct title
+        const modal = authenticatedPage.getByRole('dialog', {
+          name: /preferences/i,
+        });
+        await expect(modal).toBeVisible();
+
+        // Verify description
+        await expect(
+          authenticatedPage.getByText(
+            /customize your personal preferences for the application/i
+          )
+        ).toBeVisible();
+      }
+    );
+
+    authenticatedTest(
+      'modal can be closed with close button',
+      async ({ authenticatedPage }) => {
+        await openPreferencesModal(authenticatedPage);
+
+        const modal = authenticatedPage.getByRole('dialog', {
+          name: /preferences/i,
+        });
+        await expect(modal).toBeVisible();
+
+        // Click close button
+        const closeButton = authenticatedPage.getByRole('button', {
+          name: /close/i,
+        });
+        await closeButton.click();
+
+        // Modal should be closed
+        await expect(modal).not.toBeVisible();
+      }
+    );
+
+    authenticatedTest(
+      'modal can be closed with Escape key',
+      async ({ authenticatedPage }) => {
+        await openPreferencesModal(authenticatedPage);
+
+        const modal = authenticatedPage.getByRole('dialog', {
+          name: /preferences/i,
+        });
+        await expect(modal).toBeVisible();
+
+        // Press Escape
+        await authenticatedPage.keyboard.press('Escape');
+
+        // Modal should be closed
+        await expect(modal).not.toBeVisible();
+      }
+    );
+  });
+
+  authenticatedTest.describe('Form Elements', () => {
+    authenticatedTest(
+      'renders all preference sections',
+      async ({ authenticatedPage }) => {
+        await openPreferencesModal(authenticatedPage);
+
+        // Verify sections (h3 headings in the modal)
         await expect(
           authenticatedPage.getByRole('heading', {
-            level: 1,
-            name: /preferences/i,
+            level: 3,
+            name: /startup behaviour/i,
           })
         ).toBeVisible();
-
-        // Verify page description
-        await expect(
-          authenticatedPage.getByText(/customize your personal preferences/i)
-        ).toBeVisible();
-
-        // Verify sections
         await expect(
           authenticatedPage.getByRole('heading', {
-            level: 2,
-            name: /content defaults/i,
-          })
-        ).toBeVisible();
-        await expect(
-          authenticatedPage.getByRole('heading', {
-            level: 2,
+            level: 3,
             name: /view preferences/i,
           })
         ).toBeVisible();
         await expect(
           authenticatedPage.getByRole('heading', {
-            level: 2,
+            level: 3,
             name: /date & time format/i,
           })
         ).toBeVisible();
@@ -64,7 +140,12 @@ authenticatedTest.describe('Settings Preferences Page', () => {
     authenticatedTest(
       'renders default channel select',
       async ({ authenticatedPage }) => {
-        const selectLabel = authenticatedPage.getByText('Default Channel');
+        await openPreferencesModal(authenticatedPage);
+
+        // Use exact match for the label text to avoid matching the placeholder
+        const selectLabel = authenticatedPage.getByText('Default Channel', {
+          exact: true,
+        });
         await expect(selectLabel).toBeVisible();
 
         // Verify select has helper text
@@ -77,6 +158,8 @@ authenticatedTest.describe('Settings Preferences Page', () => {
     authenticatedTest(
       'renders view mode radio group',
       async ({ authenticatedPage }) => {
+        await openPreferencesModal(authenticatedPage);
+
         await expect(
           authenticatedPage.getByRole('group', {
             name: /content plan view mode/i,
@@ -96,6 +179,8 @@ authenticatedTest.describe('Settings Preferences Page', () => {
     authenticatedTest(
       'renders date format select',
       async ({ authenticatedPage }) => {
+        await openPreferencesModal(authenticatedPage);
+
         const selectLabel = authenticatedPage.getByText('Date Format');
         await expect(selectLabel).toBeVisible();
 
@@ -104,14 +189,16 @@ authenticatedTest.describe('Settings Preferences Page', () => {
         });
         await expect(select).toBeVisible();
 
-        // Verify all format options exist
-        await expect(select).toHaveValue('ISO'); // Default value
+        // Verify default value
+        await expect(select).toHaveValue('ISO');
       }
     );
 
     authenticatedTest(
       'renders time format radio group',
       async ({ authenticatedPage }) => {
+        await openPreferencesModal(authenticatedPage);
+
         await expect(
           authenticatedPage.getByRole('group', { name: /time format/i })
         ).toBeVisible();
@@ -129,6 +216,8 @@ authenticatedTest.describe('Settings Preferences Page', () => {
     authenticatedTest(
       'renders form action buttons',
       async ({ authenticatedPage }) => {
+        await openPreferencesModal(authenticatedPage);
+
         const resetButton = authenticatedPage.getByRole('button', {
           name: /reset/i,
         });
@@ -150,6 +239,8 @@ authenticatedTest.describe('Settings Preferences Page', () => {
     authenticatedTest(
       'enables action buttons when changes are made',
       async ({ authenticatedPage }) => {
+        await openPreferencesModal(authenticatedPage);
+
         const resetButton = authenticatedPage.getByRole('button', {
           name: /reset/i,
         });
@@ -186,6 +277,8 @@ authenticatedTest.describe('Settings Preferences Page', () => {
     authenticatedTest(
       'resets form to original values on reset',
       async ({ authenticatedPage }) => {
+        await openPreferencesModal(authenticatedPage);
+
         const resetButton = authenticatedPage.getByRole('button', {
           name: /reset/i,
         });
@@ -227,6 +320,8 @@ authenticatedTest.describe('Settings Preferences Page', () => {
     authenticatedTest(
       'saves preferences successfully',
       async ({ authenticatedPage }) => {
+        await openPreferencesModal(authenticatedPage);
+
         const saveButton = authenticatedPage.getByRole('button', {
           name: /save preferences/i,
         });
@@ -254,8 +349,10 @@ authenticatedTest.describe('Settings Preferences Page', () => {
     );
 
     authenticatedTest(
-      'persists view mode preference',
+      'persists view mode preference after reopening modal',
       async ({ authenticatedPage }) => {
+        await openPreferencesModal(authenticatedPage);
+
         const saveButton = authenticatedPage.getByRole('button', {
           name: /save preferences/i,
         });
@@ -272,9 +369,19 @@ authenticatedTest.describe('Settings Preferences Page', () => {
           authenticatedPage.getByText(/preferences saved successfully/i)
         ).toBeVisible();
 
-        // Reload page
-        await authenticatedPage.reload();
-        await authenticatedPage.waitForLoadState('networkidle');
+        // Close modal
+        const closeButton = authenticatedPage.getByRole('button', {
+          name: /close/i,
+        });
+        await closeButton.click();
+
+        // Wait for modal to close
+        await expect(
+          authenticatedPage.getByRole('dialog', { name: /preferences/i })
+        ).not.toBeVisible();
+
+        // Reopen modal
+        await openPreferencesModal(authenticatedPage);
 
         // Verify table view is still selected
         await expect(tableViewRadio).toBeChecked();
@@ -284,6 +391,8 @@ authenticatedTest.describe('Settings Preferences Page', () => {
     authenticatedTest(
       'changes date format successfully',
       async ({ authenticatedPage }) => {
+        await openPreferencesModal(authenticatedPage);
+
         const dateFormatSelect = authenticatedPage.getByRole('combobox', {
           name: /date format/i,
         });
@@ -303,10 +412,14 @@ authenticatedTest.describe('Settings Preferences Page', () => {
           authenticatedPage.getByText(/preferences saved successfully/i)
         ).toBeVisible();
 
-        // Reload and verify persistence
-        await authenticatedPage.reload();
-        await authenticatedPage.waitForLoadState('networkidle');
+        // Close and reopen modal
+        const closeButton = authenticatedPage.getByRole('button', {
+          name: /close/i,
+        });
+        await closeButton.click();
+        await openPreferencesModal(authenticatedPage);
 
+        // Verify persistence
         await expect(dateFormatSelect).toHaveValue('US');
       }
     );
@@ -314,6 +427,8 @@ authenticatedTest.describe('Settings Preferences Page', () => {
     authenticatedTest(
       'changes time format successfully',
       async ({ authenticatedPage }) => {
+        await openPreferencesModal(authenticatedPage);
+
         const timeFormat12h = authenticatedPage.getByRole('radio', {
           name: /12-hour \(AM\/PM\)/i,
         });
@@ -333,10 +448,14 @@ authenticatedTest.describe('Settings Preferences Page', () => {
           authenticatedPage.getByText(/preferences saved successfully/i)
         ).toBeVisible();
 
-        // Reload and verify persistence
-        await authenticatedPage.reload();
-        await authenticatedPage.waitForLoadState('networkidle');
+        // Close and reopen modal
+        const closeButton = authenticatedPage.getByRole('button', {
+          name: /close/i,
+        });
+        await closeButton.click();
+        await openPreferencesModal(authenticatedPage);
 
+        // Verify persistence
         await expect(timeFormat12h).toBeChecked();
       }
     );
@@ -344,55 +463,83 @@ authenticatedTest.describe('Settings Preferences Page', () => {
 
   authenticatedTest.describe('Date Format Options', () => {
     authenticatedTest(
-      'displays all date format options correctly',
+      'all date format options are selectable',
       async ({ authenticatedPage }) => {
+        await openPreferencesModal(authenticatedPage);
+
         const dateFormatSelect = authenticatedPage.getByRole('combobox', {
           name: /date format/i,
         });
 
-        // Click to open dropdown (if needed)
-        await dateFormatSelect.click();
+        // Native HTML selects don't expose options to accessibility tree
+        // Verify all options exist by trying to select them
+        await dateFormatSelect.selectOption('ISO');
+        await expect(dateFormatSelect).toHaveValue('ISO');
 
-        // Verify all options exist
-        const isoOption = authenticatedPage.getByRole('option', {
-          name: /ISO \(YYYY-MM-DD\)/i,
-        });
-        const usOption = authenticatedPage.getByRole('option', {
-          name: /US \(MM\/DD\/YYYY\)/i,
-        });
-        const euOption = authenticatedPage.getByRole('option', {
-          name: /EU \(DD\/MM\/YYYY\)/i,
-        });
-        const ukOption = authenticatedPage.getByRole('option', {
-          name: /UK \(DD-MMM-YYYY\)/i,
-        });
+        await dateFormatSelect.selectOption('US');
+        await expect(dateFormatSelect).toHaveValue('US');
 
-        await expect(isoOption).toBeVisible();
-        await expect(usOption).toBeVisible();
-        await expect(euOption).toBeVisible();
-        await expect(ukOption).toBeVisible();
+        await dateFormatSelect.selectOption('EU');
+        await expect(dateFormatSelect).toHaveValue('EU');
+
+        await dateFormatSelect.selectOption('UK');
+        await expect(dateFormatSelect).toHaveValue('UK');
       }
     );
 
     authenticatedTest(
-      'UK format is distinct from EU format',
+      'UK format value is distinct from EU format',
       async ({ authenticatedPage }) => {
+        await openPreferencesModal(authenticatedPage);
+
         const dateFormatSelect = authenticatedPage.getByRole('combobox', {
           name: /date format/i,
         });
 
-        // Verify EU option shows DD/MM/YYYY
-        await dateFormatSelect.click();
-        const euOption = authenticatedPage.getByRole('option', {
-          name: /EU \(DD\/MM\/YYYY\)/i,
-        });
-        await expect(euOption).toBeVisible();
+        // Verify EU option can be selected
+        await dateFormatSelect.selectOption('EU');
+        await expect(dateFormatSelect).toHaveValue('EU');
 
-        // Verify UK option shows DD-MMM-YYYY (different format)
-        const ukOption = authenticatedPage.getByRole('option', {
-          name: /UK \(DD-MMM-YYYY\)/i,
+        // Verify UK option can be selected and is different from EU
+        await dateFormatSelect.selectOption('UK');
+        await expect(dateFormatSelect).toHaveValue('UK');
+
+        // Verify they are distinct values
+        await dateFormatSelect.selectOption('EU');
+        await expect(dateFormatSelect).not.toHaveValue('UK');
+      }
+    );
+  });
+
+  authenticatedTest.describe('Unsaved Changes Warning', () => {
+    authenticatedTest(
+      'warns when closing modal with unsaved changes',
+      async ({ authenticatedPage }) => {
+        await openPreferencesModal(authenticatedPage);
+
+        // Make a change
+        const tableViewRadio = authenticatedPage.getByRole('radio', {
+          name: /table view/i,
         });
-        await expect(ukOption).toBeVisible();
+        await tableViewRadio.click();
+
+        // Set up dialog handler to accept the confirmation
+        authenticatedPage.on('dialog', async (dialog) => {
+          expect(dialog.type()).toBe('confirm');
+          expect(dialog.message()).toContain('unsaved changes');
+          await dialog.accept();
+        });
+
+        // Try to close with close button
+        const closeButton = authenticatedPage.getByRole('button', {
+          name: /close/i,
+        });
+        await closeButton.click();
+
+        // Modal should close after accepting the confirmation
+        await expect(
+          authenticatedPage.getByRole('dialog', { name: /preferences/i })
+        ).not.toBeVisible();
       }
     );
   });
@@ -400,20 +547,22 @@ authenticatedTest.describe('Settings Preferences Page', () => {
   authenticatedTest.describe('Loading State', () => {
     authenticatedTest(
       'shows loading state with proper accessibility',
-      async ({ page }) => {
+      async ({ authenticatedPage }) => {
         // Intercept the preferences API call to delay response
-        await page.route('**/api/trpc/user.getPreferences*', async (route) => {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          await route.continue();
-        });
+        await authenticatedPage.route(
+          '**/api/trpc/user.getPreferences*',
+          async (route) => {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await route.continue();
+          }
+        );
 
-        await page.goto('/t/workspace/settings/preferences');
+        await openPreferencesModal(authenticatedPage);
 
         // Verify loading state
-        const loadingStatus = page.getByRole('status', {
-          name: /loading preferences/i,
-        });
+        const loadingStatus = authenticatedPage.getByRole('status');
         await expect(loadingStatus).toBeVisible();
+        await expect(loadingStatus).toContainText(/loading preferences/i);
 
         // Verify it has aria-live
         await expect(loadingStatus).toHaveAttribute('aria-live', 'polite');
@@ -424,64 +573,51 @@ authenticatedTest.describe('Settings Preferences Page', () => {
   authenticatedTest.describe('Error Handling', () => {
     authenticatedTest(
       'displays error state when preferences fail to load',
-      async ({ page }) => {
+      async ({ authenticatedPage }) => {
         // Intercept and fail the preferences API call
-        await page.route('**/api/trpc/user.getPreferences*', async (route) => {
-          await route.abort('failed');
-        });
+        await authenticatedPage.route(
+          '**/api/trpc/user.getPreferences*',
+          async (route) => {
+            await route.abort('failed');
+          }
+        );
 
-        await page.goto('/t/workspace/settings/preferences');
+        await openPreferencesModal(authenticatedPage);
 
         // Verify error message
-        await expect(page.getByRole('alert')).toBeVisible();
+        await expect(authenticatedPage.getByRole('alert')).toBeVisible();
 
         await expect(
-          page.getByText(/failed to load preferences/i)
+          authenticatedPage.getByText(/failed to load preferences/i)
         ).toBeVisible();
       }
     );
   });
 });
 
-authenticatedTest.describe('Settings Navigation', () => {
+authenticatedTest.describe('Settings Navigation (Deprecated Page)', () => {
   authenticatedTest(
-    'navigates between Account and Preferences tabs',
+    'old preferences URL redirects to settings-moved page',
     async ({ authenticatedPage }) => {
-      // Start on preferences page
+      // Navigate to the old preferences page URL
       await authenticatedPage.goto('/t/workspace/settings/preferences');
       await authenticatedPage.waitForLoadState('networkidle');
 
-      // Verify we're on preferences
+      // Should redirect to settings-moved page
+      await expect(authenticatedPage).toHaveURL(/settings-moved/);
+
+      // Should show the "Settings Have Moved" notice
       await expect(
         authenticatedPage.getByRole('heading', {
           level: 1,
-          name: /preferences/i,
+          name: /settings have moved/i,
         })
       ).toBeVisible();
 
-      // Navigate to account settings (if navigation exists)
-      const accountLink = authenticatedPage.getByRole('link', {
-        name: /account/i,
-      });
-      if (await accountLink.isVisible()) {
-        await accountLink.click();
-        await authenticatedPage.waitForLoadState('networkidle');
-
-        // Navigate back to preferences
-        const preferencesLink = authenticatedPage.getByRole('link', {
-          name: /preferences/i,
-        });
-        await preferencesLink.click();
-        await authenticatedPage.waitForLoadState('networkidle');
-
-        // Verify we're back on preferences
-        await expect(
-          authenticatedPage.getByRole('heading', {
-            level: 1,
-            name: /preferences/i,
-          })
-        ).toBeVisible();
-      }
+      // Should explain how to access preferences
+      await expect(
+        authenticatedPage.getByText(/user menu at the bottom of the sidebar/i)
+      ).toBeVisible();
     }
   );
 });

@@ -40,15 +40,12 @@ export const test = base.extend<{
     // Create a unique email for this test to avoid conflicts
     const uniqueEmail = `e2e-${Date.now()}@example.com`;
 
-    // Register and login
+    // Register and login (registerAsUser already waits for redirect)
     await registerAsUser(page, {
       email: uniqueEmail,
       password: TEST_USER.password,
       name: TEST_USER.name,
     });
-
-    // Verify we're logged in
-    await page.waitForURL('/');
 
     // Provide the authenticated page to the test
     await use(page);
