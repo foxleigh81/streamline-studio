@@ -6,6 +6,7 @@ import {
   channels,
   teamspaces,
   teamspaceUsers,
+  userPreferences,
 } from '@/server/db/schema';
 // eslint-disable-next-line no-restricted-imports -- Landing page needs cross-channel query to find user's accessible channels
 import { eq, and, desc } from 'drizzle-orm';
@@ -16,6 +17,9 @@ import { TeamspaceDashboard } from './teamspace-dashboard';
  *
  * Shows a dashboard with all channels within the teamspace.
  * Works for both single-tenant and multi-tenant modes.
+ *
+ * If user has set a default channel preference, redirects to that channel's
+ * content-plan page instead of showing the dashboard.
  *
  * Route: /t/[teamspace] (e.g., /t/workspace or /t/my-team)
  */
@@ -52,6 +56,41 @@ export default async function TeamspacePage({ params }: TeamspacePageProps) {
   const teamspace = teamspaceResult[0];
   if (!teamspace) {
     redirect('/setup');
+  }
+
+  // Check if user has a default channel preference
+  const [preferences] = await db
+    .select({
+      defaultChannelId: userPreferences.defaultChannelId,
+    })
+    .from(userPreferences)
+    .where(eq(userPreferences.userId, user.id))
+    .limit(1);
+
+  // If user has a default channel set, try to redirect to it
+  if (preferences?.defaultChannelId) {
+    // Verify the user still has access to this channel and it belongs to this teamspace
+    const [defaultChannel] = await db
+      .select({
+        slug: channels.slug,
+        teamspaceId: channels.teamspaceId,
+      })
+      .from(channelUsers)
+      .innerJoin(channels, eq(channelUsers.channelId, channels.id))
+      .where(
+        and(
+          eq(channelUsers.userId, user.id),
+          eq(channelUsers.channelId, preferences.defaultChannelId),
+          eq(channels.teamspaceId, teamspace.id)
+        )
+      )
+      .limit(1);
+
+    // If channel is valid and belongs to this teamspace, redirect to content-plan
+    if (defaultChannel) {
+      redirect(`/t/${teamspaceSlug}/${defaultChannel.slug}/content-plan`);
+    }
+    // If channel is invalid (deleted, no access, or different teamspace), continue to dashboard
   }
 
   // Get user's teamspace role to determine if they can create channels

@@ -161,14 +161,6 @@ jobs:
       - name: Seed database with test data
         run: npm run db:seed
 
-      - name: Create setup flag BEFORE build
-        run: |
-          mkdir -p /tmp/streamline-data
-          echo '{"completed":true,"timestamp":"2024-01-01T00:00:00.000Z","version":"1.0"}' > /tmp/streamline-data/.setup-complete
-          echo "Setup flag created at /tmp/streamline-data/.setup-complete:"
-          cat /tmp/streamline-data/.setup-complete
-          echo "This MUST happen before build so pages don't bake in redirect to /setup"
-
       - name: Build Next.js application
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/streamline_test
@@ -187,16 +179,6 @@ jobs:
           echo "Static assets copied successfully:"
           ls -la .next/standalone/.next/static
           ls -la .next/standalone/public
-
-      - name: Verify setup flag exists
-        run: |
-          echo "Verifying setup flag exists before running tests..."
-          if [ ! -f /tmp/streamline-data/.setup-complete ]; then
-            echo "ERROR: Setup flag not found!"
-            exit 1
-          fi
-          echo "Setup flag confirmed:"
-          cat /tmp/streamline-data/.setup-complete
 
       - name: Configure standalone server environment
         run: |

@@ -83,6 +83,32 @@ export const documentTypeEnum = pgEnum('document_type', [
   'thumbnail_ideas',
 ]);
 
+/**
+ * Date format enum
+ * User preference for date display format
+ */
+export const dateFormatEnum = pgEnum('date_format', [
+  'ISO', // YYYY-MM-DD (2025-12-16)
+  'US', // MM/DD/YYYY (12/16/2025)
+  'EU', // DD/MM/YYYY (16/12/2025)
+  'UK', // DD-MMM-YYYY (16-Dec-2025)
+]);
+
+/**
+ * Time format enum
+ * User preference for time display format
+ */
+export const timeFormatEnum = pgEnum('time_format', [
+  '12h', // 12-hour format with AM/PM (2:30 PM)
+  '24h', // 24-hour format (14:30)
+]);
+
+/**
+ * View mode enum
+ * User preference for content plan display mode
+ */
+export const viewModeEnum = pgEnum('view_mode', ['grid', 'table']);
+
 // =============================================================================
 // TABLES
 // =============================================================================
@@ -402,6 +428,44 @@ export const auditLog = pgTable(
   ]
 );
 
+/**
+ * User Preferences table
+ * Stores user-specific settings and preferences
+ * Not workspace-scoped - settings apply across all teamspaces/channels
+ *
+ * Note: This is user-level data, not workspace-scoped.
+ * Direct Drizzle queries are acceptable here (per ADR-008).
+ */
+export const userPreferences = pgTable(
+  'user_preferences',
+  {
+    userId: uuid('user_id')
+      .primaryKey()
+      .references(() => users.id, { onDelete: 'cascade' }),
+
+    // UX Preferences
+    defaultChannelId: uuid('default_channel_id').references(() => channels.id, {
+      onDelete: 'set null',
+    }),
+    contentPlanViewMode: viewModeEnum('content_plan_view_mode')
+      .notNull()
+      .default('grid'),
+    dateFormat: dateFormatEnum('date_format').notNull().default('ISO'),
+    timeFormat: timeFormatEnum('time_format').notNull().default('24h'),
+
+    // Timestamps
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index('idx_user_preferences_default_channel').on(table.defaultChannelId),
+  ]
+);
+
 // =============================================================================
 // RELATIONS
 // =============================================================================
@@ -434,11 +498,15 @@ export const channelsRelations = relations(channels, ({ one, many }) => ({
   invitations: many(invitations),
 }));
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   teamspaceUsers: many(teamspaceUsers),
   channelUsers: many(channelUsers),
   sessions: many(sessions),
   invitationsCreated: many(invitations),
+  preferences: one(userPreferences, {
+    fields: [users.id],
+    references: [userPreferences.userId],
+  }),
 }));
 
 export const channelUsersRelations = relations(channelUsers, ({ one }) => ({
@@ -531,6 +599,20 @@ export const invitationsRelations = relations(invitations, ({ one }) => ({
   }),
 }));
 
+export const userPreferencesRelations = relations(
+  userPreferences,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [userPreferences.userId],
+      references: [users.id],
+    }),
+    defaultChannel: one(channels, {
+      fields: [userPreferences.defaultChannelId],
+      references: [channels.id],
+    }),
+  })
+);
+
 // =============================================================================
 // TYPE EXPORTS
 // =============================================================================
@@ -580,3 +662,10 @@ export type NewVideoCategory = typeof videoCategories.$inferInsert;
 
 export type Invitation = typeof invitations.$inferSelect;
 export type NewInvitation = typeof invitations.$inferInsert;
+
+export type UserPreferences = typeof userPreferences.$inferSelect;
+export type NewUserPreferences = typeof userPreferences.$inferInsert;
+
+export type DateFormat = (typeof dateFormatEnum.enumValues)[number];
+export type TimeFormat = (typeof timeFormatEnum.enumValues)[number];
+export type ViewMode = (typeof viewModeEnum.enumValues)[number];

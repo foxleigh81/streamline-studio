@@ -46,6 +46,7 @@ export interface AppShellProps {
 
 /**
  * Navigation items for the sidebar
+ * Note: Some items are channel-scoped, others are teamspace-scoped
  */
 const navigationItems = [
   {
@@ -54,6 +55,7 @@ const navigationItems = [
     icon: 'clipboard-list',
     ariaLabel: 'Navigate to content plan page',
     requiresPermission: null,
+    scope: 'channel', // Channel-scoped
   },
   {
     name: 'Categories',
@@ -61,6 +63,7 @@ const navigationItems = [
     icon: 'tag',
     ariaLabel: 'Navigate to categories page',
     requiresPermission: null,
+    scope: 'channel', // Channel-scoped
   },
   {
     name: 'Team',
@@ -68,13 +71,23 @@ const navigationItems = [
     icon: 'team',
     ariaLabel: 'Navigate to team page',
     requiresPermission: null,
+    scope: 'channel', // Channel-scoped
   },
   {
-    name: 'Settings',
+    name: 'Channel Settings',
     href: '/settings',
     icon: 'settings',
-    ariaLabel: 'Navigate to settings page',
+    ariaLabel: 'Navigate to channel settings page',
     requiresPermission: 'admin',
+    scope: 'channel', // Channel-scoped
+  },
+  {
+    name: 'Account',
+    href: '/settings',
+    icon: 'settings',
+    ariaLabel: 'Navigate to account settings page',
+    requiresPermission: null,
+    scope: 'teamspace', // Teamspace-scoped (user account)
   },
 ] as const;
 
@@ -114,22 +127,31 @@ export function AppShell({
 
   /**
    * Check if a navigation item is active
+   * @param href - The relative path for the navigation item
+   * @param scope - Whether the item is 'channel' or 'teamspace' scoped
    */
-  const isActive = (href: string): boolean => {
-    // Always use unified routing - use "workspace" as fallback for single-tenant
-    const effectiveTeamspace = teamspaceSlug ?? 'workspace';
-    const fullPath = `/t/${effectiveTeamspace}/${channelSlug}${href}`;
+  const isActive = (href: string, scope: 'channel' | 'teamspace'): boolean => {
+    const fullPath = buildLink(href, scope);
     return pathname === fullPath || pathname.startsWith(`${fullPath}/`);
   };
 
   /**
    * Build full navigation link with teamspace and channel slug
    * Uses unified routing structure for both single-tenant and multi-tenant modes
+   * @param href - The relative path for the navigation item
+   * @param scope - Whether the item is 'channel' or 'teamspace' scoped
    */
-  const buildLink = (href: string): string => {
+  const buildLink = (href: string, scope: 'channel' | 'teamspace'): string => {
     // Always use unified routing - use "workspace" as fallback for single-tenant
     const effectiveTeamspace = teamspaceSlug ?? 'workspace';
-    return `/t/${effectiveTeamspace}/${channelSlug}${href}`;
+
+    if (scope === 'teamspace') {
+      // Teamspace-scoped items (like account settings)
+      return `/t/${effectiveTeamspace}${href}`;
+    } else {
+      // Channel-scoped items (like content plan, categories, etc.)
+      return `/t/${effectiveTeamspace}/${channelSlug}${href}`;
+    }
   };
 
   /**
@@ -152,7 +174,7 @@ export function AppShell({
       <aside className={styles.sidebar} aria-label="Main navigation">
         <div className={styles.sidebarHeader}>
           <h1 className={styles.logo}>
-            <Link href={buildLink('/content-plan')}>
+            <Link href={buildLink('/content-plan', 'channel')}>
               <Image
                 src="/streamline-studio-logo.png"
                 alt="Streamline Studio"
@@ -211,12 +233,14 @@ export function AppShell({
             {navigationItems
               .filter((item) => canSeeNavItem(item.requiresPermission))
               .map((item) => (
-                <li key={item.href}>
+                <li key={`${item.scope}-${item.href}`}>
                   <Link
-                    href={buildLink(item.href)}
-                    className={`${styles.navLink} ${isActive(item.href) ? styles.navLinkActive : ''}`}
+                    href={buildLink(item.href, item.scope)}
+                    className={`${styles.navLink} ${isActive(item.href, item.scope) ? styles.navLinkActive : ''}`}
                     aria-label={item.ariaLabel}
-                    aria-current={isActive(item.href) ? 'page' : undefined}
+                    aria-current={
+                      isActive(item.href, item.scope) ? 'page' : undefined
+                    }
                   >
                     <span className={styles.navIcon} aria-hidden="true">
                       {item.icon === 'clipboard-list' && (

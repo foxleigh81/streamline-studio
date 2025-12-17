@@ -1,31 +1,16 @@
-import { redirect } from 'next/navigation';
-import { TRPCProvider } from '@/components/providers/trpc-provider';
-import { isSetupComplete } from '@/lib/setup';
-import { serverEnv } from '@/lib/env';
-
 /**
- * Setup Layout
+ * Setup Layout - Deprecated
  *
- * Provides tRPC provider for the setup wizard.
+ * This route has been consolidated into /register.
+ * Layout is minimal since the page immediately redirects.
  *
- * In multi-tenant mode, setup wizard is disabled - redirect to home.
- * If setup is already complete, redirect to home.
+ * @deprecated Use /register instead
  */
-export default async function SetupLayout({
+
+export default function SetupLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // In multi-tenant mode, setup wizard is disabled
-  if (serverEnv.MODE === 'multi-tenant') {
-    redirect('/');
-  }
-
-  // If setup is already complete, redirect to home
-  const setupComplete = await isSetupComplete();
-  if (setupComplete) {
-    redirect('/');
-  }
-
-  return <TRPCProvider>{children}</TRPCProvider>;
+  return <>{children}</>;
 }

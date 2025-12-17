@@ -12,14 +12,14 @@ import { Button } from '@/components/ui/button';
 import { ViewToggle, type ViewMode } from '@/components/ui/view-toggle';
 import { useParams } from 'next/navigation';
 import { announce } from '@/lib/accessibility/aria';
-import { CONTENT_PLAN_VIEW_MODE_KEY } from '@/lib/constants/storage-keys';
 import styles from './content-plan-page.module.scss';
 
 /**
  * Content Plan Page
  *
  * Displays videos in either grid or table view with ability to create new videos.
- * Uses tRPC for data fetching and mutations. View preference is persisted to localStorage.
+ * Uses tRPC for data fetching and mutations. View preference is persisted to database
+ * via user preferences.
  */
 export default function ContentPlanPage() {
   const params = useParams<{ teamspace: string; channel: string }>();
@@ -29,6 +29,45 @@ export default function ContentPlanPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [mounted, setMounted] = useState(false);
+
+  // Fetch user preferences
+  const { data: preferences } = trpc.user.getPreferences.useQuery();
+
+  // Update preferences mutation
+  const utils = trpc.useUtils();
+  const updatePreferencesMutation = trpc.user.updatePreferences.useMutation({
+    // Optimistically update the cache immediately
+    onMutate: async (newPreferences) => {
+      // Cancel any outgoing refetches to prevent them from overwriting our optimistic update
+      await utils.user.getPreferences.cancel();
+
+      // Snapshot the previous value
+      const previousPreferences = utils.user.getPreferences.getData();
+
+      // Optimistically update to the new value
+      if (previousPreferences) {
+        utils.user.getPreferences.setData(undefined, {
+          ...previousPreferences,
+          ...newPreferences,
+        });
+      }
+
+      return { previousPreferences };
+    },
+    // If the mutation fails, use the context returned from onMutate to roll back
+    onError: (_err, _newPreferences, context) => {
+      if (context?.previousPreferences) {
+        utils.user.getPreferences.setData(
+          undefined,
+          context.previousPreferences
+        );
+      }
+    },
+    // Always refetch after error or success to ensure sync with server
+    onSettled: () => {
+      utils.user.getPreferences.invalidate();
+    },
+  });
 
   // Fetch videos
   const {
@@ -72,22 +111,28 @@ export default function ContentPlanPage() {
   const hasVideos = videos.length > 0;
 
   /**
-   * Load view mode preference from localStorage on mount
+   * Initialize view mode from user preferences when they load
    */
   useEffect(() => {
     setMounted(true);
-    const savedViewMode = localStorage.getItem(CONTENT_PLAN_VIEW_MODE_KEY);
-    if (savedViewMode === 'grid' || savedViewMode === 'table') {
-      setViewMode(savedViewMode);
+    if (preferences?.contentPlanViewMode) {
+      setViewMode(preferences.contentPlanViewMode);
     }
-  }, []);
+  }, [preferences?.contentPlanViewMode]);
 
   /**
-   * Handle view mode change and persist to localStorage
+   * Handle view mode change and persist to database
+   * Uses optimistic updates for immediate UI feedback
    */
   const handleViewModeChange = (mode: ViewMode) => {
+    // Update local state immediately for instant UI feedback
     setViewMode(mode);
-    localStorage.setItem(CONTENT_PLAN_VIEW_MODE_KEY, mode);
+
+    // Persist to database (optimistic update handles cache)
+    updatePreferencesMutation.mutate({
+      contentPlanViewMode: mode,
+    });
+
     announce(`Switched to ${mode} view`);
   };
 

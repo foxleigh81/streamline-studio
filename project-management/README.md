@@ -2,6 +2,33 @@
 
 ## Recent Activities
 
+### User Settings & Preferences Implementation (2025-12-16)
+
+**Status:** Planning Complete - Ready for Implementation
+**Lead:** Project Orchestrator
+**Priority:** High
+
+Comprehensive settings system planned to enable:
+
+- Default channel selection (bypass teamspace dashboard on login)
+- View mode persistence across devices (grid vs table)
+- Account customization (profile, password - already exists)
+- Foundation for future features (themes, date formats, notifications)
+
+See:
+
+- `/project-management/tasks/settings-page-overview.md` - Quick overview and introduction
+- `/project-management/tasks/settings-page-implementation-plan.md` - Comprehensive 8-phase plan
+- `/project-management/tasks/settings-page-task-breakdown.md` - Detailed tasks with acceptance criteria
+- `/project-management/decisions/user-preferences-architecture.md` - Architectural decisions
+
+**Estimated Timeline:** 24-35 hours (3-4 days solo, 1-2 days parallel)
+
+**Next Steps:**
+1. User to review and answer open questions
+2. Assign Phase 1 (Database Schema) to Senior Next.js Developer
+3. Begin implementation
+
 ### Teamspace Hierarchy Remediation (2025-12-15)
 
 **Status:** In Progress - Phase 1
