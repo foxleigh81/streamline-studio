@@ -264,13 +264,7 @@ export function AppShell({ children, className }: AppShellProps) {
       <aside className={styles.sidebar} aria-label="Main navigation">
         <div className={styles.sidebarHeader}>
           <h1 className={styles.logo}>
-            <Link
-              href={
-                channelSlug
-                  ? buildLink('/content-plan', 'channel')
-                  : buildLink('/settings', 'teamspace')
-              }
-            >
+            <Link href="/">
               <Image
                 src="/streamline-studio-logo.png"
                 alt="Streamline Studio"

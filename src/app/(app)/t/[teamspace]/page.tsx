@@ -138,6 +138,7 @@ export default async function TeamspacePage({ params }: TeamspacePageProps) {
     <TeamspaceDashboard
       teamspaceSlug={teamspaceSlug}
       teamspaceName={teamspace.name}
+      userName={user.name ?? undefined}
       channels={channelsWithDates}
       canCreateChannel={canCreateChannel}
     />

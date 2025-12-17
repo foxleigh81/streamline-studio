@@ -1,18 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
+import { Eye, Users, Video, Clock } from 'lucide-react';
 import { ChannelCard } from '@/components/channel/channel-card';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { CreateChannelModal } from '@/components/channel/create-channel-modal';
+import { StatCard, StatsGrid } from '@/components/stats';
 import styles from './teamspace-dashboard.module.scss';
 
 /**
  * Teamspace Dashboard Component
  *
  * Client-side component for displaying channels within a teamspace.
- * Shows channel cards in a responsive grid layout.
+ * Shows channel cards in a responsive grid layout with overview statistics.
  */
 
 export interface TeamspaceDashboardProps {
@@ -20,6 +21,8 @@ export interface TeamspaceDashboardProps {
   teamspaceSlug: string;
   /** Teamspace name */
   teamspaceName?: string;
+  /** User's full name for greeting */
+  userName?: string;
   /** List of channels user has access to */
   channels: Array<{
     id: string;
@@ -34,7 +37,8 @@ export interface TeamspaceDashboardProps {
 
 export function TeamspaceDashboard({
   teamspaceSlug,
-  teamspaceName,
+  teamspaceName: _teamspaceName,
+  userName,
   channels,
   canCreateChannel,
 }: TeamspaceDashboardProps) {
@@ -73,27 +77,23 @@ export function TeamspaceDashboard({
   return (
     <>
       <div className={styles.container}>
-        {/* Branding header */}
-        <div className={styles.branding}>
-          <Image
-            src="/streamline-studio-logo.png"
-            alt="Streamline Studio"
-            width={180}
-            height={40}
-            className={styles.logo}
-            priority
-          />
-        </div>
-
         {/* Welcome banner */}
         <div className={styles.welcome}>
           <h1 className={styles.welcomeTitle}>
-            Welcome to the {teamspaceName ?? 'Workspace'} dashboard
+            Welcome back{userName ? `, ${userName}` : ''}
           </h1>
           <p className={styles.welcomeSubtitle}>
             Manage your video channels and content pipeline
           </p>
         </div>
+
+        {/* Stats overview */}
+        <StatsGrid>
+          <StatCard label="Total Views" value="124.5K" icon={<Eye />} />
+          <StatCard label="Subscribers" value="2,847" icon={<Users />} />
+          <StatCard label="Videos Published" value="48" icon={<Video />} />
+          <StatCard label="Watch Time" value="1,240 hrs" icon={<Clock />} />
+        </StatsGrid>
 
         {/* Channels section */}
         <header className={styles.header}>

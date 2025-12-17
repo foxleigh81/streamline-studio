@@ -1,0 +1,30 @@
+/**
+ * StatsGrid Component Styles
+ *
+ * Responsive grid layout for displaying statistics cards.
+ * Follows ADR-002 styling patterns.
+ *
+ * @see /docs/adrs/002-styling-solution.md
+ */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-6);
+}
+
+// Tablet: 2 columns
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-3);
+  }
+}
+
+// Mobile: 1 column
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,14 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { Calendar, User } from 'lucide-react';
+import { Calendar, User, Eye, Video } from 'lucide-react';
 import styles from './channel-card.module.scss';
 
 /**
  * Channel Card Component
  *
  * Displays channel information in a card format for the teamspace dashboard.
- * Shows channel name, role, and last updated date.
+ * Shows channel name, role, last updated date, and mini statistics.
  *
  * Used on: /t/[teamspace] (teamspace landing page)
  */
@@ -102,6 +102,17 @@ export function ChannelCard({
             <time dateTime={updatedAt.toISOString()}>
               {formatDate(updatedAt)}
             </time>
+          </span>
+        </div>
+
+        <div className={styles.stats}>
+          <span className={styles.stat}>
+            <Eye className={styles.statIcon} aria-hidden="true" />
+            <span className={styles.statValue}>12.4K</span>
+          </span>
+          <span className={styles.stat}>
+            <Video className={styles.statIcon} aria-hidden="true" />
+            <span className={styles.statValue}>24</span>
           </span>
         </div>
       </Link>

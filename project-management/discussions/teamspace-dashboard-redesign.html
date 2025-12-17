@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Discussion: Teamspace Dashboard Redesign</title>
+    <style>
+        :root {
+            --color-bg: #1a1a1a;
+            --color-surface: #2d2d2d;
+            --color-border: #404040;
+            --color-text: #e0e0e0;
+            --color-text-dim: #a0a0a0;
+            --color-accent-blue: #4a9eff;
+            --color-accent-purple: #b794f4;
+            --color-accent-green: #48bb78;
+            --color-accent-orange: #f6ad55;
+            --color-accent-red: #fc8181;
+            --color-accent-cyan: #00d4ff;
+            --color-accent-yellow: #ffd700;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--color-accent-blue);
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .meta {
+            color: var(--color-text-dim);
+            font-size: 0.9em;
+        }
+
+        .context {
+            background: var(--color-surface);
+            border-left: 4px solid var(--color-accent-purple);
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 4px;
+        }
+
+        .context h2 {
+            color: var(--color-accent-purple);
+            font-size: 1.3em;
+            margin-bottom: 15px;
+        }
+
+        .context-section {
+            margin-bottom: 20px;
+        }
+
+        .context-section h3 {
+            color: var(--color-accent-blue);
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .context-section ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .context-section li {
+            margin-bottom: 5px;
+        }
+
+        .code-block {
+            background: #1a1a1a;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+
+        .message {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 12px;
+            font-size: 1.2em;
+        }
+
+        .agent-developer { background: var(--color-accent-blue); }
+        .agent-security { background: var(--color-accent-red); }
+        .agent-ux { background: var(--color-accent-green); }
+        .agent-qa { background: var(--color-accent-orange); }
+        .agent-orchestrator { background: var(--color-accent-purple); }
+        .agent-architect { background: var(--color-accent-cyan); }
+        .agent-planner { background: var(--color-accent-yellow); color: #1a1a1a; }
+
+        .message-info {
+            flex: 1;
+        }
+
+        .agent-name {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .timestamp {
+            color: var(--color-text-dim);
+            font-size: 0.85em;
+        }
+
+        .message-content {
+            color: var(--color-text);
+        }
+
+        .message-content h4 {
+            color: var(--color-accent-blue);
+            margin-top: 15px;
+            margin-bottom: 8px;
+        }
+
+        .message-content ul, .message-content ol {
+            margin-left: 20px;
+            margin-top: 8px;
+        }
+
+        .message-content li {
+            margin-bottom: 6px;
+        }
+
+        .message-content strong {
+            color: var(--color-accent-blue);
+        }
+
+        .message-content em {
+            color: var(--color-accent-green);
+        }
+
+        .wireframe {
+            background: #1a1a1a;
+            border: 2px dashed var(--color-border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        .stat-preview {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .stat-card-preview {
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-card-preview .label {
+            font-size: 0.75em;
+            color: var(--color-text-dim);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .stat-card-preview .value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--color-accent-blue);
+        }
+
+        .stat-card-preview .placeholder {
+            color: var(--color-text-dim);
+            font-style: italic;
+        }
+
+        .recommendation {
+            background: linear-gradient(135deg, rgba(74, 158, 255, 0.1), rgba(183, 148, 244, 0.1));
+            border: 2px solid var(--color-accent-purple);
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .recommendation h2 {
+            color: var(--color-accent-purple);
+            font-size: 1.5em;
+            margin-bottom: 15px;
+        }
+
+        .task-list {
+            background: var(--color-surface);
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .task-list h4 {
+            color: var(--color-accent-green);
+            margin-bottom: 10px;
+        }
+
+        .task-list ol {
+            margin-left: 20px;
+        }
+
+        .task-list li {
+            margin-bottom: 8px;
+        }
+
+        .question-box {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(247, 173, 85, 0.1));
+            border: 2px solid var(--color-accent-orange);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .question-box h3 {
+            color: var(--color-accent-orange);
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+
+        .question-box ol {
+            margin-left: 20px;
+        }
+
+        .question-box li {
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .stat-preview {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Teamspace Dashboard Redesign</h1>
+        <div class="meta">
+            Discussion Date: December 17, 2025<br>
+            Topic: Improving the teamspace page design, removing redundant elements, and adding YouTube stats placeholders<br>
+            Participants: Project Orchestrator, Senior Next.js Developer, UX Advocate (TRON), Feature Architect, Strategic Planner, QA Architect
+        </div>
+    </header>
+
+    <div class="context">
+        <h2>Context & Current State</h2>
+
+        <div class="context-section">
+            <h3>Current Implementation</h3>
+            <ul>
+                <li><strong>teamspace-dashboard.tsx</strong> - Main component at <code>/src/app/(app)/t/[teamspace]/</code></li>
+                <li>Contains redundant logo (also in app-shell sidebar)</li>
+                <li>Simple welcome banner with red gradient styling</li>
+                <li>Channel cards in a responsive grid</li>
+                <li>No analytics or stats section</li>
+            </ul>
+        </div>
+
+        <div class="context-section">
+            <h3>User Requirements</h3>
+            <ul>
+                <li>Remove the redundant logo (sidebar has universal logo now)</li>
+                <li>Improve visual design - current state "doesn't look very good"</li>
+                <li>Add placeholder stats section for future YouTube Studio API integration</li>
+                <li>Transform from channel selector to <strong>dashboard that aggregates vital stats</strong></li>
+                <li>Future vision: users see data about their entire YouTube platform</li>
+            </ul>
+        </div>
+
+        <div class="context-section">
+            <h3>Design System Reference</h3>
+            <ul>
+                <li>YouTube Studio inspired colour scheme (red primary, grey neutrals)</li>
+                <li>CSS Modules with SCSS - use existing theme tokens</li>
+                <li>Responsive design with mobile breakpoints</li>
+                <li>WCAG 2.1 AA accessibility requirements</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Discussion Messages -->
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-orchestrator">PO</div>
+            <div class="message-info">
+                <div class="agent-name">Project Orchestrator</div>
+                <div class="timestamp">09:00 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <p>Good morning, team. We've been asked to give the teamspace page some love. The user has identified three main concerns:</p>
+
+            <ol>
+                <li><strong>Visual quality</strong> - It doesn't look very good currently</li>
+                <li><strong>Redundant logo</strong> - The sidebar now has a universal logo, so we don't need one in the dashboard content area</li>
+                <li><strong>Missing dashboard features</strong> - We need to start building toward a proper dashboard with vital stats that will eventually integrate with YouTube Studio API</li>
+            </ol>
+
+            <p>I want each of you to weigh in from your area of expertise. Let's start with TRON on the UX side, then move to technical implementation.</p>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-ux">UX</div>
+            <div class="message-info">
+                <div class="agent-name">TRON (UX Advocate)</div>
+                <div class="timestamp">09:12 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Current UX Issues Identified</h4>
+
+            <p>I've reviewed the current teamspace dashboard and here are my observations:</p>
+
+            <ol>
+                <li><strong>Visual hierarchy problems:</strong>
+                    <ul>
+                        <li>The redundant logo creates confusion - users see branding twice which feels unprofessional</li>
+                        <li>The welcome banner uses a red gradient that, while on-brand, doesn't provide clear visual hierarchy for a dashboard</li>
+                        <li>The "Your Channels" section jumps straight into content without context</li>
+                    </ul>
+                </li>
+                <li><strong>Dashboard expectations:</strong>
+                    <ul>
+                        <li>Users landing here expect to see an <em>overview of their entire operation</em></li>
+                        <li>Currently it's just a channel picker, not a command center</li>
+                        <li>No at-a-glance metrics means users must navigate into each channel to understand status</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h4>Proposed Layout Structure</h4>
+
+            <div class="wireframe">
++----------------------------------------------------------+
+|  WELCOME SECTION (Cleaner, no logo)                      |
+|  "Welcome back, [Name]" + Quick stats summary            |
++----------------------------------------------------------+
+|                                                          |
+|  VITAL STATS SECTION                                     |
+|  +----------+ +----------+ +----------+ +----------+     |
+|  | Total    | | Total    | | Videos   | | Avg      |     |
+|  | Views    | | Subs     | | This     | | Watch    |     |
+|  |  --      | |  --      | | Month    | | Time     |     |
+|  +----------+ +----------+ +----------+ +----------+     |
+|  (Placeholders with "Coming Soon" / "Connect YouTube")   |
+|                                                          |
++----------------------------------------------------------+
+|                                                          |
+|  YOUR CHANNELS                                           |
+|  +----------------+  +----------------+  +-------------+ |
+|  |  Channel 1     |  |  Channel 2     |  |  + New     | |
+|  |  [mini stats]  |  |  [mini stats]  |  |  Channel   | |
+|  +----------------+  +----------------+  +-------------+ |
+|                                                          |
++----------------------------------------------------------+
+            </div>
+
+            <h4>Key UX Recommendations</h4>
+            <ul>
+                <li><strong>Remove the logo</strong> - Sidebar handles branding; content area should focus on functionality</li>
+                <li><strong>Personalised greeting</strong> - "Welcome back, [Name]" feels warmer than generic "Welcome to [Workspace]"</li>
+                <li><strong>Stats at a glance</strong> - Even placeholders set expectations for what's coming</li>
+                <li><strong>Empty states done right</strong> - "Connect YouTube" or "Coming Soon" badges that explain future functionality</li>
+                <li><strong>Card improvements</strong> - Channel cards could show mini-stats when available</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-developer">SD</div>
+            <div class="message-info">
+                <div class="agent-name">Senior Next.js Developer</div>
+                <div class="timestamp">09:28 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Technical Implementation Analysis</h4>
+
+            <p>TRON's layout proposal is solid. Let me break down the technical approach:</p>
+
+            <h4>1. Remove Redundant Logo (Trivial)</h4>
+            <div class="code-block">// Simply remove these lines from teamspace-dashboard.tsx:
+{/* Branding header */}
+&lt;div className={styles.branding}&gt;
+  &lt;Image src="/streamline-studio-logo.png" ... /&gt;
+&lt;/div&gt;</div>
+
+            <p>And delete the corresponding <code>.branding</code> and <code>.logo</code> styles from the SCSS module.</p>
+
+            <h4>2. Restructure Welcome Section</h4>
+            <p>Currently the component receives <code>teamspaceName</code> but we could also pass the user's name. However, we already have access to the user via the <code>trpc.user.me</code> query in the app-shell. We could either:</p>
+            <ul>
+                <li><strong>Option A:</strong> Pass userName as a prop from the page server component</li>
+                <li><strong>Option B:</strong> Make this a client component that fetches its own user data</li>
+            </ul>
+            <p>I recommend <strong>Option A</strong> - keep the component flexible and data-fetching at the page level.</p>
+
+            <h4>3. Stats Section Component Architecture</h4>
+            <div class="code-block">// New components needed:
+src/components/stats/
+  ├── stat-card.tsx           // Reusable stat card component
+  ├── stat-card.module.scss
+  ├── stats-grid.tsx          // Grid container for stat cards
+  ├── stats-grid.module.scss
+  └── index.ts
+
+// Usage in teamspace-dashboard.tsx:
+&lt;StatsGrid&gt;
+  &lt;StatCard
+    label="Total Views"
+    value={stats?.totalViews}
+    placeholder="Connect YouTube"
+    icon={&lt;Eye /&gt;}
+  /&gt;
+  &lt;StatCard
+    label="Subscribers"
+    value={stats?.subscribers}
+    placeholder="Coming Soon"
+    icon={&lt;Users /&gt;}
+  /&gt;
+  ...
+&lt;/StatsGrid&gt;</div>
+
+            <h4>4. Data Model Considerations</h4>
+            <p>For now, we're building placeholder UI. But I want to ensure we structure it properly for when YouTube API integration comes:</p>
+            <ul>
+                <li>Stats will likely be aggregated across all channels in a teamspace</li>
+                <li>We'll need a <code>youtubeIntegration</code> table in the database</li>
+                <li>The StatCard component should handle: loading, error, placeholder, and data states</li>
+            </ul>
+
+            <h4>5. Styling Approach</h4>
+            <p>I'll use the existing theme tokens. The current red gradient welcome banner could be refined to:</p>
+            <ul>
+                <li>Lighter, more subtle gradient using <code>--palette-grey-50</code> to <code>--palette-grey-100</code></li>
+                <li>Or keep a subtle brand touch with <code>--palette-red-50</code> as a border accent</li>
+                <li>Stats cards should use <code>--color-surface-raised</code> with <code>--shadow-sm</code></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-architect">FA</div>
+            <div class="message-info">
+                <div class="agent-name">Feature Architect</div>
+                <div class="timestamp">09:45 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Component Blueprint</h4>
+
+            <p>Building on the Senior Dev's architecture, here's my proposed component structure:</p>
+
+            <h4>StatCard Component Design</h4>
+            <div class="code-block">interface StatCardProps {
+  /** Display label for the stat */
+  label: string;
+  /** Current value (undefined = placeholder state) */
+  value?: number | string;
+  /** Text shown when no value */
+  placeholder?: string;
+  /** Icon component (lucide-react) */
+  icon?: ReactNode;
+  /** Trend indicator: 'up' | 'down' | 'neutral' */
+  trend?: 'up' | 'down' | 'neutral';
+  /** Percentage change for trend */
+  trendValue?: number;
+  /** Loading state */
+  isLoading?: boolean;
+  /** Link to drill-down page */
+  href?: string;
+}</div>
+
+            <h4>State Handling Strategy</h4>
+            <ul>
+                <li><strong>Placeholder state:</strong> Shows "Coming Soon" or "Connect YouTube" with a subtle badge</li>
+                <li><strong>Loading state:</strong> Skeleton animation using CSS (no external libraries)</li>
+                <li><strong>Error state:</strong> "Unable to load" with retry option</li>
+                <li><strong>Data state:</strong> Shows value with optional trend indicator</li>
+            </ul>
+
+            <h4>Suggested Stat Categories (for placeholders)</h4>
+            <div class="stat-preview">
+                <div class="stat-card-preview">
+                    <div class="label">Total Views</div>
+                    <div class="value placeholder">--</div>
+                </div>
+                <div class="stat-card-preview">
+                    <div class="label">Subscribers</div>
+                    <div class="value placeholder">--</div>
+                </div>
+                <div class="stat-card-preview">
+                    <div class="label">Videos Published</div>
+                    <div class="value placeholder">--</div>
+                </div>
+                <div class="stat-card-preview">
+                    <div class="label">Watch Time</div>
+                    <div class="value placeholder">--</div>
+                </div>
+            </div>
+
+            <p>These four metrics align with YouTube Studio's primary dashboard and will be most meaningful when we integrate the API.</p>
+
+            <h4>Future-Proofing Notes</h4>
+            <ul>
+                <li>Design the stats section to be collapsible (users without YouTube integration might want to hide it)</li>
+                <li>Consider a "Setup YouTube Integration" CTA that links to a future settings page</li>
+                <li>The stats grid should be a generic component usable on channel pages too (per-channel stats)</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-ux">UX</div>
+            <div class="message-info">
+                <div class="agent-name">TRON (UX Advocate)</div>
+                <div class="timestamp">10:02 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Refinement on Empty/Placeholder States</h4>
+
+            <p>Feature Architect raises a good point about the "Connect YouTube" CTA. Let me elaborate on how to handle this well:</p>
+
+            <h4>Placeholder UX Patterns</h4>
+            <ul>
+                <li><strong>Don't just show dashes</strong> - That looks broken. Show a purposeful message.</li>
+                <li><strong>Be aspirational</strong> - "See your channel analytics here" sets expectations positively</li>
+                <li><strong>Provide a path forward</strong> - Even if the feature isn't ready, a "Coming Soon" badge builds anticipation</li>
+            </ul>
+
+            <h4>Recommended Empty State Content</h4>
+            <div class="code-block">// For the stats section when no YouTube integration exists:
+&lt;div className={styles.statsPlaceholder}&gt;
+  &lt;BarChart3 className={styles.placeholderIcon} /&gt;
+  &lt;h3&gt;Channel Analytics&lt;/h3&gt;
+  &lt;p&gt;Connect your YouTube channels to see aggregated stats across your entire operation.&lt;/p&gt;
+  &lt;Badge variant="info"&gt;Coming Soon&lt;/Badge&gt;
+&lt;/div&gt;</div>
+
+            <h4>Visual Treatment</h4>
+            <ul>
+                <li>Subtle dashed border around the stats area</li>
+                <li>60% opacity on placeholder content</li>
+                <li>Single centred message rather than 4 empty cards</li>
+                <li>This feels intentional rather than incomplete</li>
+            </ul>
+
+            <h4>Accessibility Consideration</h4>
+            <p>Ensure placeholder states have appropriate ARIA labels. Screen reader users should understand this is upcoming functionality, not a loading failure.</p>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-qa">QA</div>
+            <div class="message-info">
+                <div class="agent-name">QA Architect</div>
+                <div class="timestamp">10:18 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Testing & Quality Considerations</h4>
+
+            <h4>What Needs Testing</h4>
+            <ol>
+                <li><strong>Visual regression:</strong> Storybook stories for the new components
+                    <ul>
+                        <li>StatCard in all states (loading, placeholder, data, error)</li>
+                        <li>StatsGrid with various layouts</li>
+                        <li>TeamspaceDashboard with different data scenarios</li>
+                    </ul>
+                </li>
+                <li><strong>Responsive behaviour:</strong> Test at all breakpoints
+                    <ul>
+                        <li>Stats grid should collapse gracefully on mobile</li>
+                        <li>Welcome section should stack appropriately</li>
+                    </ul>
+                </li>
+                <li><strong>Accessibility:</strong>
+                    <ul>
+                        <li>Placeholder states need appropriate ARIA (role="status" or similar)</li>
+                        <li>Keyboard navigation through interactive stat cards</li>
+                        <li>Colour contrast on placeholder text</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h4>Test Scenarios for Dashboard</h4>
+            <ul>
+                <li><strong>Zero channels:</strong> Empty state should render correctly with CTA</li>
+                <li><strong>Single channel:</strong> Grid layout should still look good</li>
+                <li><strong>Many channels:</strong> Scroll behaviour and performance</li>
+                <li><strong>Long teamspace name:</strong> Text truncation handling</li>
+            </ul>
+
+            <h4>Storybook Stories Needed</h4>
+            <div class="code-block">// New stories to create:
+stat-card.stories.tsx
+  - Default
+  - WithValue
+  - WithTrend
+  - Loading
+  - Placeholder
+  - Error
+
+stats-grid.stories.tsx
+  - Default (4 cards)
+  - EmptyPlaceholder
+  - PartialData (some cards have data, some don't)
+
+teamspace-dashboard.stories.tsx
+  - Default
+  - EmptyChannels
+  - SingleChannel
+  - ManyChannels</div>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-planner">SP</div>
+            <div class="message-info">
+                <div class="agent-name">Strategic Planner</div>
+                <div class="timestamp">10:35 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Task Breakdown & Sequencing</h4>
+
+            <p>Based on our discussion, here's how I'd sequence this work:</p>
+
+            <div class="task-list">
+                <h4>Phase 1: Quick Wins (Immediate Impact)</h4>
+                <ol>
+                    <li>Remove redundant logo from teamspace-dashboard.tsx</li>
+                    <li>Update welcome section styling (cleaner, personalised greeting)</li>
+                    <li>Adjust overall dashboard typography and spacing</li>
+                </ol>
+            </div>
+
+            <div class="task-list">
+                <h4>Phase 2: Stats Infrastructure</h4>
+                <ol>
+                    <li>Create StatCard component with all state variants</li>
+                    <li>Create StatsGrid container component</li>
+                    <li>Write Storybook stories for both</li>
+                    <li>Add stats section to teamspace dashboard (placeholder mode)</li>
+                </ol>
+            </div>
+
+            <div class="task-list">
+                <h4>Phase 3: Polish & Accessibility</h4>
+                <ol>
+                    <li>Implement empty state placeholder UX (as TRON described)</li>
+                    <li>Add ARIA labels and accessibility attributes</li>
+                    <li>Responsive testing and adjustments</li>
+                    <li>Visual regression testing</li>
+                </ol>
+            </div>
+
+            <h4>Dependencies</h4>
+            <ul>
+                <li>Phase 1 can proceed immediately - no blockers</li>
+                <li>Phase 2 is independent and can run in parallel with Phase 1</li>
+                <li>Phase 3 requires Phase 2 completion</li>
+            </ul>
+
+            <h4>Out of Scope (Future Work)</h4>
+            <ul>
+                <li>YouTube API integration - this work is purely UI/UX</li>
+                <li>Actual data fetching - we're building placeholder infrastructure</li>
+                <li>Settings page for YouTube connection - separate feature</li>
+                <li>Channel card mini-stats - enhancement for later</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-orchestrator">PO</div>
+            <div class="message-info">
+                <div class="agent-name">Project Orchestrator</div>
+                <div class="timestamp">10:50 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Summary & Consensus</h4>
+
+            <p>Excellent discussion, team. Here's where we've landed:</p>
+
+            <h4>Agreed Changes</h4>
+            <ol>
+                <li><strong>Remove redundant logo</strong> - Universal sidebar handles branding now</li>
+                <li><strong>Improve welcome section</strong> - Cleaner styling, personalised greeting ("Welcome back, [Name]")</li>
+                <li><strong>Add stats section</strong> - New StatCard and StatsGrid components in placeholder mode</li>
+                <li><strong>Better empty states</strong> - Aspirational messaging, "Coming Soon" badge, single purposeful message</li>
+                <li><strong>Accessibility</strong> - ARIA labels on placeholder content, keyboard navigation</li>
+            </ol>
+
+            <h4>Technical Decisions</h4>
+            <ul>
+                <li>New components in <code>src/components/stats/</code></li>
+                <li>Use existing theme tokens - no new design variables</li>
+                <li>Pass userName as prop (keep data fetching at page level)</li>
+                <li>Storybook stories for all new components</li>
+            </ul>
+
+            <h4>Design Direction</h4>
+            <ul>
+                <li>Lighter, cleaner aesthetic - move away from heavy red gradient</li>
+                <li>Use surface colours with subtle shadows for stat cards</li>
+                <li>Placeholder state: single centred message with dashed border</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Consensus Section -->
+    <div class="recommendation">
+        <h2>Proposed Implementation Plan</h2>
+
+        <div class="task-list">
+            <h4>Deliverables</h4>
+            <ol>
+                <li><strong>Updated TeamspaceDashboard</strong>
+                    <ul>
+                        <li>No logo</li>
+                        <li>Personalised welcome ("Welcome back, [Name]")</li>
+                        <li>Cleaner visual hierarchy</li>
+                    </ul>
+                </li>
+                <li><strong>New StatCard Component</strong>
+                    <ul>
+                        <li>Multiple states: loading, placeholder, data, error</li>
+                        <li>Support for icon, trend indicator</li>
+                        <li>Accessible with ARIA</li>
+                    </ul>
+                </li>
+                <li><strong>New StatsGrid Component</strong>
+                    <ul>
+                        <li>Responsive grid container</li>
+                        <li>Handles empty/placeholder state elegantly</li>
+                    </ul>
+                </li>
+                <li><strong>Storybook Coverage</strong>
+                    <ul>
+                        <li>Stories for all new components</li>
+                        <li>Visual regression protection</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- User Feedback -->
+    <div class="message" style="border-left: 4px solid var(--color-accent-green);">
+        <div class="message-header">
+            <div class="avatar" style="background: var(--color-accent-green);">U</div>
+            <div class="message-info">
+                <div class="agent-name">User (foxleigh81)</div>
+                <div class="timestamp">11:05 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Answers to Questions</h4>
+            <ol>
+                <li><strong>Greeting:</strong> Full name is better - first name may be incorrect depending on ethnic background</li>
+                <li><strong>Stats categories:</strong> Yes, those four sound sensible (Total Views, Subscribers, Videos Published, Watch Time)</li>
+                <li><strong>Placeholder treatment:</strong> Four stat cards with dummy data is fine. No need for "Coming Soon" badges - this won't be in front of users until it's finished</li>
+                <li><strong>Welcome banner:</strong> It's a bit much - let's go neutral with a subtle red hint</li>
+                <li><strong>Channel cards:</strong> Yes, adding placeholder mini-stats would be fantastic</li>
+            </ol>
+
+            <h4>Important Context</h4>
+            <p>This is all pre-launch stuff. We don't need to worry about:</p>
+            <ul>
+                <li>"Coming Soon" messaging - users won't see this until it's ready</li>
+                <li>Safe/regression-focused approaches</li>
+                <li>Backwards compatibility</li>
+            </ul>
+            <p>Just build it clean and move fast.</p>
+        </div>
+    </div>
+
+    <!-- Team Response -->
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-orchestrator">PO</div>
+            <div class="message-info">
+                <div class="agent-name">Project Orchestrator</div>
+                <div class="timestamp">11:15 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Updated Plan Based on User Feedback</h4>
+
+            <p>Perfect, that clarifies our approach significantly. Pre-launch means we can move fast without the usual safeguards. Here's our revised plan:</p>
+
+            <h4>Final Decisions</h4>
+            <ol>
+                <li><strong>Greeting:</strong> "Welcome back, [Full Name]" (respects cultural naming conventions)</li>
+                <li><strong>Stats:</strong> Four cards with dummy data - Total Views, Subscribers, Videos Published, Watch Time</li>
+                <li><strong>No badges/CTAs:</strong> Just clean placeholder values, no "Coming Soon" messaging</li>
+                <li><strong>Welcome style:</strong> Neutral grey with subtle red accent (border or tint)</li>
+                <li><strong>Channel cards:</strong> Add mini-stats placeholders now</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-developer">SD</div>
+            <div class="message-info">
+                <div class="agent-name">Senior Next.js Developer</div>
+                <div class="timestamp">11:22 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Simplified Implementation</h4>
+
+            <p>With the pre-launch context, I'll streamline the components:</p>
+
+            <h4>StatCard - Simplified Props</h4>
+            <div class="code-block">interface StatCardProps {
+  label: string;
+  value: string | number;  // Just show the value, no loading/error states needed
+  icon?: ReactNode;
+  trend?: 'up' | 'down' | 'neutral';
+  trendValue?: number;
+}</div>
+
+            <h4>Dummy Data Approach</h4>
+            <div class="code-block">// Hardcoded for now, easy to replace with real data later
+const DUMMY_STATS = {
+  totalViews: '124.5K',
+  subscribers: '2,847',
+  videosPublished: '48',
+  watchTime: '1,240 hrs',
+};</div>
+
+            <h4>Channel Card Mini-Stats</h4>
+            <p>I'll add a simple stats row to the existing ChannelCard component:</p>
+            <div class="code-block">// Added to channel-card.tsx
+&lt;div className={styles.miniStats}&gt;
+  &lt;span&gt;12.3K views&lt;/span&gt;
+  &lt;span&gt;8 videos&lt;/span&gt;
+&lt;/div&gt;</div>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-ux">UX</div>
+            <div class="message-info">
+                <div class="agent-name">TRON (UX Advocate)</div>
+                <div class="timestamp">11:30 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Visual Direction Confirmed</h4>
+
+            <p>Neutral with subtle red hint - I'd suggest:</p>
+            <ul>
+                <li><strong>Welcome section:</strong> <code>--palette-grey-50</code> background with a thin <code>--palette-red-200</code> left border accent</li>
+                <li><strong>Stat cards:</strong> <code>--color-surface-raised</code> with <code>--shadow-sm</code></li>
+                <li><strong>Channel cards:</strong> Keep existing style, add muted mini-stats text below the main content</li>
+            </ul>
+
+            <p>This keeps the YouTube brand DNA (red accent) without the overwhelming gradient.</p>
+        </div>
+    </div>
+
+    <!-- Final Plan -->
+    <div class="recommendation">
+        <h2>Final Implementation Plan</h2>
+
+        <div class="task-list">
+            <h4>Deliverables</h4>
+            <ol>
+                <li><strong>TeamspaceDashboard Updates</strong>
+                    <ul>
+                        <li>Remove redundant logo</li>
+                        <li>Personalised greeting: "Welcome back, [Full Name]"</li>
+                        <li>Neutral welcome section with subtle red accent</li>
+                        <li>Add StatsGrid with 4 stat cards (dummy data)</li>
+                    </ul>
+                </li>
+                <li><strong>New StatCard Component</strong>
+                    <ul>
+                        <li>Simple props: label, value, icon, optional trend</li>
+                        <li>Clean styling with surface/shadow tokens</li>
+                    </ul>
+                </li>
+                <li><strong>New StatsGrid Component</strong>
+                    <ul>
+                        <li>4-column responsive grid</li>
+                        <li>Collapses to 2-column on tablet, 1-column on mobile</li>
+                    </ul>
+                </li>
+                <li><strong>ChannelCard Enhancement</strong>
+                    <ul>
+                        <li>Add mini-stats row with dummy data</li>
+                        <li>Muted styling, doesn't compete with main card content</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+
+        <div class="task-list">
+            <h4>Files to Create/Modify</h4>
+            <ol>
+                <li><code>src/components/stats/stat-card.tsx</code> (new)</li>
+                <li><code>src/components/stats/stat-card.module.scss</code> (new)</li>
+                <li><code>src/components/stats/stats-grid.tsx</code> (new)</li>
+                <li><code>src/components/stats/stats-grid.module.scss</code> (new)</li>
+                <li><code>src/components/stats/index.ts</code> (new)</li>
+                <li><code>src/app/(app)/t/[teamspace]/teamspace-dashboard.tsx</code> (modify)</li>
+                <li><code>src/app/(app)/t/[teamspace]/teamspace-dashboard.module.scss</code> (modify)</li>
+                <li><code>src/components/channel/channel-card.tsx</code> (modify)</li>
+                <li><code>src/components/channel/channel-card.module.scss</code> (modify)</li>
+            </ol>
+        </div>
+
+        <div class="decision-box" style="margin-top: 20px;">
+            <h4 style="color: var(--color-accent-green);">Ready to Implement</h4>
+            <p>All decisions are made. The team is ready to proceed with implementation. No further questions.</p>
+        </div>
+    </div>
+
+</body>
+</html>
