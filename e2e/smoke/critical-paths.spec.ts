@@ -168,12 +168,19 @@ test.describe('Smoke Tests - Critical Paths', () => {
       await expect(confirmPasswordInput).toBeVisible();
 
       // Wait for button to be fully rendered/hydrated before asserting
+      // Button can be either "Create Account" or "Continue to Channel Setup" depending on first-user state
       const createAccountButton = page.getByRole('button', {
         name: /create account/i,
       });
-      await createAccountButton.waitFor({ state: 'visible', timeout: 15000 });
-      await expect(createAccountButton).toBeVisible();
-      await expect(createAccountButton).toBeEnabled();
+      const continueButton = page.getByRole('button', {
+        name: /continue to channel setup/i,
+      });
+      const submitButton = (await continueButton.isVisible().catch(() => false))
+        ? continueButton
+        : createAccountButton;
+      await submitButton.waitFor({ state: 'visible', timeout: 15000 });
+      await expect(submitButton).toBeVisible();
+      await expect(submitButton).toBeEnabled();
     });
 
     test('login form shows validation errors for empty submission', async ({
@@ -214,10 +221,16 @@ test.describe('Smoke Tests - Critical Paths', () => {
       const form = page.locator('form');
       await form.waitFor({ state: 'visible', timeout: 15000 });
 
-      // Submit empty form
-      const submitButton = page.getByRole('button', {
+      // Submit empty form - button can be either variant
+      const createAccountButton = page.getByRole('button', {
         name: /create account/i,
       });
+      const continueButton = page.getByRole('button', {
+        name: /continue to channel setup/i,
+      });
+      const submitButton = (await continueButton.isVisible().catch(() => false))
+        ? continueButton
+        : createAccountButton;
       await submitButton.waitFor({ state: 'visible' });
       await expect(submitButton).toBeEnabled();
       await submitButton.click();
