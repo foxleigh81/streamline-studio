@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { isSetupComplete } from '@/lib/setup';
 import { validateRequest } from '@/lib/auth/workspace';
 import { serverEnv } from '@/lib/env';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,6 @@ import styles from './home.module.scss';
  * Smart landing page that routes users based on their state:
  *
  * Single-Tenant Mode:
- * - Setup not complete → redirect to /setup
  * - Logged in → redirect to teamspace dashboard (/t)
  * - Not logged in → show landing with login option
  *
@@ -25,14 +23,6 @@ import styles from './home.module.scss';
  */
 export default async function HomePage() {
   const isSingleTenant = serverEnv.MODE === 'single-tenant';
-
-  // In single-tenant mode, check if setup is complete first
-  if (isSingleTenant) {
-    const setupComplete = await isSetupComplete();
-    if (!setupComplete) {
-      redirect('/setup');
-    }
-  }
 
   // Check if user is authenticated
   const { user } = await validateRequest();

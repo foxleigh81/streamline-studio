@@ -88,12 +88,16 @@ export async function loginAsUser(
   // Submit form
   await page.getByRole('button', { name: /sign in/i }).click();
 
-  // Wait for redirect to dashboard
-  await page.waitForURL('/');
+  // Wait for redirect to teamspace dashboard
+  await page.waitForURL(/\/t\/workspace/);
 }
 
 /**
  * Register a new user via the UI
+ *
+ * Handles both first-user and subsequent-user flows:
+ * - First user: 2-step flow (Account → Channel Setup)
+ * - Subsequent users: 1-step flow (Account only)
  */
 export async function registerAsUser(
   page: Page,
@@ -101,15 +105,17 @@ export async function registerAsUser(
     email?: string;
     password?: string;
     name?: string;
+    channelName?: string;
   } = {}
 ) {
   const email = options.email ?? TEST_USER.email;
   const password = options.password ?? TEST_USER.password;
   const name = options.name ?? TEST_USER.name;
+  const channelName = options.channelName ?? 'E2E Test Channel';
 
   await page.goto('/register');
 
-  // Fill in registration form
+  // Fill in registration form (step 1)
   if (name) {
     await page.getByLabel(/name/i).fill(name);
   }
@@ -117,11 +123,32 @@ export async function registerAsUser(
   await page.getByLabel(/^password$/i).fill(password);
   await page.getByLabel(/confirm password/i).fill(password);
 
-  // Submit form
-  await page.getByRole('button', { name: /create account/i }).click();
+  // Check which button is visible to determine the flow
+  const createAccountButton = page.getByRole('button', {
+    name: /create account/i,
+  });
+  const continueToChannelButton = page.getByRole('button', {
+    name: /continue to channel setup/i,
+  });
 
-  // Wait for redirect to dashboard
-  await page.waitForURL('/');
+  // Submit step 1 - click whichever button is visible
+  if (await continueToChannelButton.isVisible()) {
+    // First-user flow: proceed to channel setup
+    await continueToChannelButton.click();
+
+    // Step 2: Fill in channel name
+    await page.getByLabel(/channel name/i).fill(channelName);
+
+    // Submit step 2
+    await page.getByRole('button', { name: /create my channel/i }).click();
+  } else {
+    // Subsequent-user flow: direct registration
+    await createAccountButton.click();
+  }
+
+  // Wait for redirect to teamspace dashboard with extended timeout
+  // (parallel tests may cause slower responses)
+  await page.waitForURL(/\/t\/workspace/, { timeout: 90000 });
 }
 
 /**

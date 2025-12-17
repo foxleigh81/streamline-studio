@@ -13,8 +13,49 @@
  * @see /docs/adrs/014-security-architecture.md
  */
 
+import type { Page } from '@playwright/test';
 import { test, expect } from '@playwright/test';
 import { testData } from '../helpers/fixtures';
+
+/**
+ * Complete registration form submission (handles both first-user and subsequent-user flows)
+ */
+async function submitRegistration(page: Page) {
+  const createAccountBtn = page.getByRole('button', {
+    name: /create account/i,
+  });
+  const continueBtn = page.getByRole('button', {
+    name: /continue to channel setup/i,
+  });
+
+  if (await continueBtn.isVisible().catch(() => false)) {
+    // First-user flow
+    await continueBtn.click();
+    await page.getByLabel(/channel name/i).waitFor({ state: 'visible' });
+    await page.getByLabel(/channel name/i).fill('E2E Test Channel');
+    await page.getByRole('button', { name: /create my channel/i }).click();
+  } else {
+    // Subsequent-user flow
+    await createAccountBtn.click();
+  }
+}
+
+/**
+ * Get the registration submit button (handles both flow variants)
+ */
+async function getRegistrationButton(page: Page) {
+  const createAccountBtn = page.getByRole('button', {
+    name: /create account/i,
+  });
+  const continueBtn = page.getByRole('button', {
+    name: /continue to channel setup/i,
+  });
+
+  if (await continueBtn.isVisible().catch(() => false)) {
+    return continueBtn;
+  }
+  return createAccountBtn;
+}
 
 // Skip all rate limiting tests when E2E_TEST_MODE is enabled
 // Rate limits are increased 100x in E2E mode to prevent blocking other tests
@@ -85,14 +126,12 @@ test.describe('Rate Limiting', () => {
       await page.getByLabel(/email/i).first().fill(validEmail);
       await page.getByLabel(/^password$/i).fill(validPassword);
       await page.getByLabel(/confirm password/i).fill(validPassword);
-      const createButton = page.getByRole('button', {
-        name: /create account/i,
-      });
-      await createButton.waitFor({ state: 'visible' });
-      await createButton.click();
 
-      // Wait for registration to complete
-      await expect(page).toHaveURL('/', { timeout: 10000 });
+      // Submit registration (handles both first-user and subsequent-user flows)
+      await submitRegistration(page);
+
+      // Wait for registration to complete (redirects to teamspace)
+      await expect(page).toHaveURL(/\/t\/workspace/, { timeout: 10000 });
 
       // Logout
       await context.clearCookies();
@@ -201,7 +240,7 @@ test.describe('Rate Limiting', () => {
       await page.getByLabel(/email/i).first().fill(email);
       await page.getByLabel(/^password$/i).fill(password);
       await page.getByLabel(/confirm password/i).fill(password);
-      const firstBtn = page.getByRole('button', { name: /create account/i });
+      const firstBtn = await getRegistrationButton(page);
       await firstBtn.waitFor({ state: 'visible' });
       await firstBtn.click();
 
@@ -215,7 +254,7 @@ test.describe('Rate Limiting', () => {
         await page.getByLabel(/email/i).first().fill(testData.uniqueEmail());
         await page.getByLabel(/^password$/i).fill(password);
         await page.getByLabel(/confirm password/i).fill(password);
-        const regBtn = page.getByRole('button', { name: /create account/i });
+        const regBtn = await getRegistrationButton(page);
         await regBtn.waitFor({ state: 'visible' });
         await regBtn.click();
 
@@ -228,7 +267,7 @@ test.describe('Rate Limiting', () => {
       await page.getByLabel(/email/i).first().fill(testData.uniqueEmail());
       await page.getByLabel(/^password$/i).fill(password);
       await page.getByLabel(/confirm password/i).fill(password);
-      const limitBtn = page.getByRole('button', { name: /create account/i });
+      const limitBtn = await getRegistrationButton(page);
       await limitBtn.waitFor({ state: 'visible' });
       await limitBtn.click();
 
@@ -252,10 +291,10 @@ test.describe('Rate Limiting', () => {
       await page.getByLabel(/email/i).first().fill(realEmail);
       await page.getByLabel(/^password$/i).fill(password);
       await page.getByLabel(/confirm password/i).fill(password);
-      const regBtn = page.getByRole('button', { name: /create account/i });
-      await regBtn.waitFor({ state: 'visible' });
-      await regBtn.click();
-      await expect(page).toHaveURL('/', { timeout: 10000 });
+
+      // Submit registration (handles both first-user and subsequent-user flows)
+      await submitRegistration(page);
+      await expect(page).toHaveURL(/\/t\/workspace/, { timeout: 10000 });
 
       // Logout
       await page.context().clearCookies();

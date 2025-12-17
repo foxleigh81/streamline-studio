@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Discussion: Registration Flow Consolidation</title>
+    <style>
+        :root {
+            --color-bg: #1a1a1a;
+            --color-surface: #2d2d2d;
+            --color-border: #404040;
+            --color-text: #e0e0e0;
+            --color-text-dim: #a0a0a0;
+            --color-accent-blue: #4a9eff;
+            --color-accent-purple: #b794f4;
+            --color-accent-green: #48bb78;
+            --color-accent-orange: #f6ad55;
+            --color-accent-red: #fc8181;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--color-accent-blue);
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .meta {
+            color: var(--color-text-dim);
+            font-size: 0.9em;
+        }
+
+        .context {
+            background: var(--color-surface);
+            border-left: 4px solid var(--color-accent-purple);
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 4px;
+        }
+
+        .context h2 {
+            color: var(--color-accent-purple);
+            font-size: 1.3em;
+            margin-bottom: 15px;
+        }
+
+        .context-section {
+            margin-bottom: 20px;
+        }
+
+        .context-section h3 {
+            color: var(--color-accent-blue);
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .context-section ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .context-section li {
+            margin-bottom: 5px;
+        }
+
+        .code-block {
+            background: #1a1a1a;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+
+        .message {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 12px;
+            font-size: 1.2em;
+        }
+
+        .agent-developer { background: var(--color-accent-blue); }
+        .agent-security { background: var(--color-accent-red); }
+        .agent-ux { background: var(--color-accent-green); }
+        .agent-qa { background: var(--color-accent-orange); }
+        .agent-orchestrator { background: var(--color-accent-purple); }
+
+        .message-info {
+            flex: 1;
+        }
+
+        .agent-name {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .timestamp {
+            color: var(--color-text-dim);
+            font-size: 0.85em;
+        }
+
+        .message-content {
+            color: var(--color-text);
+        }
+
+        .message-content h4 {
+            color: var(--color-accent-blue);
+            margin-top: 15px;
+            margin-bottom: 8px;
+        }
+
+        .message-content ul, .message-content ol {
+            margin-left: 20px;
+            margin-top: 8px;
+        }
+
+        .message-content li {
+            margin-bottom: 6px;
+        }
+
+        .message-content strong {
+            color: var(--color-accent-blue);
+        }
+
+        .recommendation {
+            background: linear-gradient(135deg, rgba(74, 158, 255, 0.1), rgba(183, 148, 244, 0.1));
+            border: 2px solid var(--color-accent-purple);
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .recommendation h2 {
+            color: var(--color-accent-purple);
+            font-size: 1.5em;
+            margin-bottom: 15px;
+        }
+
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .pros, .cons {
+            background: var(--color-surface);
+            padding: 15px;
+            border-radius: 6px;
+        }
+
+        .pros h4 {
+            color: var(--color-accent-green);
+            margin-bottom: 10px;
+        }
+
+        .cons h4 {
+            color: var(--color-accent-orange);
+            margin-bottom: 10px;
+        }
+
+        .decision-box {
+            background: var(--color-surface);
+            border-left: 4px solid var(--color-accent-green);
+            padding: 20px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .pros-cons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Registration Flow Consolidation</h1>
+        <div class="meta">
+            Discussion Date: December 17, 2025<br>
+            Topic: Should we consolidate /setup and /register into a single registration flow?<br>
+            Participants: Senior Next.js Developer, Security Architect, UX Advocate (TRON), QA Architect
+        </div>
+    </header>
+
+    <div class="context">
+        <h2>Context & Current State</h2>
+
+        <div class="context-section">
+            <h3>Current Implementation</h3>
+            <ul>
+                <li><strong>/setup</strong> - 2-step wizard (Account → Channel creation)</li>
+                <li>Runs once, creates file flag (.setup-complete)</li>
+                <li>First user becomes owner of default teamspace and channel</li>
+                <li><strong>/register</strong> - 1-step form (Account only)</li>
+                <li>For subsequent users in single-tenant mode</li>
+                <li>Auto-joins existing channel as editor</li>
+            </ul>
+        </div>
+
+        <div class="context-section">
+            <h3>Proposed Change</h3>
+            <ul>
+                <li>Consolidate into single <strong>/register</strong> flow</li>
+                <li>Multi-step: Account → Channel creation</li>
+                <li>Remove /setup entirely or redirect to /register</li>
+                <li>Remove file-based setup flag system</li>
+                <li>Use database state to determine first-user scenario</li>
+            </ul>
+        </div>
+
+        <div class="context-section">
+            <h3>Key Constraints</h3>
+            <ul>
+                <li>Project is pre-release (< 1.0.0) - no backwards compatibility required</li>
+                <li>Must maintain security (rate limiting, password validation)</li>
+                <li>Must work in both single-tenant and multi-tenant modes</li>
+                <li>Must not break invitation flow</li>
+                <li>Use CHANNEL terminology, not workspace</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-orchestrator">🎯</div>
+            <div class="message-info">
+                <div class="agent-name">Project Orchestrator</div>
+                <div class="timestamp">09:00 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <p>Good morning, team. The user has raised a valid concern: we currently have two separate registration flows - /setup and /register. They see no merit in maintaining both, and I'm inclined to agree.</p>
+
+            <p>The /setup flow is a 2-step wizard for the first user, while /register is a simpler flow for subsequent users. The distinction creates complexity and confusion. I'd like to hear each of your perspectives on consolidating these into a single, unified registration experience.</p>
+
+            <p>Let's discuss the technical, security, UX, and testing implications.</p>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-developer">💻</div>
+            <div class="message-info">
+                <div class="agent-name">Senior Next.js Developer</div>
+                <div class="timestamp">09:15 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Technical Implementation Analysis</h4>
+
+            <p>From a technical standpoint, consolidation is <strong>absolutely feasible</strong> and would actually simplify our codebase.</p>
+
+            <h4>Current Complexity:</h4>
+            <ul>
+                <li>Two separate route handlers (/setup and /register)</li>
+                <li>Two separate tRPC routers (setupRouter and authRouter)</li>
+                <li>File-based flag system (lib/setup.ts) with filesystem dependencies</li>
+                <li>Multiple redirect chains checking isSetupComplete()</li>
+                <li>Guards in both (auth) and (app) layouts</li>
+            </ul>
+
+            <h4>Consolidation Benefits:</h4>
+            <ul>
+                <li><strong>Single source of truth</strong> - one registration endpoint</li>
+                <li><strong>Database-driven logic</strong> - check if users exist instead of file flags</li>
+                <li><strong>Simpler routing</strong> - eliminate setup guards everywhere</li>
+                <li><strong>Conditional UI</strong> - show step 2 (channel creation) only for first user</li>
+                <li><strong>Reduced surface area</strong> - fewer endpoints to secure and test</li>
+            </ul>
+
+            <h4>Implementation Approach:</h4>
+            <ol>
+                <li>Enhance auth.register endpoint to detect first-user scenario</li>
+                <li>Add optional channelName parameter</li>
+                <li>Create conditional step 2 in /register UI when no users exist</li>
+                <li>Remove setupRouter entirely</li>
+                <li>Remove lib/setup.ts and all isSetupComplete() checks</li>
+                <li>Simplify layout guards to just check authentication</li>
+            </ol>
+
+            <p><strong>Risk Assessment:</strong> Low. The auth.register endpoint already handles workspace creation logic. We're just removing the redundant setup flow and file flag system.</p>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-security">🔒</div>
+            <div class="message-info">
+                <div class="agent-name">Security Architect</div>
+                <div class="timestamp">09:30 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Security Implications</h4>
+
+            <p>I've reviewed the proposal from a security perspective, and I'm <strong>strongly in favor</strong> of consolidation, with some important caveats.</p>
+
+            <h4>Current Setup Flow Issues:</h4>
+            <ul>
+                <li><strong>File-based flag is fragile</strong> - vulnerable to filesystem manipulation</li>
+                <li><strong>Race condition risk</strong> - multiple simultaneous setup attempts possible</li>
+                <li><strong>Inconsistent state</strong> - flag can exist without users (db wipe scenario)</li>
+                <li><strong>Privilege escalation vector</strong> - if flag is deleted, anyone can become owner</li>
+            </ul>
+
+            <h4>Database-Driven Approach (Recommended):</h4>
+            <ul>
+                <li><strong>Atomic checks</strong> - query user count within transaction</li>
+                <li><strong>ACID guarantees</strong> - database ensures consistency</li>
+                <li><strong>No external dependencies</strong> - works in containerized environments</li>
+                <li><strong>Auditable</strong> - user creation is logged in database</li>
+            </ul>
+
+            <h4>Security Requirements for Consolidated Flow:</h4>
+            <ol>
+                <li><strong>Rate Limiting:</strong> Must maintain existing registration rate limits (5 per hour per IP)</li>
+                <li><strong>Transaction Safety:</strong> First-user detection MUST happen inside transaction:
+                    <div class="code-block">
+await tx.transaction(async (tx) => {<br>
+&nbsp;&nbsp;const userCount = await tx.select().from(users).limit(1);<br>
+&nbsp;&nbsp;const isFirstUser = userCount.length === 0;<br>
+&nbsp;&nbsp;// Create user and channel atomically<br>
+});
+                    </div>
+                </li>
+                <li><strong>Password Policy:</strong> Maintain existing validation (min 8 chars, complexity rules)</li>
+                <li><strong>Account Enumeration:</strong> Keep generic error messages</li>
+                <li><strong>Multi-Tenant Handling:</strong> In multi-tenant mode, always require channel name</li>
+            </ol>
+
+            <h4>Edge Cases to Handle:</h4>
+            <ul>
+                <li><strong>Concurrent registrations:</strong> Database transaction will handle this - second transaction will see existing user</li>
+                <li><strong>Invitations:</strong> Existing invitation flow bypasses registration, should continue to work</li>
+                <li><strong>Mode switching:</strong> Single-tenant to multi-tenant - first user in each mode creates their own channel</li>
+            </ul>
+
+            <p><strong>Verdict:</strong> Consolidation actually <strong>improves security</strong> by removing filesystem dependency and using ACID-compliant database checks. Approve with transaction safety requirements.</p>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-ux">🎨</div>
+            <div class="message-info">
+                <div class="agent-name">TRON (UX Advocate)</div>
+                <div class="timestamp">09:45 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>User Experience Analysis</h4>
+
+            <p>From a UX perspective, this consolidation is a <strong>significant improvement</strong>. The current dual-flow system creates unnecessary confusion.</p>
+
+            <h4>Current UX Problems:</h4>
+            <ul>
+                <li><strong>Cognitive dissonance:</strong> "Why is there /setup AND /register? What's the difference?"</li>
+                <li><strong>Hidden complexity:</strong> Users don't know which one to use</li>
+                <li><strong>Inconsistent branding:</strong> /setup has custom styling, /register shares auth layout</li>
+                <li><strong>Dead-end links:</strong> After setup, /register link appears but may confuse first user</li>
+            </ul>
+
+            <h4>Consolidated Flow Benefits:</h4>
+            <ul>
+                <li><strong>Single mental model:</strong> "I register to create an account"</li>
+                <li><strong>Progressive disclosure:</strong> Show channel creation step only when needed</li>
+                <li><strong>Consistent experience:</strong> Same flow for everyone, just conditional steps</li>
+                <li><strong>Clearer communication:</strong> "You're the first user! Let's set up your channel."</li>
+            </ul>
+
+            <h4>Recommended UX Flow:</h4>
+            <ol>
+                <li><strong>Step 1 (Always):</strong> Account credentials (email, password, name)
+                    <ul>
+                        <li>Standard form fields</li>
+                        <li>Clear password requirements</li>
+                        <li>Submit button: "Continue"</li>
+                    </ul>
+                </li>
+                <li><strong>Step 2 (Conditional - First User Only):</strong> Channel setup
+                    <ul>
+                        <li>Friendly message: "Welcome! Let's set up your first channel."</li>
+                        <li>Channel name input with suggestions/randomizer</li>
+                        <li>Helper text explaining what channels are</li>
+                        <li>Submit button: "Create My Channel"</li>
+                    </ul>
+                </li>
+                <li><strong>Step 2 (Subsequent Users):</strong> Automatic redirect
+                    <ul>
+                        <li>Brief success message: "Account created! Redirecting to your dashboard..."</li>
+                        <li>Auto-join existing channel</li>
+                        <li>No manual input needed</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h4>Accessibility Considerations:</h4>
+            <ul>
+                <li>Step indicator for multi-step flow (current /setup has this, good!)</li>
+                <li>Clear heading changes between steps</li>
+                <li>Back button on step 2 to edit account info</li>
+                <li>Loading states and progress feedback</li>
+                <li>Error handling per step</li>
+            </ul>
+
+            <h4>Open Question for Product:</h4>
+            <p><strong>What about subsequent users in single-tenant mode?</strong> Do they:</p>
+            <ul>
+                <li><strong>Option A:</strong> Auto-join the existing channel as editor (current behavior)?</li>
+                <li><strong>Option B:</strong> Create their own personal channel?</li>
+                <li><strong>Option C:</strong> Be prompted to request access to existing channel?</li>
+            </ul>
+            <p>Current implementation is Option A. I think this is correct for single-tenant, but we should make this behavior clear in the UI with a message like: "You've been added to the shared channel."</p>
+
+            <p><strong>Verdict:</strong> Strong approve. This simplifies the user journey and removes unnecessary decision points.</p>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-qa">🧪</div>
+            <div class="message-info">
+                <div class="agent-name">QA Architect</div>
+                <div class="timestamp">10:00 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Testing & Quality Implications</h4>
+
+            <p>From a testing perspective, consolidation is <strong>overwhelmingly positive</strong>. We reduce test surface area and eliminate redundant test cases.</p>
+
+            <h4>Current Test Burden:</h4>
+            <ul>
+                <li>Separate E2E tests for /setup flow</li>
+                <li>Separate E2E tests for /register flow</li>
+                <li>Unit tests for setup router</li>
+                <li>Unit tests for auth router</li>
+                <li>Unit tests for lib/setup.ts filesystem operations</li>
+                <li>Integration tests for setup flag persistence</li>
+                <li>Cross-browser testing for both flows</li>
+            </ul>
+
+            <h4>Consolidated Test Strategy:</h4>
+            <ul>
+                <li><strong>Single registration E2E suite</strong> with scenarios:
+                    <ul>
+                        <li>First user (includes channel creation)</li>
+                        <li>Subsequent user (auto-join)</li>
+                        <li>Multi-tenant mode (always channel creation)</li>
+                        <li>Invalid inputs</li>
+                        <li>Rate limiting</li>
+                    </ul>
+                </li>
+                <li><strong>Simplified unit tests</strong> - one endpoint to test</li>
+                <li><strong>No filesystem mocking</strong> - database queries only</li>
+                <li><strong>Transaction testing</strong> - verify atomicity</li>
+            </ul>
+
+            <h4>Test Coverage Impact:</h4>
+            <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                    <th style="text-align: left; padding: 8px;">Area</th>
+                    <th style="text-align: center; padding: 8px;">Current</th>
+                    <th style="text-align: center; padding: 8px;">After Consolidation</th>
+                    <th style="text-align: center; padding: 8px;">Change</th>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                    <td style="padding: 8px;">E2E Test Files</td>
+                    <td style="text-align: center; padding: 8px;">2</td>
+                    <td style="text-align: center; padding: 8px;">1</td>
+                    <td style="text-align: center; padding: 8px; color: var(--color-accent-green);">-50%</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                    <td style="padding: 8px;">tRPC Routers</td>
+                    <td style="text-align: center; padding: 8px;">2</td>
+                    <td style="text-align: center; padding: 8px;">1</td>
+                    <td style="text-align: center; padding: 8px; color: var(--color-accent-green);">-50%</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                    <td style="padding: 8px;">Utility Functions</td>
+                    <td style="text-align: center; padding: 8px;">1 file (5 fns)</td>
+                    <td style="text-align: center; padding: 8px;">0 files</td>
+                    <td style="text-align: center; padding: 8px; color: var(--color-accent-green);">-100%</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px;">Test Scenarios</td>
+                    <td style="text-align: center; padding: 8px;">~25</td>
+                    <td style="text-align: center; padding: 8px;">~15</td>
+                    <td style="text-align: center; padding: 8px; color: var(--color-accent-green);">-40%</td>
+                </tr>
+            </table>
+
+            <h4>Risk Mitigation:</h4>
+            <ol>
+                <li><strong>Comprehensive E2E suite</strong> before removing old flow</li>
+                <li><strong>Manual testing checklist</strong> for first-user and subsequent-user scenarios</li>
+                <li><strong>Database state verification</strong> - ensure channel ownership is correct</li>
+                <li><strong>Rollback plan</strong> - keep old code in git history (pre-1.0 so no need to maintain)</li>
+            </ol>
+
+            <h4>Test Cases to Create:</h4>
+            <ul>
+                <li>First user creates account with channel name</li>
+                <li>First user creates account without channel name (uses default)</li>
+                <li>Second user joins existing channel</li>
+                <li>Concurrent registration attempts (transaction safety)</li>
+                <li>Registration with invalid password</li>
+                <li>Registration with duplicate email</li>
+                <li>Rate limit enforcement</li>
+                <li>Multi-tenant mode: unique channel names</li>
+                <li>Multi-tenant mode: duplicate channel name rejection</li>
+            </ul>
+
+            <p><strong>Verdict:</strong> Strong approve. This reduces test maintenance burden and improves test clarity. We should update our E2E suite before merging the consolidation.</p>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-orchestrator">🎯</div>
+            <div class="message-info">
+                <div class="agent-name">Project Orchestrator</div>
+                <div class="timestamp">10:30 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Discussion Summary</h4>
+
+            <p>Excellent input from everyone. Let me synthesize what I'm hearing:</p>
+
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>✅ Strong Support (Unanimous)</h4>
+                    <ul>
+                        <li>Simplifies codebase (fewer files, less complexity)</li>
+                        <li>Improves security (database-driven, ACID guarantees)</li>
+                        <li>Better UX (single mental model, progressive disclosure)</li>
+                        <li>Reduces test burden (40-50% fewer tests to maintain)</li>
+                        <li>Removes filesystem dependency</li>
+                        <li>Pre-1.0 status allows breaking changes</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>⚠️ Considerations (Manageable)</h4>
+                    <ul>
+                        <li>Must ensure transaction safety</li>
+                        <li>Need clear conditional UI logic</li>
+                        <li>Requires comprehensive testing before removal</li>
+                        <li>Must handle edge cases (concurrent, invitations)</li>
+                        <li>Need to update all routes checking isSetupComplete()</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h4>Key Requirements:</h4>
+            <ol>
+                <li><strong>Transaction-wrapped first-user check</strong> (Security requirement)</li>
+                <li><strong>Rate limiting maintained</strong> (Security requirement)</li>
+                <li><strong>Progressive UI disclosure</strong> (UX requirement)</li>
+                <li><strong>Comprehensive E2E tests</strong> (QA requirement)</li>
+                <li><strong>Use CHANNEL terminology</strong> (Product requirement)</li>
+            </ol>
+
+            <h4>Edge Cases Clarified:</h4>
+            <ul>
+                <li><strong>Invitations:</strong> Continue to bypass registration flow (no changes needed)</li>
+                <li><strong>Concurrent registrations:</strong> Database transaction handles race condition</li>
+                <li><strong>Subsequent users (single-tenant):</strong> Auto-join existing channel as editor with clear UI feedback</li>
+                <li><strong>Multi-tenant:</strong> Always create new channel (current behavior)</li>
+            </ul>
+
+            <p>All agents approve consolidation. I'm marking this as <strong>APPROVED TO PROCEED</strong>.</p>
+        </div>
+    </div>
+
+    <div class="recommendation">
+        <h2>📋 Final Recommendation: CONSOLIDATE</h2>
+
+        <p><strong>Decision:</strong> Proceed with consolidating /setup and /register into a single /register flow.</p>
+
+        <div class="decision-box">
+            <h3 style="color: var(--color-accent-green); margin-bottom: 10px;">Implementation Plan</h3>
+            <ol>
+                <li><strong>Phase 1: Enhance /register</strong>
+                    <ul>
+                        <li>Add conditional step 2 for channel creation</li>
+                        <li>Enhance auth.register endpoint with first-user detection (in transaction)</li>
+                        <li>Add channelName parameter handling</li>
+                        <li>Implement progressive UI with step indicator</li>
+                    </ul>
+                </li>
+                <li><strong>Phase 2: Remove /setup</strong>
+                    <ul>
+                        <li>Delete /setup route or redirect to /register</li>
+                        <li>Remove setupRouter from tRPC</li>
+                        <li>Remove lib/setup.ts</li>
+                        <li>Remove isSetupComplete() checks from all layouts</li>
+                        <li>Update root page redirect logic</li>
+                    </ul>
+                </li>
+                <li><strong>Phase 3: Testing</strong>
+                    <ul>
+                        <li>Create comprehensive E2E test suite</li>
+                        <li>Test first-user scenario</li>
+                        <li>Test subsequent-user scenario</li>
+                        <li>Test concurrent registration</li>
+                        <li>Test multi-tenant mode</li>
+                        <li>Verify invitation flow still works</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+
+        <h3 style="color: var(--color-accent-blue); margin-top: 20px; margin-bottom: 10px;">Success Criteria</h3>
+        <ul>
+            <li>Single /register endpoint handles all registration scenarios</li>
+            <li>First user sees channel creation step, subsequent users don't</li>
+            <li>No file-based flags - all state in database</li>
+            <li>Transaction safety prevents race conditions</li>
+            <li>All existing functionality preserved</li>
+            <li>E2E tests passing</li>
+            <li>CI/CD pipeline green</li>
+        </ul>
+
+        <h3 style="color: var(--color-accent-orange); margin-top: 20px; margin-bottom: 10px;">Risks Mitigated</h3>
+        <ul>
+            <li>Transaction wrapping prevents concurrent registration issues</li>
+            <li>Comprehensive tests verify behavior before removing old code</li>
+            <li>Database-driven approach eliminates filesystem dependencies</li>
+            <li>Pre-1.0 status allows clean break (no migration needed)</li>
+        </ul>
+    </div>
+
+    <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--color-border); text-align: center; color: var(--color-text-dim);">
+        <p>Generated by Project Orchestrator | Streamline Studio | December 17, 2025</p>
+    </footer>
+</body>
+</html>

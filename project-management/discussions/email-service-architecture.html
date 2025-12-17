@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Discussion: Email Service Architecture</title>
+    <style>
+        :root {
+            --color-bg: #1a1a1a;
+            --color-surface: #2d2d2d;
+            --color-border: #404040;
+            --color-text: #e0e0e0;
+            --color-text-dim: #a0a0a0;
+            --color-accent-blue: #4a9eff;
+            --color-accent-purple: #b794f4;
+            --color-accent-green: #48bb78;
+            --color-accent-orange: #f6ad55;
+            --color-accent-red: #fc8181;
+            --color-accent-cyan: #00d4ff;
+            --color-accent-yellow: #ffd700;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--color-accent-blue);
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .meta {
+            color: var(--color-text-dim);
+            font-size: 0.9em;
+        }
+
+        .context {
+            background: var(--color-surface);
+            border-left: 4px solid var(--color-accent-purple);
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 4px;
+        }
+
+        .context h2 {
+            color: var(--color-accent-purple);
+            font-size: 1.3em;
+            margin-bottom: 15px;
+        }
+
+        .context-section {
+            margin-bottom: 20px;
+        }
+
+        .context-section h3 {
+            color: var(--color-accent-blue);
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .context-section ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .context-section li {
+            margin-bottom: 5px;
+        }
+
+        .code-block {
+            background: #1a1a1a;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            margin: 10px 0;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .message {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 12px;
+            font-size: 1.2em;
+        }
+
+        .agent-developer { background: var(--color-accent-blue); }
+        .agent-security { background: var(--color-accent-red); }
+        .agent-ux { background: var(--color-accent-green); }
+        .agent-qa { background: var(--color-accent-orange); }
+        .agent-orchestrator { background: var(--color-accent-purple); }
+        .agent-architect { background: var(--color-accent-cyan); }
+        .agent-planner { background: var(--color-accent-yellow); color: #1a1a1a; }
+
+        .message-info {
+            flex: 1;
+        }
+
+        .agent-name {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .timestamp {
+            color: var(--color-text-dim);
+            font-size: 0.85em;
+        }
+
+        .message-content {
+            color: var(--color-text);
+        }
+
+        .message-content h4 {
+            color: var(--color-accent-blue);
+            margin-top: 15px;
+            margin-bottom: 8px;
+        }
+
+        .message-content ul, .message-content ol {
+            margin-left: 20px;
+            margin-top: 8px;
+        }
+
+        .message-content li {
+            margin-bottom: 6px;
+        }
+
+        .message-content strong {
+            color: var(--color-accent-blue);
+        }
+
+        .message-content em {
+            color: var(--color-accent-green);
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.9em;
+        }
+
+        .comparison-table th, .comparison-table td {
+            border: 1px solid var(--color-border);
+            padding: 10px;
+            text-align: left;
+        }
+
+        .comparison-table th {
+            background: var(--color-bg);
+            color: var(--color-accent-blue);
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .pros { color: var(--color-accent-green); }
+        .cons { color: var(--color-accent-orange); }
+
+        .recommendation {
+            background: linear-gradient(135deg, rgba(74, 158, 255, 0.1), rgba(183, 148, 244, 0.1));
+            border: 2px solid var(--color-accent-purple);
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .recommendation h2 {
+            color: var(--color-accent-purple);
+            font-size: 1.5em;
+            margin-bottom: 15px;
+        }
+
+        .task-list {
+            background: var(--color-surface);
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .task-list h4 {
+            color: var(--color-accent-green);
+            margin-bottom: 10px;
+        }
+
+        .task-list ol {
+            margin-left: 20px;
+        }
+
+        .task-list li {
+            margin-bottom: 8px;
+        }
+
+        .question-box {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(247, 173, 85, 0.1));
+            border: 2px solid var(--color-accent-orange);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .question-box h3 {
+            color: var(--color-accent-orange);
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+
+        .question-box ol {
+            margin-left: 20px;
+        }
+
+        .question-box li {
+            margin-bottom: 10px;
+        }
+
+        .decision-box {
+            background: var(--color-surface);
+            border-left: 4px solid var(--color-accent-green);
+            padding: 20px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Email Service Architecture</h1>
+        <div class="meta">
+            Discussion Date: December 17, 2025<br>
+            Topic: How to implement email functionality that works for both single-tenant self-hosted AND multi-tenant SaaS<br>
+            Participants: Project Orchestrator, Senior Next.js Developer, Security Architect, Feature Architect, Strategic Planner
+        </div>
+    </header>
+
+    <div class="context">
+        <h2>Context & Current State</h2>
+
+        <div class="context-section">
+            <h3>Current Implementation</h3>
+            <ul>
+                <li><strong>src/lib/email.ts</strong> - Basic SMTP implementation using nodemailer</li>
+                <li>In development: logs to console instead of sending</li>
+                <li>In production: requires SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM</li>
+                <li>Currently used for: workspace invitation emails only</li>
+                <li>Inline template in the email.ts file (sendInvitationEmail function)</li>
+            </ul>
+        </div>
+
+        <div class="context-section">
+            <h3>Deployment Modes</h3>
+            <ul>
+                <li><strong>Single-tenant self-hosted:</strong> User controls their own SMTP (Gmail, personal mail server, etc.)</li>
+                <li><strong>Multi-tenant SaaS:</strong> We control the email infrastructure (transactional email service)</li>
+                <li>Must work seamlessly in both without code changes</li>
+                <li>Configuration-only switching preferred</li>
+            </ul>
+        </div>
+
+        <div class="context-section">
+            <h3>Future Email Needs</h3>
+            <ul>
+                <li>Password reset emails</li>
+                <li>Workspace invitations (existing)</li>
+                <li>Email verification (optional)</li>
+                <li>Notification emails (new video published, comments, mentions)</li>
+                <li>Digest emails (weekly summary)</li>
+            </ul>
+        </div>
+
+        <div class="context-section">
+            <h3>Key Constraint</h3>
+            <p><strong>Must be easy to swap providers without code changes</strong> - environment configuration only.</p>
+        </div>
+    </div>
+
+    <!-- Discussion Messages -->
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-orchestrator">PO</div>
+            <div class="message-info">
+                <div class="agent-name">Project Orchestrator</div>
+                <div class="timestamp">09:00 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <p>Good morning, team. We need to design an email architecture that serves two very different deployment scenarios:</p>
+
+            <ol>
+                <li><strong>Self-hosted single-tenant:</strong> Users bring their own SMTP (could be Gmail, Mailgun, or a corporate mail server)</li>
+                <li><strong>Multi-tenant SaaS:</strong> We operate the email infrastructure using a transactional email service</li>
+            </ol>
+
+            <p>The current implementation is basic SMTP via nodemailer. The user's key requirement is: <em>"easy to swap out without having to change code."</em></p>
+
+            <p>Let's discuss provider options, abstraction patterns, and the best path forward. Senior Dev, what are our options?</p>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-developer">SD</div>
+            <div class="message-info">
+                <div class="agent-name">Senior Next.js Developer</div>
+                <div class="timestamp">09:15 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Provider Options Analysis</h4>
+
+            <table class="comparison-table">
+                <tr>
+                    <th>Provider</th>
+                    <th>Type</th>
+                    <th>Self-Hosted Friendly</th>
+                    <th>SaaS Friendly</th>
+                    <th>Notes</th>
+                </tr>
+                <tr>
+                    <td><strong>SMTP (nodemailer)</strong></td>
+                    <td>Protocol</td>
+                    <td class="pros">Excellent</td>
+                    <td>Works but basic</td>
+                    <td>Universal, user brings own server</td>
+                </tr>
+                <tr>
+                    <td><strong>Resend</strong></td>
+                    <td>API Service</td>
+                    <td class="cons">Requires account</td>
+                    <td class="pros">Excellent</td>
+                    <td>Modern API, great DX, React Email support</td>
+                </tr>
+                <tr>
+                    <td><strong>SendGrid</strong></td>
+                    <td>API Service</td>
+                    <td class="cons">Requires account</td>
+                    <td class="pros">Excellent</td>
+                    <td>Industry standard, good deliverability</td>
+                </tr>
+                <tr>
+                    <td><strong>AWS SES</strong></td>
+                    <td>API Service</td>
+                    <td class="cons">Requires AWS</td>
+                    <td class="pros">Excellent</td>
+                    <td>Cheap at scale, complex setup</td>
+                </tr>
+                <tr>
+                    <td><strong>Postmark</strong></td>
+                    <td>API Service</td>
+                    <td class="cons">Requires account</td>
+                    <td class="pros">Excellent</td>
+                    <td>Great deliverability, transactional focus</td>
+                </tr>
+            </table>
+
+            <h4>The Core Problem</h4>
+            <p>SMTP is the only truly self-hosted-friendly option. Everything else requires a third-party account. But SMTP lacks:</p>
+            <ul>
+                <li>Delivery tracking</li>
+                <li>Bounce handling</li>
+                <li>Easy templating</li>
+                <li>Analytics</li>
+            </ul>
+
+            <h4>Recommended Architecture: Provider Abstraction Layer</h4>
+
+            <div class="code-block">// src/lib/email/provider.ts
+interface EmailProvider {
+  send(options: EmailMessage): Promise&lt;EmailResult&gt;;
+  name: string;
+}
+
+// Factory based on environment config
+function createEmailProvider(): EmailProvider {
+  const provider = serverEnv.EMAIL_PROVIDER; // 'smtp' | 'resend' | 'sendgrid' | 'console'
+
+  switch (provider) {
+    case 'smtp':
+      return new SmtpProvider(smtpConfig);
+    case 'resend':
+      return new ResendProvider(serverEnv.RESEND_API_KEY);
+    case 'sendgrid':
+      return new SendGridProvider(serverEnv.SENDGRID_API_KEY);
+    case 'console':
+    default:
+      return new ConsoleProvider(); // Dev mode - just logs
+  }
+}</div>
+
+            <h4>Benefits of This Approach</h4>
+            <ul>
+                <li><strong>Config-driven:</strong> Set EMAIL_PROVIDER=smtp for self-hosted, EMAIL_PROVIDER=resend for SaaS</li>
+                <li><strong>No code changes:</strong> Same codebase, different env vars</li>
+                <li><strong>Future-proof:</strong> Easy to add new providers</li>
+                <li><strong>Testable:</strong> ConsoleProvider for testing, MockProvider for unit tests</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-security">SA</div>
+            <div class="message-info">
+                <div class="agent-name">Security Architect</div>
+                <div class="timestamp">09:32 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Security Considerations</h4>
+
+            <h4>1. Credential Storage</h4>
+            <ul>
+                <li>API keys and SMTP passwords must be in environment variables only</li>
+                <li>Never store in database or expose to client</li>
+                <li>Current approach is correct - keep it this way</li>
+            </ul>
+
+            <h4>2. Email Injection Prevention</h4>
+            <p>The current implementation has good protections:</p>
+            <div class="code-block">// Current protection in src/lib/email.ts
+function isSafeEmailValue(value: string): boolean {
+  return !value.includes('\r') && !value.includes('\n');
+}
+
+function htmlEscape(str: string): string {
+  // XSS prevention in HTML emails
+}</div>
+            <p class="pros">This should be preserved in any abstraction.</p>
+
+            <h4>3. Rate Limiting</h4>
+            <p>Email sending should be rate-limited to prevent abuse:</p>
+            <ul>
+                <li>Per-user rate limits (e.g., 10 emails/hour for invitations)</li>
+                <li>Global rate limits (prevent accidental spam loops)</li>
+                <li>This is <em>separate</em> from the provider abstraction</li>
+            </ul>
+
+            <h4>4. SPF/DKIM/DMARC</h4>
+            <ul>
+                <li><strong>Self-hosted:</strong> User's responsibility - document requirements</li>
+                <li><strong>SaaS:</strong> Our responsibility - use provider's domain verification</li>
+                <li>Transactional services (Resend, SendGrid) handle this better than raw SMTP</li>
+            </ul>
+
+            <h4>5. Sensitive Data in Emails</h4>
+            <ul>
+                <li>Never include passwords in emails</li>
+                <li>Use time-limited tokens for password reset (current invitation pattern is good)</li>
+                <li>Consider token length - 64 hex chars (256 bits) is solid</li>
+            </ul>
+
+            <h4>Security Recommendation</h4>
+            <p>The abstraction layer is fine from a security perspective. Key points:</p>
+            <ul>
+                <li>Keep input validation in the shared layer (not per-provider)</li>
+                <li>Add rate limiting at the application level</li>
+                <li>Document SPF/DKIM requirements for self-hosters</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-architect">FA</div>
+            <div class="message-info">
+                <div class="agent-name">Feature Architect</div>
+                <div class="timestamp">09:48 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Detailed Architecture Proposal</h4>
+
+            <h4>File Structure</h4>
+            <div class="code-block">src/lib/email/
+├── index.ts              # Public API (sendEmail, sendInvitation, etc.)
+├── types.ts              # Shared types and interfaces
+├── provider.ts           # Provider factory
+├── validation.ts         # Input validation (injection prevention)
+├── templates/
+│   ├── invitation.ts     # Invitation email template
+│   ├── password-reset.ts # Password reset template
+│   └── base.ts           # Base HTML wrapper
+└── providers/
+    ├── smtp.ts           # SMTP/nodemailer provider
+    ├── resend.ts         # Resend provider
+    ├── sendgrid.ts       # SendGrid provider (if needed)
+    └── console.ts        # Development console logger</div>
+
+            <h4>Core Types</h4>
+            <div class="code-block">// src/lib/email/types.ts
+export interface EmailMessage {
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+  replyTo?: string;
+}
+
+export interface EmailResult {
+  success: boolean;
+  messageId?: string;
+  error?: string;
+}
+
+export interface EmailProvider {
+  readonly name: string;
+  send(message: EmailMessage): Promise&lt;EmailResult&gt;;
+}
+
+export type EmailProviderType = 'smtp' | 'resend' | 'sendgrid' | 'console';</div>
+
+            <h4>Public API</h4>
+            <div class="code-block">// src/lib/email/index.ts
+import { getProvider } from './provider';
+import { validateEmail, sanitizeSubject } from './validation';
+import { renderInvitationEmail } from './templates/invitation';
+import { renderPasswordResetEmail } from './templates/password-reset';
+
+// Low-level send (for custom emails)
+export async function sendEmail(options: EmailMessage): Promise&lt;EmailResult&gt; {
+  // Validation happens here, once, for all providers
+  validateEmail(options.to);
+  sanitizeSubject(options.subject);
+
+  const provider = getProvider();
+  return provider.send(options);
+}
+
+// High-level API for specific email types
+export async function sendInvitationEmail(params: InvitationParams): Promise&lt;EmailResult&gt; {
+  const { text, html } = renderInvitationEmail(params);
+  return sendEmail({
+    to: params.email,
+    subject: `You've been invited to ${params.workspaceName}`,
+    text,
+    html,
+  });
+}
+
+export async function sendPasswordResetEmail(params: PasswordResetParams): Promise&lt;EmailResult&gt; {
+  const { text, html } = renderPasswordResetEmail(params);
+  return sendEmail({
+    to: params.email,
+    subject: 'Reset your password',
+    text,
+    html,
+  });
+}</div>
+
+            <h4>Environment Configuration</h4>
+            <div class="code-block"># .env.example additions
+
+# =============================================================================
+# EMAIL CONFIGURATION
+# =============================================================================
+# Provider: 'smtp' | 'resend' | 'sendgrid' | 'console'
+# Use 'console' for development (logs to console)
+# Use 'smtp' for self-hosted (user provides SMTP server)
+# Use 'resend' or 'sendgrid' for SaaS deployment
+EMAIL_PROVIDER=console
+
+# From address (required for all providers)
+EMAIL_FROM=noreply@example.com
+
+# SMTP Configuration (when EMAIL_PROVIDER=smtp)
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASSWORD=
+SMTP_SECURE=false  # true for port 465
+
+# Resend Configuration (when EMAIL_PROVIDER=resend)
+RESEND_API_KEY=
+
+# SendGrid Configuration (when EMAIL_PROVIDER=sendgrid)
+SENDGRID_API_KEY=</div>
+
+            <h4>Template Strategy</h4>
+            <p>For templates, I recommend keeping them simple and inline (TypeScript functions that return {text, html}). Reasons:</p>
+            <ul>
+                <li>No external dependencies (React Email adds complexity)</li>
+                <li>Easy to modify and test</li>
+                <li>Works identically across all providers</li>
+                <li>We can always upgrade to a templating library later if needed</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-developer">SD</div>
+            <div class="message-info">
+                <div class="agent-name">Senior Next.js Developer</div>
+                <div class="timestamp">10:05 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Provider Implementation Examples</h4>
+
+            <h4>SMTP Provider (for self-hosted)</h4>
+            <div class="code-block">// src/lib/email/providers/smtp.ts
+import nodemailer from 'nodemailer';
+import type { EmailProvider, EmailMessage, EmailResult } from '../types';
+
+export class SmtpProvider implements EmailProvider {
+  readonly name = 'smtp';
+  private transporter: nodemailer.Transporter;
+
+  constructor(config: SmtpConfig) {
+    this.transporter = nodemailer.createTransport({
+      host: config.host,
+      port: config.port,
+      secure: config.secure,
+      auth: { user: config.user, pass: config.password },
+    });
+  }
+
+  async send(message: EmailMessage): Promise&lt;EmailResult&gt; {
+    try {
+      const result = await this.transporter.sendMail({
+        from: serverEnv.EMAIL_FROM,
+        to: message.to,
+        subject: message.subject,
+        text: message.text,
+        html: message.html,
+      });
+      return { success: true, messageId: result.messageId };
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  }
+}</div>
+
+            <h4>Resend Provider (for SaaS)</h4>
+            <div class="code-block">// src/lib/email/providers/resend.ts
+import { Resend } from 'resend';
+import type { EmailProvider, EmailMessage, EmailResult } from '../types';
+
+export class ResendProvider implements EmailProvider {
+  readonly name = 'resend';
+  private client: Resend;
+
+  constructor(apiKey: string) {
+    this.client = new Resend(apiKey);
+  }
+
+  async send(message: EmailMessage): Promise&lt;EmailResult&gt; {
+    try {
+      const result = await this.client.emails.send({
+        from: serverEnv.EMAIL_FROM,
+        to: message.to,
+        subject: message.subject,
+        text: message.text,
+        html: message.html,
+      });
+      return { success: true, messageId: result.data?.id };
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  }
+}</div>
+
+            <h4>Console Provider (for development)</h4>
+            <div class="code-block">// src/lib/email/providers/console.ts
+import type { EmailProvider, EmailMessage, EmailResult } from '../types';
+import { logger } from '@/lib/logger';
+
+export class ConsoleProvider implements EmailProvider {
+  readonly name = 'console';
+
+  async send(message: EmailMessage): Promise&lt;EmailResult&gt; {
+    logger.info({
+      to: message.to,
+      subject: message.subject,
+      provider: 'console',
+    }, 'Email would be sent (dev mode)');
+
+    // Log full email in debug mode
+    logger.debug({ text: message.text }, 'Email text content');
+
+    return {
+      success: true,
+      messageId: `console-${Date.now()}`
+    };
+  }
+}</div>
+
+            <h4>Dependency Considerations</h4>
+            <ul>
+                <li><strong>nodemailer:</strong> Already installed, keep for SMTP</li>
+                <li><strong>resend:</strong> Add as optional peer dependency (only needed if using Resend)</li>
+                <li><strong>@sendgrid/mail:</strong> Add as optional peer dependency (only needed if using SendGrid)</li>
+            </ul>
+            <p>We could also use dynamic imports to lazy-load providers, reducing bundle size when a provider isn't used.</p>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-planner">SP</div>
+            <div class="message-info">
+                <div class="agent-name">Strategic Planner</div>
+                <div class="timestamp">10:22 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Implementation Roadmap</h4>
+
+            <div class="task-list">
+                <h4>Phase 1: Core Abstraction</h4>
+                <ol>
+                    <li>Create email module structure (types, provider interface)</li>
+                    <li>Implement ConsoleProvider (dev mode)</li>
+                    <li>Implement SmtpProvider (migrate current nodemailer code)</li>
+                    <li>Implement provider factory with EMAIL_PROVIDER env var</li>
+                    <li>Update .env.example with new configuration</li>
+                </ol>
+            </div>
+
+            <div class="task-list">
+                <h4>Phase 2: Template System</h4>
+                <ol>
+                    <li>Create base HTML template wrapper</li>
+                    <li>Migrate invitation email template</li>
+                    <li>Create password reset email template</li>
+                    <li>Add validation module (extract from current email.ts)</li>
+                </ol>
+            </div>
+
+            <div class="task-list">
+                <h4>Phase 3: SaaS Provider (when needed)</h4>
+                <ol>
+                    <li>Add Resend provider (or SendGrid, based on preference)</li>
+                    <li>Add optional dependency</li>
+                    <li>Test deliverability</li>
+                </ol>
+            </div>
+
+            <div class="task-list">
+                <h4>Future Enhancements (out of scope)</h4>
+                <ol>
+                    <li>Background job queue for async email sending</li>
+                    <li>Email tracking/analytics (opens, clicks)</li>
+                    <li>Bounce handling webhooks</li>
+                    <li>Email preferences (unsubscribe)</li>
+                </ol>
+            </div>
+
+            <h4>Recommended Priority</h4>
+            <p>Start with <strong>Phase 1 only</strong>. This gives us the abstraction layer that can be extended later. Phase 2 improves maintainability but isn't blocking. Phase 3 is only needed when deploying SaaS.</p>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-orchestrator">PO</div>
+            <div class="message-info">
+                <div class="agent-name">Project Orchestrator</div>
+                <div class="timestamp">10:35 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Summary & Recommendations</h4>
+
+            <h4>Agreed Architecture</h4>
+            <ol>
+                <li><strong>Provider abstraction layer</strong> - Interface-based design with factory pattern</li>
+                <li><strong>Configuration-driven</strong> - EMAIL_PROVIDER env var switches between implementations</li>
+                <li><strong>Three initial providers:</strong>
+                    <ul>
+                        <li>ConsoleProvider - development/testing</li>
+                        <li>SmtpProvider - self-hosted deployments</li>
+                        <li>ResendProvider (or similar) - SaaS deployments</li>
+                    </ul>
+                </li>
+                <li><strong>Validation in shared layer</strong> - Injection prevention happens once, not per-provider</li>
+                <li><strong>Simple templates</strong> - TypeScript functions, no external templating library</li>
+            </ol>
+
+            <h4>Key Benefits</h4>
+            <ul>
+                <li class="pros">Zero code changes to switch providers - environment config only</li>
+                <li class="pros">Self-hosted users can use any SMTP server</li>
+                <li class="pros">SaaS can use modern transactional email service</li>
+                <li class="pros">Easy to add new providers in future</li>
+                <li class="pros">Testable - mock providers for unit tests</li>
+            </ul>
+
+            <h4>Open Decision</h4>
+            <p>Which transactional email service for SaaS? Options:</p>
+            <ul>
+                <li><strong>Resend</strong> - Modern, great DX, React-focused ecosystem</li>
+                <li><strong>SendGrid</strong> - Industry standard, proven at scale</li>
+                <li><strong>Postmark</strong> - Excellent deliverability, transactional focus</li>
+                <li><strong>AWS SES</strong> - Cheapest at scale, more setup required</li>
+            </ul>
+            <p>This can be decided later - the abstraction supports any of them.</p>
+        </div>
+    </div>
+
+    <!-- Recommendation -->
+    <div class="recommendation">
+        <h2>Proposed Implementation Plan</h2>
+
+        <div class="task-list">
+            <h4>Deliverables</h4>
+            <ol>
+                <li><strong>Email Module Restructure</strong>
+                    <ul>
+                        <li>New file structure under src/lib/email/</li>
+                        <li>Provider interface and factory</li>
+                        <li>Type definitions</li>
+                    </ul>
+                </li>
+                <li><strong>Provider Implementations</strong>
+                    <ul>
+                        <li>ConsoleProvider (dev mode)</li>
+                        <li>SmtpProvider (self-hosted)</li>
+                        <li>ResendProvider or SendGridProvider (SaaS - can be added later)</li>
+                    </ul>
+                </li>
+                <li><strong>Migration</strong>
+                    <ul>
+                        <li>Move existing email.ts functionality into new structure</li>
+                        <li>Update invitation router to use new API</li>
+                        <li>Update .env.example with new config options</li>
+                    </ul>
+                </li>
+                <li><strong>Password Reset Infrastructure</strong>
+                    <ul>
+                        <li>Password reset email template</li>
+                        <li>Token generation (similar to invitation tokens)</li>
+                        <li>Reset flow endpoints</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+
+        <div class="task-list">
+            <h4>Files to Create/Modify</h4>
+            <ol>
+                <li><code>src/lib/email/index.ts</code> (new - public API)</li>
+                <li><code>src/lib/email/types.ts</code> (new)</li>
+                <li><code>src/lib/email/provider.ts</code> (new - factory)</li>
+                <li><code>src/lib/email/validation.ts</code> (new - extracted)</li>
+                <li><code>src/lib/email/providers/console.ts</code> (new)</li>
+                <li><code>src/lib/email/providers/smtp.ts</code> (new)</li>
+                <li><code>src/lib/email/providers/resend.ts</code> (new - optional)</li>
+                <li><code>src/lib/email/templates/invitation.ts</code> (new - extracted)</li>
+                <li><code>src/lib/email/templates/password-reset.ts</code> (new)</li>
+                <li><code>src/lib/email/templates/base.ts</code> (new - HTML wrapper)</li>
+                <li><code>src/lib/email.ts</code> (delete - replaced by new structure)</li>
+                <li><code>src/server/trpc/routers/invitation.ts</code> (modify imports)</li>
+                <li><code>src/lib/env.ts</code> (add new env vars)</li>
+                <li><code>.env.example</code> (update documentation)</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- User Feedback -->
+    <div class="message" style="border-left: 4px solid var(--color-accent-green);">
+        <div class="message-header">
+            <div class="avatar" style="background: var(--color-accent-green);">U</div>
+            <div class="message-info">
+                <div class="agent-name">User (foxleigh81)</div>
+                <div class="timestamp">11:00 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Answers to Questions</h4>
+            <ol>
+                <li><strong>SaaS provider:</strong> Need cost/benefit analysis first. Park it - decide later (E).</li>
+                <li><strong>Password reset:</strong> Yes, include this now.</li>
+                <li><strong>Email verification:</strong> Need more info - what's industry standard/best practice?</li>
+                <li><strong>Templates:</strong> Need more info - "sophisticated" doesn't mean better. What are the actual pros/cons?</li>
+                <li><strong>Rate limiting:</strong> Yes, implement this now.</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- Continued Discussion -->
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-security">SA</div>
+            <div class="message-info">
+                <div class="agent-name">Security Architect</div>
+                <div class="timestamp">11:15 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Email Verification: Industry Analysis</h4>
+
+            <p>Let me break down the approaches used across the industry:</p>
+
+            <h4>Option 1: No Email Verification (Current State)</h4>
+            <table class="comparison-table">
+                <tr>
+                    <th>Aspect</th>
+                    <th>Assessment</th>
+                </tr>
+                <tr>
+                    <td>Who uses this?</td>
+                    <td>Slack, Discord, many B2B tools (especially self-hosted)</td>
+                </tr>
+                <tr>
+                    <td class="pros">Pros</td>
+                    <td>Instant access, zero friction, better conversion</td>
+                </tr>
+                <tr>
+                    <td class="cons">Cons</td>
+                    <td>Can't recover accounts if email is fake, spam signups possible</td>
+                </tr>
+                <tr>
+                    <td>Best for</td>
+                    <td>Self-hosted, invite-only, internal tools</td>
+                </tr>
+            </table>
+
+            <h4>Option 2: Mandatory Email Verification (Block Until Verified)</h4>
+            <table class="comparison-table">
+                <tr>
+                    <th>Aspect</th>
+                    <th>Assessment</th>
+                </tr>
+                <tr>
+                    <td>Who uses this?</td>
+                    <td>Banks, healthcare, high-security apps</td>
+                </tr>
+                <tr>
+                    <td class="pros">Pros</td>
+                    <td>Guaranteed real emails, prevents spam accounts</td>
+                </tr>
+                <tr>
+                    <td class="cons">Cons</td>
+                    <td>High friction, users abandon signup, email deliverability issues lock people out</td>
+                </tr>
+                <tr>
+                    <td>Best for</td>
+                    <td>High-security requirements, compliance needs</td>
+                </tr>
+            </table>
+
+            <h4>Option 3: Progressive Verification (Modern Best Practice)</h4>
+            <table class="comparison-table">
+                <tr>
+                    <th>Aspect</th>
+                    <th>Assessment</th>
+                </tr>
+                <tr>
+                    <td>Who uses this?</td>
+                    <td>GitHub, Notion, Linear, most modern SaaS</td>
+                </tr>
+                <tr>
+                    <td class="pros">Pros</td>
+                    <td>Low friction signup, verification only when needed</td>
+                </tr>
+                <tr>
+                    <td class="cons">Cons</td>
+                    <td>More complex to implement, need to track verification state</td>
+                </tr>
+                <tr>
+                    <td>Best for</td>
+                    <td>SaaS products balancing UX and security</td>
+                </tr>
+            </table>
+
+            <h4>How Progressive Verification Works</h4>
+            <ol>
+                <li>User signs up → immediately gets access to the app</li>
+                <li>We send verification email in background</li>
+                <li>User can use the app normally</li>
+                <li>Certain actions require verified email:
+                    <ul>
+                        <li>Inviting team members</li>
+                        <li>Password reset (obvious)</li>
+                        <li>Billing/subscription changes</li>
+                        <li>Publishing content publicly (if applicable)</li>
+                    </ul>
+                </li>
+                <li>Gentle reminders to verify (banner, not blocking)</li>
+            </ol>
+
+            <h4>My Recommendation</h4>
+            <p>For Streamline Studio, I recommend <strong>Progressive Verification</strong> with a twist:</p>
+            <ul>
+                <li><strong>Single-tenant self-hosted:</strong> No verification needed (admin controls who signs up)</li>
+                <li><strong>Multi-tenant SaaS:</strong> Progressive verification (verify to invite others, etc.)</li>
+            </ul>
+            <p>This gives self-hosters zero friction, while protecting the SaaS from spam accounts.</p>
+
+            <p>However, if we want to keep it simple for now: <strong>skip verification entirely</strong>. Password reset alone proves email ownership when users actually need it. Many successful products (including early Slack) operated this way.</p>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-developer">SD</div>
+            <div class="message-info">
+                <div class="agent-name">Senior Next.js Developer</div>
+                <div class="timestamp">11:35 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Email Template Approaches: Deep Dive</h4>
+
+            <p>Let me be concrete about what each option actually means for our codebase:</p>
+
+            <h4>Option A: Simple Inline TypeScript (Current Approach)</h4>
+            <div class="code-block">// What it looks like:
+function renderPasswordResetEmail(params: { resetUrl: string; name: string }) {
+  const text = `Hi ${params.name}, click here to reset: ${params.resetUrl}`;
+
+  const html = `
+    &lt;!DOCTYPE html&gt;
+    &lt;html&gt;
+    &lt;head&gt;&lt;style&gt;
+      body { font-family: sans-serif; }
+      .button { background: #cc0000; color: white; padding: 12px 24px; }
+    &lt;/style&gt;&lt;/head&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Reset Your Password&lt;/h1&gt;
+      &lt;p&gt;Hi ${htmlEscape(params.name)},&lt;/p&gt;
+      &lt;a href="${params.resetUrl}" class="button"&gt;Reset Password&lt;/a&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;
+  `;
+
+  return { text, html };
+}</div>
+
+            <table class="comparison-table">
+                <tr><th>Aspect</th><th>Assessment</th></tr>
+                <tr><td class="pros">Zero dependencies</td><td>No npm packages, no build steps</td></tr>
+                <tr><td class="pros">Full control</td><td>You see exactly what's sent</td></tr>
+                <tr><td class="pros">Easy to understand</td><td>Any developer can modify</td></tr>
+                <tr><td class="cons">Manual HTML escaping</td><td>Must remember XSS prevention</td></tr>
+                <tr><td class="cons">No responsive helpers</td><td>You handle Outlook quirks yourself</td></tr>
+                <tr><td class="cons">Repetitive</td><td>Shared styles copy-pasted</td></tr>
+                <tr><td><strong>Effort</strong></td><td>Low setup, medium maintenance</td></tr>
+            </table>
+
+            <h4>Option B: MJML</h4>
+            <div class="code-block">// What it looks like:
+const mjmlTemplate = `
+&lt;mjml&gt;
+  &lt;mj-body&gt;
+    &lt;mj-section&gt;
+      &lt;mj-column&gt;
+        &lt;mj-text font-size="24px"&gt;Reset Your Password&lt;/mj-text&gt;
+        &lt;mj-text&gt;Hi {{name}},&lt;/mj-text&gt;
+        &lt;mj-button href="{{resetUrl}}" background-color="#cc0000"&gt;
+          Reset Password
+        &lt;/mj-button&gt;
+      &lt;/mj-column&gt;
+    &lt;/mj-section&gt;
+  &lt;/mj-body&gt;
+&lt;/mjml&gt;
+`;
+
+// Compile at runtime or build time
+import mjml2html from 'mjml';
+const { html } = mjml2html(mjmlTemplate);
+// Then substitute variables</div>
+
+            <table class="comparison-table">
+                <tr><th>Aspect</th><th>Assessment</th></tr>
+                <tr><td class="pros">Cross-client compatible</td><td>Outlook, Gmail, Apple Mail - all work</td></tr>
+                <tr><td class="pros">Responsive by default</td><td>Mobile layouts handled automatically</td></tr>
+                <tr><td class="pros">Clean syntax</td><td>Much less verbose than raw HTML</td></tr>
+                <tr><td class="cons">New syntax to learn</td><td>XML-like markup, not HTML</td></tr>
+                <tr><td class="cons">Build step required</td><td>Must compile MJML → HTML</td></tr>
+                <tr><td class="cons">Variable substitution</td><td>Need template engine or manual replace</td></tr>
+                <tr><td><strong>Effort</strong></td><td>Medium setup, low maintenance</td></tr>
+            </table>
+
+            <h4>Option C: React Email</h4>
+            <div class="code-block">// What it looks like:
+import { Html, Head, Body, Container, Text, Button } from '@react-email/components';
+
+export function PasswordResetEmail({ name, resetUrl }: Props) {
+  return (
+    &lt;Html&gt;
+      &lt;Head /&gt;
+      &lt;Body style={{ fontFamily: 'sans-serif' }}&gt;
+        &lt;Container&gt;
+          &lt;Text style={{ fontSize: 24 }}&gt;Reset Your Password&lt;/Text&gt;
+          &lt;Text&gt;Hi {name},&lt;/Text&gt;
+          &lt;Button href={resetUrl} style={{ background: '#cc0000' }}&gt;
+            Reset Password
+          &lt;/Button&gt;
+        &lt;/Container&gt;
+      &lt;/Body&gt;
+    &lt;/Html&gt;
+  );
+}
+
+// Render to HTML string
+import { render } from '@react-email/render';
+const html = render(&lt;PasswordResetEmail name="John" resetUrl="..." /&gt;);</div>
+
+            <table class="comparison-table">
+                <tr><th>Aspect</th><th>Assessment</th></tr>
+                <tr><td class="pros">Familiar to React devs</td><td>JSX, components, TypeScript</td></tr>
+                <tr><td class="pros">Type-safe</td><td>Props are typed, IDE autocomplete</td></tr>
+                <tr><td class="pros">Composable</td><td>Reusable components (Header, Footer)</td></tr>
+                <tr><td class="pros">Preview tooling</td><td>Built-in preview server for development</td></tr>
+                <tr><td class="cons">More dependencies</td><td>~5 packages for full functionality</td></tr>
+                <tr><td class="cons">React knowledge required</td><td>Non-React devs may struggle</td></tr>
+                <tr><td class="cons">Overkill for simple emails</td><td>Adds complexity we may not need</td></tr>
+                <tr><td><strong>Effort</strong></td><td>Medium setup, low maintenance</td></tr>
+            </table>
+
+            <h4>My Honest Assessment</h4>
+
+            <p>For Streamline Studio right now, I recommend <strong>Option A: Simple Inline TypeScript</strong>. Here's why:</p>
+
+            <ol>
+                <li><strong>We have ~3-4 email types max</strong> - invitation, password reset, maybe verification, maybe notifications. This isn't an email-heavy product.</li>
+                <li><strong>We already have this pattern</strong> - the current invitation email works fine</li>
+                <li><strong>No build complexity</strong> - MJML/React Email add compilation steps</li>
+                <li><strong>Upgrade path exists</strong> - if we later need 20 email templates with complex layouts, we can migrate</li>
+            </ol>
+
+            <p>The main risk is Outlook rendering. We can mitigate this by:</p>
+            <ul>
+                <li>Keeping emails simple (single column, basic styles)</li>
+                <li>Using table-based layout for the few elements we have</li>
+                <li>Testing in Litmus/Email on Acid before launch</li>
+            </ul>
+
+            <p><strong>Bottom line:</strong> Don't add complexity for a problem we don't have yet. If email design becomes a pain point, upgrade then.</p>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-architect">FA</div>
+            <div class="message-info">
+                <div class="agent-name">Feature Architect</div>
+                <div class="timestamp">11:52 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Rate Limiting Design</h4>
+
+            <p>Since rate limiting is confirmed, here's how we'll implement it:</p>
+
+            <h4>Rate Limit Categories</h4>
+            <div class="code-block">// src/lib/email/rate-limit.ts
+
+interface EmailRateLimits {
+  // Per-user limits
+  invitationsPerHour: 10,      // Max invitations a user can send
+  passwordResetsPerHour: 3,    // Max password resets per email
+
+  // Global limits (prevent runaway loops)
+  emailsPerMinute: 30,         // Total emails system can send
+}</div>
+
+            <h4>Implementation Approach</h4>
+            <ul>
+                <li>Use the existing rate limiting infrastructure from <code>src/lib/auth/rate-limit.ts</code></li>
+                <li>Redis-backed for production (distributed), in-memory for dev</li>
+                <li>Rate limit BEFORE calling the email provider (fail fast)</li>
+                <li>Return friendly error message, not just "rate limited"</li>
+            </ul>
+
+            <h4>Integration Points</h4>
+            <div class="code-block">// In the email service
+export async function sendInvitationEmail(params: InvitationParams): Promise&lt;EmailResult&gt; {
+  // Check rate limit first
+  const allowed = await checkEmailRateLimit('invitation', params.userId);
+  if (!allowed) {
+    return {
+      success: false,
+      error: 'Too many invitations sent. Please wait before sending more.'
+    };
+  }
+
+  // Proceed with sending...
+}</div>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-orchestrator">PO</div>
+            <div class="message-info">
+                <div class="agent-name">Project Orchestrator</div>
+                <div class="timestamp">12:05 PM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Updated Plan Based on Feedback</h4>
+
+            <h4>Confirmed Decisions</h4>
+            <ol>
+                <li><strong>SaaS provider:</strong> Deferred - build SMTP + Console only for now</li>
+                <li><strong>Password reset:</strong> Include in this implementation</li>
+                <li><strong>Templates:</strong> Simple inline TypeScript (Option A) - minimal complexity, upgrade later if needed</li>
+                <li><strong>Rate limiting:</strong> Include in this implementation</li>
+            </ol>
+
+            <h4>Still Open: Email Verification</h4>
+            <p>Security Architect presented three options. My recommendation based on our context:</p>
+            <ul>
+                <li><strong>For now:</strong> Skip email verification entirely</li>
+                <li><strong>Rationale:</strong> Password reset proves email ownership when needed. Self-hosted users control access anyway. We can add progressive verification later for SaaS.</li>
+                <li><strong>Alternative:</strong> If you prefer verification, implement progressive (non-blocking) verification</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Updated Recommendation -->
+    <div class="recommendation">
+        <h2>Updated Implementation Plan</h2>
+
+        <div class="task-list">
+            <h4>Scope (Confirmed)</h4>
+            <ol>
+                <li><strong>Email provider abstraction</strong> - ConsoleProvider + SmtpProvider</li>
+                <li><strong>Password reset flow</strong> - Token generation, email template, reset endpoints</li>
+                <li><strong>Rate limiting</strong> - Per-user and global limits on email sending</li>
+                <li><strong>Simple templates</strong> - Inline TypeScript, base HTML wrapper for consistency</li>
+            </ol>
+        </div>
+
+        <div class="task-list">
+            <h4>Out of Scope (Deferred)</h4>
+            <ol>
+                <li>SaaS email provider (Resend/SendGrid) - decide later</li>
+                <li>Email verification - skip for now, add progressive verification later if needed</li>
+                <li>Sophisticated templating (MJML/React Email) - only if we hit pain points</li>
+            </ol>
+        </div>
+
+        <div class="task-list">
+            <h4>Implementation Tasks</h4>
+            <ol>
+                <li>Create email module structure (types, interfaces, factory)</li>
+                <li>Implement ConsoleProvider (development)</li>
+                <li>Implement SmtpProvider (migrate from current)</li>
+                <li>Create base HTML template wrapper</li>
+                <li>Migrate invitation email template</li>
+                <li>Create password reset email template</li>
+                <li>Implement email rate limiting</li>
+                <li>Create password reset token generation (similar to invitation)</li>
+                <li>Create password reset tRPC endpoints (request, validate, complete)</li>
+                <li>Create password reset UI pages</li>
+                <li>Update invitation router to use new email module</li>
+                <li>Update .env.example with new configuration</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- User Decision -->
+    <div class="message" style="border-left: 4px solid var(--color-accent-green);">
+        <div class="message-header">
+            <div class="avatar" style="background: var(--color-accent-green);">U</div>
+            <div class="message-info">
+                <div class="agent-name">User (foxleigh81)</div>
+                <div class="timestamp">12:20 PM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Decision: Progressive Verification with Mode-Based Bypass</h4>
+            <p>Add progressive email verification, but <strong>bypass it entirely in single-tenant mode</strong>.</p>
+            <ul>
+                <li><strong>Multi-tenant (SaaS):</strong> Progressive verification - verify email to invite others</li>
+                <li><strong>Single-tenant (self-hosted):</strong> No verification required - admin controls access</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Team Response -->
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-developer">SD</div>
+            <div class="message-info">
+                <div class="agent-name">Senior Next.js Developer</div>
+                <div class="timestamp">12:28 PM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Implementation Approach for Mode-Based Verification</h4>
+
+            <p>This is a clean solution. Here's how we'll implement it:</p>
+
+            <h4>Database Schema Addition</h4>
+            <div class="code-block">// Add to users table in schema.ts
+emailVerified: boolean('email_verified').default(false),
+emailVerifiedAt: timestamp('email_verified_at'),</div>
+
+            <h4>Verification Check Logic</h4>
+            <div class="code-block">// src/lib/auth/verification.ts
+import { isMultiTenant } from '@/lib/constants';
+
+/**
+ * Check if email verification is required for an action
+ * Single-tenant: Never required (admin controls access)
+ * Multi-tenant: Required for sensitive actions
+ */
+export function requiresEmailVerification(): boolean {
+  return isMultiTenant();
+}
+
+/**
+ * Check if user can perform action requiring verified email
+ */
+export function canPerformVerifiedAction(user: { emailVerified: boolean }): boolean {
+  // Single-tenant: Always allowed
+  if (!isMultiTenant()) {
+    return true;
+  }
+  // Multi-tenant: Must be verified
+  return user.emailVerified;
+}</div>
+
+            <h4>Guarded Actions (Multi-tenant only)</h4>
+            <ul>
+                <li><strong>Send invitations</strong> - requires verified email</li>
+                <li><strong>Create channels</strong> - requires verified email (prevents spam workspaces)</li>
+                <li><strong>Change billing</strong> - requires verified email (future)</li>
+            </ul>
+
+            <h4>Non-Guarded Actions</h4>
+            <ul>
+                <li>Login / use the app</li>
+                <li>View content</li>
+                <li>Edit own content</li>
+                <li>Change password</li>
+                <li>Update profile</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-architect">FA</div>
+            <div class="message-info">
+                <div class="agent-name">Feature Architect</div>
+                <div class="timestamp">12:35 PM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Verification Flow Design</h4>
+
+            <h4>1. Registration Flow</h4>
+            <div class="code-block">// After successful registration:
+if (isMultiTenant()) {
+  // Send verification email in background (non-blocking)
+  sendVerificationEmail(user.email, verificationToken);
+}
+// User is logged in immediately regardless</div>
+
+            <h4>2. Verification Email Template</h4>
+            <div class="code-block">Subject: Verify your email for Streamline Studio
+
+Hi {name},
+
+Please verify your email address to unlock all features.
+
+[Verify Email] → {verificationUrl}
+
+This link expires in 24 hours.
+
+---
+You can use Streamline Studio without verifying, but you'll need
+a verified email to invite team members.</div>
+
+            <h4>3. UI Indication (Multi-tenant only)</h4>
+            <ul>
+                <li>Subtle banner at top: "Verify your email to invite team members" with resend link</li>
+                <li>Tooltip on disabled invite button explaining why</li>
+                <li>No blocking modals or aggressive prompts</li>
+            </ul>
+
+            <h4>4. Token Management</h4>
+            <ul>
+                <li>Reuse existing token pattern from invitations</li>
+                <li>64-char hex token, 24-hour expiry</li>
+                <li>Store in new <code>email_verifications</code> table or add columns to users</li>
+                <li>One active token per user (new request invalidates old)</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-orchestrator">PO</div>
+            <div class="message-info">
+                <div class="agent-name">Project Orchestrator</div>
+                <div class="timestamp">12:45 PM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Final Implementation Plan</h4>
+
+            <p>All decisions are now confirmed. Here's the complete scope:</p>
+
+            <h4>Email System Components</h4>
+            <ol>
+                <li><strong>Provider Abstraction</strong>
+                    <ul>
+                        <li>ConsoleProvider (development)</li>
+                        <li>SmtpProvider (production - self-hosted & SaaS)</li>
+                        <li>Factory pattern with EMAIL_PROVIDER env var</li>
+                    </ul>
+                </li>
+                <li><strong>Rate Limiting</strong>
+                    <ul>
+                        <li>Per-user limits (invitations, password resets, verification resends)</li>
+                        <li>Global limits (prevent runaway email loops)</li>
+                        <li>Reuse existing Redis/in-memory rate limit infrastructure</li>
+                    </ul>
+                </li>
+                <li><strong>Templates (Inline TypeScript)</strong>
+                    <ul>
+                        <li>Invitation email (migrate existing)</li>
+                        <li>Password reset email (new)</li>
+                        <li>Email verification email (new, multi-tenant only)</li>
+                        <li>Base HTML wrapper for consistency</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h4>Password Reset Flow</h4>
+            <ol>
+                <li>User requests reset → token generated, email sent</li>
+                <li>User clicks link → validates token, shows reset form</li>
+                <li>User submits new password → token consumed, password updated</li>
+                <li>UI pages: /forgot-password, /reset-password/[token]</li>
+            </ol>
+
+            <h4>Email Verification (Progressive, Multi-tenant Only)</h4>
+            <ol>
+                <li>On registration (multi-tenant) → verification email sent automatically</li>
+                <li>User can use app immediately</li>
+                <li>Certain actions gated behind verification (invite, create channel)</li>
+                <li>Single-tenant → verification skipped entirely, all users treated as verified</li>
+                <li>UI: subtle banner, tooltip on disabled actions</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- Final Implementation Plan -->
+    <div class="recommendation">
+        <h2>Final Implementation Plan</h2>
+
+        <div class="task-list">
+            <h4>Files to Create</h4>
+            <ol>
+                <li><code>src/lib/email/index.ts</code> - Public API</li>
+                <li><code>src/lib/email/types.ts</code> - Interfaces</li>
+                <li><code>src/lib/email/provider.ts</code> - Factory</li>
+                <li><code>src/lib/email/validation.ts</code> - Input sanitization</li>
+                <li><code>src/lib/email/rate-limit.ts</code> - Email-specific rate limits</li>
+                <li><code>src/lib/email/providers/console.ts</code></li>
+                <li><code>src/lib/email/providers/smtp.ts</code></li>
+                <li><code>src/lib/email/templates/base.ts</code> - HTML wrapper</li>
+                <li><code>src/lib/email/templates/invitation.ts</code></li>
+                <li><code>src/lib/email/templates/password-reset.ts</code></li>
+                <li><code>src/lib/email/templates/verification.ts</code></li>
+                <li><code>src/lib/auth/verification.ts</code> - Verification logic</li>
+                <li><code>src/lib/auth/password-reset.ts</code> - Reset token logic</li>
+                <li><code>src/server/trpc/routers/password-reset.ts</code> - Reset endpoints</li>
+                <li><code>src/app/(auth)/forgot-password/page.tsx</code></li>
+                <li><code>src/app/(auth)/reset-password/[token]/page.tsx</code></li>
+                <li><code>src/app/(auth)/verify-email/[token]/page.tsx</code></li>
+                <li><code>src/components/ui/verification-banner.tsx</code> - Reminder banner</li>
+            </ol>
+        </div>
+
+        <div class="task-list">
+            <h4>Files to Modify</h4>
+            <ol>
+                <li><code>src/server/db/schema.ts</code> - Add emailVerified, verification tokens</li>
+                <li><code>src/server/trpc/routers/auth.ts</code> - Send verification on register (multi-tenant)</li>
+                <li><code>src/server/trpc/routers/invitation.ts</code> - Check verification before invite</li>
+                <li><code>src/lib/env.ts</code> - Add EMAIL_PROVIDER, EMAIL_FROM</li>
+                <li><code>.env.example</code> - Document new variables</li>
+                <li><code>src/lib/email.ts</code> - Delete (replaced by new module)</li>
+            </ol>
+        </div>
+
+        <div class="task-list">
+            <h4>Database Migration</h4>
+            <ol>
+                <li>Add <code>email_verified</code> boolean to users table</li>
+                <li>Add <code>email_verified_at</code> timestamp to users table</li>
+                <li>Add <code>verification_token</code> column (or separate table)</li>
+                <li>Add <code>verification_token_expires_at</code> column</li>
+                <li>Add <code>password_reset_tokens</code> table (or columns on users)</li>
+            </ol>
+        </div>
+
+        <div class="decision-box">
+            <h4 style="color: var(--color-accent-green);">Ready to Implement</h4>
+            <p>All decisions confirmed:</p>
+            <ul>
+                <li><strong>Provider:</strong> Console + SMTP (SaaS provider deferred)</li>
+                <li><strong>Templates:</strong> Simple inline TypeScript</li>
+                <li><strong>Password reset:</strong> Full implementation</li>
+                <li><strong>Email verification:</strong> Progressive, bypassed in single-tenant</li>
+                <li><strong>Rate limiting:</strong> Per-user and global limits</li>
+            </ul>
+        </div>
+    </div>
+
+</body>
+</html>

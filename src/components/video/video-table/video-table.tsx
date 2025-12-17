@@ -9,7 +9,7 @@ import {
   STATUS_TEXT_COLORS,
   STATUS_LABELS,
 } from '@/lib/constants/status';
-import { formatDueDateCompact } from '@/lib/utils/date';
+import { useDateFormatter } from '@/lib/hooks/use-date-formatter';
 import { announce } from '@/lib/accessibility/aria';
 import styles from './video-table.module.scss';
 
@@ -68,6 +68,7 @@ export function VideoTable({
   className,
   onRowClick,
 }: VideoTableProps) {
+  const { formatDateCompact } = useDateFormatter();
   const [sortColumn, setSortColumn] = useState<SortableColumn>('title');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
@@ -259,7 +260,7 @@ export function VideoTable({
                 </span>
               </td>
               <td className={styles.dueDateCell}>
-                {formatDueDateCompact(video.dueDate)}
+                {formatDateCompact(video.dueDate)}
               </td>
               <td className={styles.categoriesCell}>
                 {video.categories || '—'}

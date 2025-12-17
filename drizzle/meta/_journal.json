@@ -8,6 +8,13 @@
       "when": 1765906668377,
       "tag": "0000_whole_wolfsbane",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1765925813268,
+      "tag": "0001_salty_silver_centurion",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,127 @@
+/**
+ * Preferences Settings Page Styles
+ *
+ * Uses CSS custom properties from the theme system.
+ * Follows ADR-002 styling patterns.
+ *
+ * @see /docs/adrs/002-styling-solution.md
+ */
+
+.container {
+  max-width: var(--container-2xl);
+  margin: 0 auto;
+  padding: var(--spacing-8);
+}
+
+.header {
+  margin-bottom: var(--spacing-8);
+}
+
+.heading {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-foreground);
+  margin: 0 0 var(--spacing-2) 0;
+}
+
+.description {
+  font-size: var(--font-size-base);
+  color: var(--color-muted-foreground);
+  margin: 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  padding: var(--spacing-6);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.sectionHeading {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-foreground);
+  margin: 0 0 var(--spacing-2) 0;
+}
+
+.formGroup {
+  margin-top: var(--spacing-4);
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: var(--spacing-3);
+  justify-content: flex-end;
+  padding-top: var(--spacing-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-12);
+  color: var(--color-muted-foreground);
+  font-size: var(--font-size-base);
+}
+
+.error {
+  padding: var(--spacing-4);
+  background: var(--color-destructive);
+  color: var(--color-destructive-foreground);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+
+  p {
+    margin: 0;
+
+    & + p {
+      margin-top: var(--spacing-2);
+    }
+  }
+}
+
+.errorDetail {
+  font-size: var(--font-size-xs);
+  opacity: 0.9;
+}
+
+.success {
+  padding: var(--spacing-4);
+  background: var(--color-success);
+  color: var(--color-success-foreground);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .container {
+    padding: var(--spacing-4);
+  }
+
+  .section {
+    padding: var(--spacing-4);
+  }
+
+  .actions {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+}

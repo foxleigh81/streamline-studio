@@ -8,6 +8,7 @@ import {
   saveFocus,
   restoreFocus,
 } from '@/lib/accessibility/focus-trap';
+import { useDateFormatter } from '@/lib/hooks/use-date-formatter';
 import styles from './member-list.module.scss';
 
 /**
@@ -56,6 +57,7 @@ export function MemberList({
   onRemove,
   isLoading = false,
 }: MemberListProps) {
+  const { formatDate } = useDateFormatter();
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<{
@@ -67,17 +69,6 @@ export function MemberList({
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
   const isOwner = currentUserRole === 'owner';
-
-  /**
-   * Format the join date
-   */
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    }).format(new Date(date));
-  };
 
   /**
    * Handle role change
@@ -190,7 +181,9 @@ export function MemberList({
                       <span className={styles.roleText}>{member.role}</span>
                     )}
                   </td>
-                  <td className={styles.date}>{formatDate(member.joinedAt)}</td>
+                  <td className={styles.date}>
+                    {formatDate(member.joinedAt) ?? '—'}
+                  </td>
                   {isOwner && (
                     <td className={styles.actions}>
                       {!isCurrentUser && (

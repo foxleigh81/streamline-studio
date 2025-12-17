@@ -11,6 +11,29 @@ import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import { testData } from '../helpers/fixtures';
 
 /**
+ * Complete registration form submission (handles both first-user and subsequent-user flows)
+ */
+async function submitRegistration(page: Page) {
+  const createAccountBtn = page.getByRole('button', {
+    name: /create account/i,
+  });
+  const continueBtn = page.getByRole('button', {
+    name: /continue to channel setup/i,
+  });
+
+  if (await continueBtn.isVisible().catch(() => false)) {
+    // First-user flow
+    await continueBtn.click();
+    await page.getByLabel(/channel name/i).waitFor({ state: 'visible' });
+    await page.getByLabel(/channel name/i).fill('E2E Test Channel');
+    await page.getByRole('button', { name: /create my channel/i }).click();
+  } else {
+    // Subsequent-user flow
+    await createAccountBtn.click();
+  }
+}
+
+/**
  * Helper to create a test video and navigate to its document editor
  */
 async function createTestVideoAndNavigate(page: Page): Promise<string> {
@@ -106,10 +129,8 @@ test.describe.skip('Document Conflict Resolution', () => {
       await page1.getByLabel(/email/i).first().fill(uniqueEmail);
       await page1.getByLabel(/^password$/i).fill('testpassword123');
       await page1.getByLabel(/confirm password/i).fill('testpassword123');
-      const regBtn1 = page1.getByRole('button', { name: /create account/i });
-      await regBtn1.waitFor({ state: 'visible' });
-      await regBtn1.click();
-      await page1.waitForURL('/');
+      await submitRegistration(page1);
+      await page1.waitForURL(/\/t\/workspace/);
 
       // Create a test video and navigate to script editor
       const videoId = await createTestVideoAndNavigate(page1);
@@ -194,10 +215,8 @@ test.describe.skip('Document Conflict Resolution', () => {
       await page1.getByLabel(/email/i).first().fill(uniqueEmail);
       await page1.getByLabel(/^password$/i).fill('testpassword123');
       await page1.getByLabel(/confirm password/i).fill('testpassword123');
-      const regBtn2 = page1.getByRole('button', { name: /create account/i });
-      await regBtn2.waitFor({ state: 'visible' });
-      await regBtn2.click();
-      await page1.waitForURL('/');
+      await submitRegistration(page1);
+      await page1.waitForURL(/\/t\/workspace/);
 
       const videoId = await createTestVideoAndNavigate(page1);
 
@@ -265,10 +284,8 @@ test.describe.skip('Document Conflict Resolution', () => {
       await page1.getByLabel(/email/i).first().fill(uniqueEmail);
       await page1.getByLabel(/^password$/i).fill('testpassword123');
       await page1.getByLabel(/confirm password/i).fill('testpassword123');
-      const regBtn3 = page1.getByRole('button', { name: /create account/i });
-      await regBtn3.waitFor({ state: 'visible' });
-      await regBtn3.click();
-      await page1.waitForURL('/');
+      await submitRegistration(page1);
+      await page1.waitForURL(/\/t\/workspace/);
 
       const videoId = await createTestVideoAndNavigate(page1);
 
@@ -337,10 +354,8 @@ test.describe.skip('Document Conflict Resolution', () => {
       await page1.getByLabel(/email/i).first().fill(uniqueEmail);
       await page1.getByLabel(/^password$/i).fill('testpassword123');
       await page1.getByLabel(/confirm password/i).fill('testpassword123');
-      const regBtn4 = page1.getByRole('button', { name: /create account/i });
-      await regBtn4.waitFor({ state: 'visible' });
-      await regBtn4.click();
-      await page1.waitForURL('/');
+      await submitRegistration(page1);
+      await page1.waitForURL(/\/t\/workspace/);
 
       const videoId = await createTestVideoAndNavigate(page1);
 

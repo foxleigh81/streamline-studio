@@ -4,12 +4,61 @@
  * Tests the complete registration flow including form validation,
  * successful registration, and error handling.
  *
+ * Handles both first-user and subsequent-user flows:
+ * - First user: 2-step flow (Account → Channel Setup)
+ * - Subsequent users: 1-step flow (Account only)
+ *
  * @see /docs/adrs/005-testing-strategy.md
  * @see /docs/adrs/014-security-architecture.md
  */
 
+import type { Page } from '@playwright/test';
 import { test, expect } from '@playwright/test';
 import { testData } from '../helpers/fixtures';
+
+/**
+ * Get the submit button on the registration form (handles both flow variants)
+ */
+async function getSubmitButton(page: Page) {
+  const createAccountBtn = page.getByRole('button', {
+    name: /create account/i,
+  });
+  const continueBtn = page.getByRole('button', {
+    name: /continue to channel setup/i,
+  });
+
+  // Return whichever button is visible
+  if (await continueBtn.isVisible().catch(() => false)) {
+    return continueBtn;
+  }
+  return createAccountBtn;
+}
+
+/**
+ * Complete the registration form submission (handles both flow variants)
+ */
+async function submitRegistration(page: Page) {
+  const createAccountBtn = page.getByRole('button', {
+    name: /create account/i,
+  });
+  const continueBtn = page.getByRole('button', {
+    name: /continue to channel setup/i,
+  });
+
+  // Check which flow we're in
+  if (await continueBtn.isVisible().catch(() => false)) {
+    // First-user flow: click continue, then complete channel setup
+    await continueBtn.click();
+
+    // Wait for step 2
+    await page.getByLabel(/channel name/i).waitFor({ state: 'visible' });
+    await page.getByLabel(/channel name/i).fill('E2E Test Channel');
+    await page.getByRole('button', { name: /create my channel/i }).click();
+  } else {
+    // Subsequent-user flow: direct submission
+    await createAccountBtn.click();
+  }
+}
 
 test.describe('User Registration Flow', () => {
   test.beforeEach(async ({ page }) => {
@@ -21,10 +70,12 @@ test.describe('User Registration Flow', () => {
     test('renders registration form with all required fields', async ({
       page,
     }) => {
-      // Verify heading
-      await expect(
-        page.getByRole('heading', { level: 2, name: /create account/i })
-      ).toBeVisible();
+      // Verify heading (either "Create Account" or "Welcome! Create Your Account" for first user)
+      const heading = page.getByRole('heading', { level: 2 });
+      await expect(heading).toBeVisible();
+      const headingText = await heading.textContent();
+      expect(headingText?.toLowerCase()).toContain('create');
+      expect(headingText?.toLowerCase()).toContain('account');
 
       // Verify form fields
       await expect(page.getByLabel(/name/i)).toBeVisible();
@@ -32,10 +83,9 @@ test.describe('User Registration Flow', () => {
       await expect(page.getByLabel(/^password$/i)).toBeVisible();
       await expect(page.getByLabel(/confirm password/i)).toBeVisible();
 
-      // Verify submit button
-      await expect(
-        page.getByRole('button', { name: /create account/i })
-      ).toBeVisible();
+      // Verify submit button (either "Create Account" or "Continue to Channel Setup")
+      const submitButton = await getSubmitButton(page);
+      await expect(submitButton).toBeVisible();
 
       // Verify link to login
       await expect(page.getByRole('link', { name: /sign in/i })).toBeVisible();
@@ -55,9 +105,7 @@ test.describe('User Registration Flow', () => {
       await page.getByLabel(/confirm password/i).fill('testpassword123');
 
       // Submit form
-      const submitButton = page.getByRole('button', {
-        name: /create account/i,
-      });
+      const submitButton = await getSubmitButton(page);
       await submitButton.waitFor({ state: 'visible' });
       await submitButton.click();
 
@@ -72,9 +120,7 @@ test.describe('User Registration Flow', () => {
         .fill('testpassword123');
       await page.getByLabel(/confirm password/i).fill('testpassword123');
 
-      const submitButton = page.getByRole('button', {
-        name: /create account/i,
-      });
+      const submitButton = await getSubmitButton(page);
       await submitButton.waitFor({ state: 'visible' });
       await submitButton.click();
 
@@ -84,9 +130,7 @@ test.describe('User Registration Flow', () => {
     test('shows error for empty password', async ({ page }) => {
       await page.getByLabel(/email/i).first().fill('test@example.com');
 
-      const submitButton = page.getByRole('button', {
-        name: /create account/i,
-      });
+      const submitButton = await getSubmitButton(page);
       await submitButton.waitFor({ state: 'visible' });
       await submitButton.click();
 
@@ -100,9 +144,7 @@ test.describe('User Registration Flow', () => {
       await page.getByLabel('Password', { exact: true }).fill('short');
       await page.getByLabel(/confirm password/i).fill('short');
 
-      const submitButton = page.getByRole('button', {
-        name: /create account/i,
-      });
+      const submitButton = await getSubmitButton(page);
       await submitButton.waitFor({ state: 'visible' });
       await submitButton.click();
 
@@ -114,9 +156,7 @@ test.describe('User Registration Flow', () => {
       await page.getByLabel('Password', { exact: true }).fill('password123');
       await page.getByLabel(/confirm password/i).fill('differentpassword');
 
-      const submitButton = page.getByRole('button', {
-        name: /create account/i,
-      });
+      const submitButton = await getSubmitButton(page);
       await submitButton.waitFor({ state: 'visible' });
       await submitButton.click();
 
@@ -132,15 +172,12 @@ test.describe('User Registration Flow', () => {
         .fill('testpassword123');
       await page.getByLabel(/confirm password/i).fill('testpassword123');
 
-      const submitButton = page.getByRole('button', {
-        name: /create account/i,
-      });
-      await submitButton.waitFor({ state: 'visible' });
-      await submitButton.click();
+      // Submit registration (handles both first-user and subsequent-user flows)
+      await submitRegistration(page);
 
-      // Should either redirect to dashboard or show success
+      // Should either redirect to teamspace or complete channel setup
       // Not require name field
-      await expect(page).not.toHaveURL('/register', { timeout: 5000 });
+      await expect(page).not.toHaveURL('/register', { timeout: 10000 });
     });
   });
 
@@ -155,7 +192,8 @@ test.describe('User Registration Flow', () => {
         .fill('testpassword123');
       await page.getByLabel(/confirm password/i).fill('testpassword123');
 
-      await page.getByRole('button', { name: /create account/i }).click();
+      // Submit registration (handles both first-user and subsequent-user flows)
+      await submitRegistration(page);
 
       // Should redirect to teamspace dashboard
       await expect(page).toHaveURL(/\/t\/workspace/, { timeout: 10000 });
@@ -173,9 +211,7 @@ test.describe('User Registration Flow', () => {
 
       // Click and wait for either loading state OR successful redirect
       // The loading state is brief, so we race between checking state and redirect
-      const submitButton = page.getByRole('button', {
-        name: /create account/i,
-      });
+      const submitButton = await getSubmitButton(page);
 
       // Use Promise.race to check for either loading state OR redirect
       // This handles the race condition where redirect happens before we can check
@@ -198,11 +234,16 @@ test.describe('User Registration Flow', () => {
           }
           return true; // Button gone means form submitted
         }),
-        // Option 2: Wait for redirect (successful submission)
-        page.waitForURL('/', { timeout: 10000 }),
+        // Option 2: Wait for step 2 (first-user flow) or redirect (subsequent-user)
+        Promise.race([
+          page
+            .getByLabel(/channel name/i)
+            .waitFor({ state: 'visible', timeout: 10000 }),
+          page.waitForURL('/', { timeout: 10000 }),
+        ]),
       ]);
 
-      // If we get here, either loading state was shown or redirect happened
+      // If we get here, either loading state was shown or form proceeded
       // Both are valid outcomes - this is a smoke test
     });
 
@@ -216,7 +257,8 @@ test.describe('User Registration Flow', () => {
         .fill('testpassword123');
       await page.getByLabel(/confirm password/i).fill('testpassword123');
 
-      await page.getByRole('button', { name: /create account/i }).click();
+      // Submit registration (handles both first-user and subsequent-user flows)
+      await submitRegistration(page);
 
       // Form should either redirect or show disabled fields briefly
       // The disabled state is very brief so we just verify form was submitted
@@ -258,17 +300,14 @@ test.describe('User Registration Flow', () => {
       await page.keyboard.press('Tab'); // Confirm password field
       await page.keyboard.press('Tab'); // Submit button
 
-      // Submit button should be focused
-      await expect(
-        page.getByRole('button', { name: /create account/i })
-      ).toBeFocused();
+      // Submit button should be focused (either variant)
+      const submitButton = await getSubmitButton(page);
+      await expect(submitButton).toBeFocused();
     });
 
     test('error messages are announced to screen readers', async ({ page }) => {
       // Submit empty form to trigger errors
-      const submitButton = page.getByRole('button', {
-        name: /create account/i,
-      });
+      const submitButton = await getSubmitButton(page);
       await submitButton.waitFor({ state: 'visible' });
       await submitButton.click();
 

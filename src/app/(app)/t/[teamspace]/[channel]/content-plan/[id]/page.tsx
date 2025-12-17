@@ -9,6 +9,7 @@ import { VideoDeleteDialog } from '@/components/video/video-delete-dialog';
 import { DocumentEditor } from '@/components/document/document-editor/document-editor';
 import { Button } from '@/components/ui/button';
 import { STATUS_COLORS, STATUS_LABELS } from '@/lib/constants/status';
+import { useDateFormatter } from '@/lib/hooks/use-date-formatter';
 import styles from './video-detail-page.module.scss';
 
 /**
@@ -18,6 +19,7 @@ import styles from './video-detail-page.module.scss';
  * Allows editing video metadata and deleting the video.
  */
 export default function VideoDetailPage() {
+  const { formatDate } = useDateFormatter();
   const params = useParams<{
     teamspace: string;
     channel: string;
@@ -140,23 +142,6 @@ export default function VideoDetailPage() {
   };
 
   /**
-   * Format date for display
-   */
-  const formatDate = (date: string | Date | null): string => {
-    if (!date) return 'Not set';
-    try {
-      const d = typeof date === 'string' ? new Date(date) : date;
-      return d.toLocaleDateString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      });
-    } catch {
-      return 'Invalid date';
-    }
-  };
-
-  /**
    * Get category details
    */
   const videoCategories = categories.filter((cat) =>
@@ -231,28 +216,28 @@ export default function VideoDetailPage() {
           <div className={styles.metaItem}>
             <span className={styles.metaLabel}>Due Date:</span>
             <span className={styles.metaValue}>
-              {formatDate(video.dueDate)}
+              {formatDate(video.dueDate) ?? 'Not set'}
             </span>
           </div>
 
           <div className={styles.metaItem}>
             <span className={styles.metaLabel}>Publish Date:</span>
             <span className={styles.metaValue}>
-              {formatDate(video.publishDate)}
+              {formatDate(video.publishDate) ?? 'Not set'}
             </span>
           </div>
 
           <div className={styles.metaItem}>
             <span className={styles.metaLabel}>Created:</span>
             <span className={styles.metaValue}>
-              {formatDate(video.createdAt)}
+              {formatDate(video.createdAt) ?? 'Not set'}
             </span>
           </div>
 
           <div className={styles.metaItem}>
             <span className={styles.metaLabel}>Updated:</span>
             <span className={styles.metaValue}>
-              {formatDate(video.updatedAt)}
+              {formatDate(video.updatedAt) ?? 'Not set'}
             </span>
           </div>
         </div>

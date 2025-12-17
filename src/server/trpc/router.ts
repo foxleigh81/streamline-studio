@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { router, publicProcedure } from './trpc';
 import { authRouter } from './routers/auth';
-import { setupRouter } from './routers/setup';
 import { videoRouter } from './routers/video';
 import { categoryRouter } from './routers/category';
 import { documentRouter } from './routers/document';
@@ -51,16 +50,10 @@ export const appRouter = router({
   /**
    * Authentication router
    * Handles register, login, logout
+   * Includes unified registration flow (first-user and subsequent users)
    * @see /docs/adrs/007-api-and-auth.md
    */
   auth: authRouter,
-
-  /**
-   * Setup router
-   * Handles initial setup wizard
-   * @see Phase 4.3 - ADR-011
-   */
-  setup: setupRouter,
 
   /**
    * Video router

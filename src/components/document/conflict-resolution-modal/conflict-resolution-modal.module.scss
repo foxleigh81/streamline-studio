@@ -7,7 +7,9 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: var(--color-overlay);
+  background: var(--modal-overlay-bg);
+  backdrop-filter: blur(var(--modal-overlay-blur));
+  -webkit-backdrop-filter: blur(var(--modal-overlay-blur));
   z-index: var(--z-modal-backdrop);
   animation: fadeIn var(--duration-moderate) var(--ease-in);
 }
@@ -35,10 +37,14 @@
   max-width: 600px;
   width: 90%;
   padding: var(--spacing-6);
-  background: var(--color-background);
-  border: var(--border-width-thin) solid var(--color-border);
+  background: var(--modal-content-bg);
+  backdrop-filter: blur(var(--modal-content-blur))
+    saturate(var(--modal-content-saturate));
+  -webkit-backdrop-filter: blur(var(--modal-content-blur))
+    saturate(var(--modal-content-saturate));
+  border: 1px solid var(--modal-content-border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--modal-content-shadow);
   z-index: var(--z-modal);
   animation: slideIn var(--duration-moderate) var(--ease-out);
 

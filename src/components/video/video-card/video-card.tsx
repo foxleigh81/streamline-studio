@@ -8,7 +8,7 @@ import {
   STATUS_TEXT_COLORS,
   STATUS_LABELS,
 } from '@/lib/constants/status';
-import { formatDueDate } from '@/lib/utils/date';
+import { useDateFormatter } from '@/lib/hooks/use-date-formatter';
 import styles from './video-card.module.scss';
 
 /**
@@ -55,6 +55,8 @@ export function VideoCard({
   className,
   teamspaceSlug,
 }: VideoCardProps) {
+  const { formatDate } = useDateFormatter();
+
   /**
    * Handle card click
    */
@@ -66,7 +68,7 @@ export function VideoCard({
   };
 
   const cardClasses = [styles.card, className].filter(Boolean).join(' ');
-  const formattedDueDate = formatDueDate(dueDate);
+  const formattedDueDate = formatDate(dueDate);
 
   const effectiveTeamspace = teamspaceSlug ?? 'workspace';
 
