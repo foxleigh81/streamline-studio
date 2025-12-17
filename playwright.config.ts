@@ -13,6 +13,11 @@ import { defineConfig, devices } from '@playwright/test';
  * - CI uses 2 workers for better parallelization
  * - CI retries reduced to 1 (from 2) to avoid excessive re-runs
  *
+ * CI Parity (Dec 2025):
+ * - Global setup validates environment before tests
+ * - Use `npm run test:e2e:ci-mode` to replicate CI locally
+ * - See .env.ci.example for exact CI environment variables
+ *
  * @see /docs/adrs/005-testing-strategy.md
  */
 export default defineConfig({
@@ -21,6 +26,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 2 : 4,
+
+  // Global setup validates environment before running tests
+  globalSetup: './e2e/global-setup.ts',
   reporter: [
     ['html', { outputFolder: 'playwright-report' }],
     ['json', { outputFile: 'playwright-results.json' }],

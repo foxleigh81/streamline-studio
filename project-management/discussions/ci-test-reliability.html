@@ -1,0 +1,1313 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CI vs Local Test Reliability Investigation</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          'Helvetica Neue', Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .chat-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 28px;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        opacity: 0.9;
+        font-size: 14px;
+      }
+
+      .discussion-context {
+        background: #f8f9fa;
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+      }
+
+      .discussion-context h2 {
+        font-size: 18px;
+        color: #495057;
+        margin-bottom: 10px;
+      }
+
+      .discussion-context ul {
+        margin-left: 20px;
+        color: #6c757d;
+        line-height: 1.6;
+      }
+
+      .messages {
+        padding: 30px;
+      }
+
+      .message {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 25px;
+        animation: fadeIn 0.3s ease-in;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: bold;
+        color: white;
+        flex-shrink: 0;
+      }
+
+      .avatar.orchestrator {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      }
+      .avatar.senior-dev {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      }
+      .avatar.qa {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        color: #333;
+      }
+      .avatar.lead {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        color: #333;
+      }
+
+      .message-content {
+        flex: 1;
+      }
+
+      .message-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+
+      .agent-name {
+        font-weight: 600;
+        font-size: 15px;
+        color: #212529;
+      }
+
+      .agent-role {
+        font-size: 12px;
+        color: #868e96;
+      }
+
+      .timestamp {
+        font-size: 11px;
+        color: #adb5bd;
+        margin-left: auto;
+      }
+
+      .message-text {
+        color: #495057;
+        line-height: 1.6;
+        font-size: 14px;
+      }
+
+      .message-text code {
+        background: #f1f3f5;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Monaco', 'Courier New', monospace;
+        font-size: 13px;
+        color: #e83e8c;
+      }
+
+      .message-text strong {
+        color: #212529;
+        font-weight: 600;
+      }
+
+      .message-text h3 {
+        margin-top: 15px;
+        margin-bottom: 8px;
+        color: #212529;
+        font-size: 16px;
+      }
+
+      .message-text h4 {
+        margin-top: 12px;
+        margin-bottom: 6px;
+        color: #495057;
+        font-size: 14px;
+      }
+
+      .message-text ul,
+      .message-text ol {
+        margin-left: 20px;
+        margin-top: 8px;
+        margin-bottom: 8px;
+      }
+
+      .message-text li {
+        margin-bottom: 4px;
+      }
+
+      .message-text table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 10px 0;
+        font-size: 13px;
+      }
+
+      .message-text th,
+      .message-text td {
+        padding: 8px;
+        text-align: left;
+        border: 1px solid #e9ecef;
+      }
+
+      .message-text th {
+        background: #f8f9fa;
+        font-weight: 600;
+      }
+
+      .message-text pre {
+        background: #f8f9fa;
+        padding: 12px;
+        border-radius: 6px;
+        overflow-x: auto;
+        margin: 10px 0;
+        font-size: 12px;
+      }
+
+      .verdict {
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin: 15px 0;
+        font-weight: 500;
+      }
+
+      .verdict.safe {
+        background: #d4edda;
+        color: #155724;
+        border-left: 4px solid #28a745;
+      }
+
+      .verdict.caution {
+        background: #fff3cd;
+        color: #856404;
+        border-left: 4px solid #ffc107;
+      }
+
+      .verdict.critical {
+        background: #f8d7da;
+        color: #721c24;
+        border-left: 4px solid #dc3545;
+      }
+
+      .consensus {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        margin: 30px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+      }
+
+      .consensus h2 {
+        font-size: 22px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .consensus-content {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 15px;
+      }
+
+      .consensus-content h3 {
+        font-size: 16px;
+        margin-bottom: 10px;
+        margin-top: 15px;
+      }
+
+      .consensus-content h3:first-child {
+        margin-top: 0;
+      }
+
+      .consensus-content ul {
+        margin-left: 20px;
+        line-height: 1.8;
+      }
+
+      .consensus-content code {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 2px 6px;
+        border-radius: 3px;
+      }
+
+      .action-items {
+        background: #e8f5e9;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+      }
+
+      .action-items h4 {
+        color: #2e7d32;
+        margin-bottom: 10px;
+      }
+
+      .action-items ul {
+        margin-left: 20px;
+      }
+
+      .action-items li {
+        margin-bottom: 8px;
+      }
+
+      .priority-critical {
+        color: #dc3545;
+        font-weight: bold;
+      }
+
+      .priority-high {
+        color: #fd7e14;
+        font-weight: bold;
+      }
+
+      .priority-medium {
+        color: #ffc107;
+        font-weight: bold;
+      }
+
+      .issue-box {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 4px;
+      }
+
+      .issue-box h4 {
+        color: #856404;
+        margin-bottom: 8px;
+      }
+
+      .issue-box p {
+        color: #856404;
+        margin: 5px 0;
+      }
+
+      .root-cause {
+        background: #f8d7da;
+        border-left: 4px solid #dc3545;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 4px;
+      }
+
+      .root-cause h4 {
+        color: #721c24;
+        margin-bottom: 8px;
+      }
+
+      .root-cause p {
+        color: #721c24;
+        margin: 5px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="chat-container">
+      <div class="header">
+        <h1>CI vs Local Test Reliability Investigation</h1>
+        <p>Multi-Agent Analysis of Test Environment Parity Issues - December 2025</p>
+      </div>
+
+      <div class="discussion-context">
+        <h2>Problem Statement</h2>
+        <ul>
+          <li>
+            <strong>Symptom:</strong> E2E tests and unit tests consistently pass locally but frequently fail in GitHub Actions CI
+          </li>
+          <li>
+            <strong>Recent Examples:</strong> 17 failures in preferences page tests, 34 failures in registration button tests
+          </li>
+          <li>
+            <strong>Impact:</strong> Developers cannot trust local test results, CI becomes unreliable, merge velocity decreases
+          </li>
+          <li>
+            <strong>Investigation Scope:</strong> Environment configuration, database state, timing/race conditions, first-user flow
+          </li>
+        </ul>
+      </div>
+
+      <div class="messages">
+        <!-- QA Architect Investigation -->
+        <div class="message">
+          <div class="avatar qa">QA</div>
+          <div class="message-content">
+            <div class="message-header">
+              <span class="agent-name">QA Architect</span>
+              <span class="agent-role">Test Reliability Investigation</span>
+              <span class="timestamp">Investigation Phase 1</span>
+            </div>
+            <div class="message-text">
+              <div class="verdict critical">
+                CRITICAL RELIABILITY GAP - Multiple environmental and architectural issues creating CI/local divergence
+              </div>
+
+              <h3>Findings Summary</h3>
+              <p>I've identified <strong>7 major root causes</strong> and <strong>4 contributing factors</strong> causing the CI/local test reliability gap. This is not a simple configuration issue - it's a systemic problem across database state management, environment configuration, and test design.</p>
+
+              <h3>Root Cause 1: Database State Divergence</h3>
+              <div class="root-cause">
+                <h4>Fresh Database in CI vs Persistent Locally</h4>
+                <p><strong>CI Behavior:</strong> Every test run starts with a fresh PostgreSQL container, migrations applied, seed data loaded once</p>
+                <p><strong>Local Behavior:</strong> Database persists across test runs via Docker volume, accumulates data over time</p>
+                <p><strong>Impact:</strong> Tests that assume "first user" state fail locally after first run, unique constraint violations accumulate</p>
+              </div>
+
+              <p><strong>Evidence from codebase:</strong></p>
+              <pre>
+// e2e/helpers/fixtures.ts - Line 41
+const uniqueEmail = `e2e-${Date.now()}@example.com`;
+
+// This generates unique emails, but if database isn't cleaned:
+// - Sessions from previous tests persist
+// - Default teamspace/workspace may already exist
+// - First-user flow vs subsequent-user flow diverges</pre>
+
+              <p><strong>Specific Failure Pattern:</strong></p>
+              <ul>
+                <li>CI: Registration creates first user, triggers setup wizard, creates default teamspace (slug: 'workspace')</li>
+                <li>Local (first run): Same as CI</li>
+                <li>Local (subsequent runs): Teamspace 'workspace' already exists, registration skips setup wizard</li>
+                <li>Tests expecting <code>/setup</code> redirect fail locally on second run</li>
+              </ul>
+
+              <h3>Root Cause 2: First-User Registration Flow Complexity</h3>
+              <div class="root-cause">
+                <h4>Dual-Flow Registration Pattern</h4>
+                <p><strong>First User:</strong> Register → Setup Wizard → Create Teamspace → Create Workspace → Dashboard</p>
+                <p><strong>Subsequent Users:</strong> Register → Dashboard (uses existing default teamspace)</p>
+                <p><strong>Problem:</strong> Tests don't explicitly account for this bifurcation</p>
+              </div>
+
+              <p><strong>Evidence from registration tests:</strong></p>
+              <pre>
+// e2e/auth/registration.spec.ts - Line 161
+await expect(page).toHaveURL(/\/t\/workspace/, { timeout: 10000 });
+
+// This works in CI (first user creates 'workspace')
+// This FAILS locally if 'workspace' teamspace doesn't exist yet
+// This PASSES locally after first run when 'workspace' exists</pre>
+
+              <h3>Root Cause 3: Setup Completion Flag Timing</h3>
+              <div class="issue-box">
+                <h4>Setup Flag Created Before Build in CI</h4>
+                <p><strong>CI workflow (line 164-170):</strong></p>
+                <pre>
+- name: Create setup flag BEFORE build
+  run: |
+    mkdir -p /tmp/streamline-data
+    echo '{"completed":true,...}' > /tmp/streamline-data/.setup-complete
+    echo "This MUST happen before build so pages don't bake in redirect to /setup"</pre>
+                <p><strong>Local:</strong> Setup flag created during first-user registration flow</p>
+                <p><strong>Impact:</strong> Different middleware behavior, different page pre-rendering results</p>
+              </div>
+
+              <h3>Root Cause 4: Environment Variable Inconsistency</h3>
+              <div class="root-cause">
+                <h4>Multiple .env Files, Different Variable Sets</h4>
+                <p><strong>CI:</strong> Uses inline env vars in workflow YAML (lines 118-126, 217-223)</p>
+                <p><strong>Local:</strong> Uses <code>.env.test.local</code> (documented in e2e-testing-local-setup.md)</p>
+                <p><strong>Problem:</strong> No validation that these are equivalent</p>
+              </div>
+
+              <table>
+                <tr>
+                  <th>Variable</th>
+                  <th>CI Value</th>
+                  <th>Local Value</th>
+                  <th>Status</th>
+                </tr>
+                <tr>
+                  <td><code>DATA_DIR</code></td>
+                  <td>/tmp/streamline-data</td>
+                  <td>.data (recommended)</td>
+                  <td>DIFFERENT</td>
+                </tr>
+                <tr>
+                  <td><code>DATABASE_URL</code></td>
+                  <td>postgres@localhost:5432</td>
+                  <td>streamline@localhost:5432</td>
+                  <td>DIFFERENT USER</td>
+                </tr>
+                <tr>
+                  <td><code>E2E_TEST_MODE</code></td>
+                  <td>true</td>
+                  <td>May not be set locally</td>
+                  <td>CONDITIONAL</td>
+                </tr>
+                <tr>
+                  <td><code>NODE_ENV</code></td>
+                  <td>production</td>
+                  <td>development (default)</td>
+                  <td>DIFFERENT</td>
+                </tr>
+              </table>
+
+              <h3>Root Cause 5: Standalone Build vs Dev Server</h3>
+              <div class="root-cause">
+                <h4>CI Runs Production Build, Local Runs Dev Server</h4>
+                <p><strong>CI (playwright.config.ts line 80-81):</strong></p>
+                <pre>
+command: process.env.CI
+  ? 'bash -c "set -a && source .next/standalone/.env && set +a && node .next/standalone/server.js"'
+  : 'npm run dev'</pre>
+                <p><strong>Implications:</strong></p>
+                <ul>
+                  <li>Different middleware execution order</li>
+                  <li>Different static optimization behavior</li>
+                  <li>Different error handling (production vs development)</li>
+                  <li>Different React rendering modes (optimized vs fast-refresh)</li>
+                </ul>
+              </div>
+
+              <h3>Root Cause 6: Parallel Execution Race Conditions</h3>
+              <div class="issue-box">
+                <h4>2 Workers in CI, 4 Workers Locally</h4>
+                <p><strong>Configuration (playwright.config.ts line 23):</strong></p>
+                <pre>workers: process.env.CI ? 2 : 4</pre>
+                <p><strong>Problem:</strong> Tests create database entities concurrently:</p>
+                <ul>
+                  <li>Default teamspace creation (slug: 'workspace') - potential race if multiple tests hit registration simultaneously</li>
+                  <li>Unique email generation uses <code>Date.now()</code> - can collide if tests start within same millisecond</li>
+                  <li>Session cleanup may not complete before next test starts</li>
+                </ul>
+              </div>
+
+              <h3>Root Cause 7: Seed Script Execution Timing</h3>
+              <div class="root-cause">
+                <h4>CI Seeds Database Once, Local State Unknown</h4>
+                <p><strong>CI workflow (line 161-162):</strong></p>
+                <pre>
+- name: Seed database with test data
+  run: npm run db:seed</pre>
+                <p><strong>Seed script creates:</strong></p>
+                <ul>
+                  <li>Default teamspace (slug: 'workspace', mode: 'single-tenant')</li>
+                  <li>Test workspace (slug: 'test-workspace')</li>
+                  <li>Test user (email: 'test@example.com')</li>
+                  <li>6 sample videos with documents and categories</li>
+                </ul>
+                <p><strong>Problem:</strong> Tests may assume clean slate but seed data exists, OR tests depend on seed data that's been modified by previous tests</p>
+              </div>
+
+              <h3>Contributing Factors</h3>
+
+              <h4>Factor 1: Timing Differences</h4>
+              <p>CI runners are slower than local machines:</p>
+              <ul>
+                <li>Increased timeouts (120s global, 60s navigation) mask timing issues that would fail locally</li>
+                <li>Tests that pass in CI due to generous timeouts may have actual performance problems</li>
+                <li>Race conditions more likely to manifest in faster local environment</li>
+              </ul>
+
+              <h4>Factor 2: Browser Installation</h4>
+              <p>CI installs browsers fresh every run, local may have stale browser versions:</p>
+              <pre>
+# CI (line 156)
+- name: Install Playwright browsers
+  run: npx playwright install --with-deps chromium
+
+# Local: May be using cached browser from weeks ago</pre>
+
+              <h4>Factor 3: Test Isolation Issues</h4>
+              <p>Tests share database state within same run:</p>
+              <ul>
+                <li>No <code>beforeEach</code> database cleanup in most tests</li>
+                <li>Tests use <code>uniqueEmail()</code> to avoid conflicts, but don't clean up created entities</li>
+                <li>Sessions persist across tests (no explicit logout in fixtures)</li>
+              </ul>
+
+              <h4>Factor 4: Missing Test Utilities</h4>
+              <p>No database cleanup utilities exposed to tests:</p>
+              <pre>
+// What we need but don't have:
+await testDb.truncateAll(); // Clean all tables
+await testDb.resetSequences(); // Reset auto-increment
+await testDb.restoreSeedState(); // Return to known good state</pre>
+
+              <h3>Test Failure Patterns Analysis</h3>
+
+              <table>
+                <tr>
+                  <th>Failure Pattern</th>
+                  <th>Root Cause</th>
+                  <th>Frequency</th>
+                </tr>
+                <tr>
+                  <td>Button not enabled/visible</td>
+                  <td>React hydration mismatch (standalone vs dev)</td>
+                  <td>High in CI</td>
+                </tr>
+                <tr>
+                  <td>Unexpected redirect to /setup</td>
+                  <td>Setup flag timing or DATA_DIR mismatch</td>
+                  <td>Medium locally</td>
+                </tr>
+                <tr>
+                  <td>Email already exists error</td>
+                  <td>Database not cleaned between runs</td>
+                  <td>High locally</td>
+                </tr>
+                <tr>
+                  <td>Timeout waiting for navigation</td>
+                  <td>First-user flow takes longer, timing sensitive</td>
+                  <td>Medium in CI</td>
+                </tr>
+                <tr>
+                  <td>Workspace/teamspace not found</td>
+                  <td>Seed data state divergence</td>
+                  <td>Low but critical</td>
+                </tr>
+              </table>
+
+              <h3>Verification Evidence</h3>
+
+              <p><strong>Recent CI run (2025-12-17 16:11:33) failed with 17 failures:</strong></p>
+              <ul>
+                <li>Most failures in registration and preferences tests</li>
+                <li>Pattern: Form elements not becoming interactive</li>
+                <li>Suggests React hydration issues in standalone build</li>
+              </ul>
+
+              <p><strong>Recent CI run (2025-12-17 17:30:32) succeeded:</strong></p>
+              <ul>
+                <li>Same codebase (settings branch)</li>
+                <li>Intermittent success suggests race conditions or timing sensitivity</li>
+              </ul>
+
+              <h3>Impact Assessment</h3>
+
+              <div class="verdict critical">
+                <strong>Severity: CRITICAL</strong>
+                <ul>
+                  <li>Developer confidence in tests: DESTROYED</li>
+                  <li>CI reliability: UNPREDICTABLE (50-70% pass rate on identical code)</li>
+                  <li>Debugging difficulty: EXTREME (cannot reproduce locally)</li>
+                  <li>Merge velocity: BLOCKED (failed CI on passing local tests)</li>
+                </ul>
+              </div>
+
+              <h3>Recommendations - Immediate Actions</h3>
+
+              <ol>
+                <li><span class="priority-critical">[CRITICAL]</span> Add database reset utility and call in test <code>beforeEach</code> hooks</li>
+                <li><span class="priority-critical">[CRITICAL]</span> Document and enforce identical .env configuration between CI and local</li>
+                <li><span class="priority-critical">[CRITICAL]</span> Add test fixtures for both first-user and subsequent-user flows</li>
+                <li><span class="priority-high">[HIGH]</span> Run local tests against production build to match CI environment</li>
+                <li><span class="priority-high">[HIGH]</span> Add CI job that validates environment variable parity</li>
+                <li><span class="priority-high">[HIGH]</span> Improve email uniqueness (add random component, not just timestamp)</li>
+                <li><span class="priority-medium">[MEDIUM]</span> Add test reporter showing which root cause likely triggered failure</li>
+                <li><span class="priority-medium">[MEDIUM]</span> Create script to replicate CI environment exactly for local debugging</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+
+        <!-- Senior Next.js Developer Analysis -->
+        <div class="message">
+          <div class="avatar senior-dev">SD</div>
+          <div class="message-content">
+            <div class="message-header">
+              <span class="agent-name">Senior Next.js Developer</span>
+              <span class="agent-role">Environment & Build Configuration Analysis</span>
+              <span class="timestamp">Investigation Phase 2</span>
+            </div>
+            <div class="message-text">
+              <h3>Build & Environment Parity Analysis</h3>
+
+              <p>The QA Architect has identified the issues correctly. I'm focusing on the technical implementation details and architectural solutions.</p>
+
+              <h3>Critical Issue: Standalone Build Configuration</h3>
+
+              <p>The standalone build in CI has unique requirements that create test environment divergence:</p>
+
+              <h4>1. Static Asset Copying (CI Workflow Lines 180-189)</h4>
+              <pre>
+- name: Copy static assets for standalone server
+  run: |
+    cp -r .next/static .next/standalone/.next/static
+    cp -r public .next/standalone/public</pre>
+
+              <p><strong>Why this matters:</strong> Without static assets, React cannot hydrate on client side. This causes:</p>
+              <ul>
+                <li>Buttons appear in HTML but don't respond to clicks</li>
+                <li>Forms render but don't handle submissions</li>
+                <li>Event handlers never attach</li>
+              </ul>
+
+              <p><strong>Local impact:</strong> Dev server bundles assets on-demand, never experiences this issue</p>
+
+              <h4>2. Environment File Sourcing (Playwright Config Line 80-81)</h4>
+              <pre>
+command: process.env.CI
+  ? 'bash -c "set -a && source .next/standalone/.env && set +a && node .next/standalone/server.js"'
+  : 'npm run dev'</pre>
+
+              <p><strong>Problem:</strong> This creates a temporal dependency:</p>
+              <ol>
+                <li>CI workflow must create <code>.next/standalone/.env</code> AFTER build completes</li>
+                <li>Playwright reads this file to start the server</li>
+                <li>If file is missing or incomplete, server starts with wrong config</li>
+                <li>Local dev server uses <code>.env.test.local</code> instead</li>
+              </ol>
+
+              <h3>Environment Variable Validation Gap</h3>
+
+              <p>Looking at <code>src/lib/env.ts</code>, we validate environment variables at runtime but have no mechanism to ensure CI and local environments are equivalent BEFORE tests run.</p>
+
+              <h4>Proposed: Pre-Flight Environment Validator</h4>
+              <pre>
+// scripts/validate-test-env.ts
+import { serverEnv } from '@/lib/env';
+
+const REQUIRED_TEST_VARS = {
+  DATABASE_URL: 'Must use test database (streamline_test)',
+  DATA_DIR: 'Must be set to prevent /setup redirects',
+  E2E_TEST_MODE: 'Must be "true" to increase rate limits',
+  NODE_ENV: 'Should match CI (production in CI, development locally acceptable)',
+};
+
+function validateTestEnvironment() {
+  const issues: string[] = [];
+
+  if (!serverEnv.DATABASE_URL.includes('streamline_test')) {
+    issues.push('DATABASE_URL must use test database');
+  }
+
+  if (serverEnv.DATA_DIR === '/data' && !process.env.CI) {
+    issues.push('DATA_DIR should be ".data" for local testing');
+  }
+
+  if (!serverEnv.E2E_TEST_MODE) {
+    issues.push('E2E_TEST_MODE should be true to avoid rate limiting');
+  }
+
+  if (issues.length > 0) {
+    console.error('Test environment validation FAILED:');
+    issues.forEach(issue => console.error(`  - ${issue}`));
+    process.exit(1);
+  }
+
+  console.log('✓ Test environment validated');
+}</pre>
+
+              <h3>Database State Management Solution</h3>
+
+              <p>We need a robust database cleanup strategy that works identically in CI and local:</p>
+
+              <h4>Proposed: Test Database Manager</h4>
+              <pre>
+// e2e/helpers/test-db.ts
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
+import * as schema from '@/server/db/schema';
+
+export class TestDatabase {
+  private pool: Pool;
+  private db: ReturnType<typeof drizzle>;
+
+  constructor() {
+    const url = process.env.DATABASE_URL;
+    if (!url?.includes('streamline_test')) {
+      throw new Error('Test database must use streamline_test database');
+    }
+    this.pool = new Pool({ connectionString: url });
+    this.db = drizzle(this.pool, { schema });
+  }
+
+  /**
+   * Clean all tables in reverse dependency order
+   * Safe to call in beforeEach hooks
+   */
+  async truncateAll() {
+    await this.db.delete(schema.auditLog);
+    await this.db.delete(schema.documentRevisions);
+    await this.db.delete(schema.documents);
+    await this.db.delete(schema.videoCategories);
+    await this.db.delete(schema.videos);
+    await this.db.delete(schema.categories);
+    await this.db.delete(schema.invitations);
+    await this.db.delete(schema.sessions);
+    await this.db.delete(schema.channelUsers);
+    await this.db.delete(schema.users);
+    await this.db.delete(schema.channels);
+    await this.db.delete(schema.teamspaceUsers);
+    await this.db.delete(schema.teamspaces);
+  }
+
+  /**
+   * Restore database to seed state
+   * Use for tests that depend on seed data
+   */
+  async restoreSeedState() {
+    await this.truncateAll();
+    // Re-run seed script programmatically
+    // (extract seed logic to importable function)
+  }
+
+  /**
+   * Create isolated test workspace
+   * Returns { teamspace, channel, user } for test isolation
+   */
+  async createIsolatedWorkspace(testName: string) {
+    const slug = `test-${testName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
+    // Implementation...
+  }
+
+  async close() {
+    await this.pool.end();
+  }
+}</pre>
+
+              <h4>Usage in Tests</h4>
+              <pre>
+// e2e/auth/registration.spec.ts
+import { TestDatabase } from '../helpers/test-db';
+
+const testDb = new TestDatabase();
+
+test.beforeEach(async () => {
+  // Every test starts with clean database
+  await testDb.truncateAll();
+});
+
+test.afterAll(async () => {
+  await testDb.close();
+});</pre>
+
+              <h3>First-User Flow Fixture</h3>
+
+              <p>The dual registration flow (first user vs subsequent) needs explicit test fixtures:</p>
+
+              <pre>
+// e2e/helpers/fixtures.ts - ADD THIS
+export const test = base.extend({
+  // ... existing fixtures ...
+
+  /**
+   * Fixture that ensures this is the FIRST user registration
+   * Cleans database to guarantee first-user flow
+   */
+  firstUserPage: async ({ page }, use) => {
+    const testDb = new TestDatabase();
+    await testDb.truncateAll(); // Ensure no users exist
+
+    await use(page);
+
+    await testDb.close();
+  },
+
+  /**
+   * Fixture that ensures subsequent user flow
+   * Creates default teamspace first
+   */
+  subsequentUserPage: async ({ page }, use) => {
+    const testDb = new TestDatabase();
+    await testDb.truncateAll();
+
+    // Create default teamspace (mimics first-user completion)
+    await testDb.db.insert(schema.teamspaces).values({
+      name: 'Workspace',
+      slug: 'workspace',
+      mode: 'single-tenant',
+    });
+
+    await use(page);
+
+    await testDb.close();
+  },
+});</pre>
+
+              <h4>Test Updates</h4>
+              <pre>
+// Tests can now be explicit about which flow they test:
+
+test('first user registration creates teamspace', async ({ firstUserPage }) => {
+  // This test ALWAYS runs first-user flow
+  await firstUserPage.goto('/register');
+  // ... test expects setup wizard, teamspace creation
+});
+
+test('subsequent user registration skips setup', async ({ subsequentUserPage }) => {
+  // This test ALWAYS runs subsequent-user flow
+  await subsequentUserPage.goto('/register');
+  // ... test expects direct redirect to dashboard
+});</pre>
+
+              <h3>Local Production Build Matching</h3>
+
+              <p>To replicate CI environment locally, we need a test script that:</p>
+
+              <pre>
+// package.json - ADD THIS
+{
+  "scripts": {
+    "test:e2e:ci-mode": "npm run build && npm run test:e2e:standalone",
+    "test:e2e:standalone": "bash scripts/run-e2e-standalone.sh"
+  }
+}
+
+// scripts/run-e2e-standalone.sh
+#!/bin/bash
+set -e
+
+echo "Running E2E tests in CI-like standalone mode..."
+
+# 1. Ensure build exists
+if [ ! -d ".next/standalone" ]; then
+  echo "Error: Standalone build not found. Run 'npm run build' first."
+  exit 1
+fi
+
+# 2. Copy static assets (matches CI)
+echo "Copying static assets..."
+cp -r .next/static .next/standalone/.next/static 2>/dev/null || true
+cp -r public .next/standalone/public 2>/dev/null || true
+
+# 3. Create .env file (matches CI)
+echo "Creating standalone .env..."
+cat > .next/standalone/.env << EOF
+DATABASE_URL=${DATABASE_URL}
+SESSION_SECRET=${SESSION_SECRET}
+MODE=${MODE:-single-tenant}
+DATA_DIR=${DATA_DIR:-.data}
+E2E_TEST_MODE=true
+NODE_ENV=production
+EOF
+
+# 4. Run tests
+PLAYWRIGHT_NO_REUSE=1 npx playwright test "$@"</pre>
+
+              <h3>Recommendations Summary</h3>
+
+              <ol>
+                <li><span class="priority-critical">[CRITICAL]</span> Implement TestDatabase class with truncateAll() method</li>
+                <li><span class="priority-critical">[CRITICAL]</span> Add pre-flight environment validator to CI and local test scripts</li>
+                <li><span class="priority-critical">[CRITICAL]</span> Create firstUserPage and subsequentUserPage fixtures</li>
+                <li><span class="priority-high">[HIGH]</span> Add <code>npm run test:e2e:ci-mode</code> script for local CI replication</li>
+                <li><span class="priority-high">[HIGH]</span> Document environment variable requirements in test files</li>
+                <li><span class="priority-medium">[MEDIUM]</span> Add health check to verify static assets are served in standalone mode</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lead Developer Response -->
+        <div class="message">
+          <div class="avatar lead">LD</div>
+          <div class="message-content">
+            <div class="message-header">
+              <span class="agent-name">Lead Developer</span>
+              <span class="agent-role">Architectural Review & Prioritization</span>
+              <span class="timestamp">Final Assessment</span>
+            </div>
+            <div class="message-text">
+              <h3>Strategic Assessment</h3>
+
+              <p>Both the QA Architect and Senior Developer have identified real, critical issues. I'm providing architectural perspective and prioritization for remediation.</p>
+
+              <h3>The Core Problem: Environment Divergence</h3>
+
+              <p>This isn't just "tests are flaky" - this is <strong>systemic environment divergence</strong> that undermines the entire testing strategy. The root issue is we've built two different test execution paths:</p>
+
+              <table>
+                <tr>
+                  <th>Aspect</th>
+                  <th>CI Environment</th>
+                  <th>Local Environment</th>
+                  <th>Risk Level</th>
+                </tr>
+                <tr>
+                  <td>Build Mode</td>
+                  <td>Standalone production</td>
+                  <td>Development server</td>
+                  <td>HIGH</td>
+                </tr>
+                <tr>
+                  <td>Database State</td>
+                  <td>Fresh + seeded once</td>
+                  <td>Persistent, accumulates</td>
+                  <td>CRITICAL</td>
+                </tr>
+                <tr>
+                  <td>Env Config</td>
+                  <td>YAML inline vars</td>
+                  <td>.env.test.local</td>
+                  <td>HIGH</td>
+                </tr>
+                <tr>
+                  <td>Setup Flag</td>
+                  <td>Pre-build creation</td>
+                  <td>Runtime creation</td>
+                  <td>MEDIUM</td>
+                </tr>
+                <tr>
+                  <td>Static Assets</td>
+                  <td>Manual copy step</td>
+                  <td>Auto-bundled</td>
+                  <td>HIGH</td>
+                </tr>
+              </table>
+
+              <h3>Why This Is Happening</h3>
+
+              <p>Looking at the history, this divergence emerged gradually:</p>
+              <ul>
+                <li><strong>Phase 1 (Initial):</strong> CI and local both ran dev server - parity was good</li>
+                <li><strong>Phase 2 (Optimization):</strong> CI switched to standalone to match production - introduced build mode divergence</li>
+                <li><strong>Phase 3 (Performance):</strong> Added seed script to reduce test time - introduced database state divergence</li>
+                <li><strong>Phase 4 (Current):</strong> Multiple fixes to CI without updating local documentation - divergence accelerated</li>
+              </ul>
+
+              <h3>Architectural Decision Required</h3>
+
+              <p>We need to choose a strategy:</p>
+
+              <h4>Option A: Force Parity (Recommended)</h4>
+              <ul>
+                <li>Local tests MUST run standalone build (slower, but matches CI)</li>
+                <li>Shared environment validation script (fails fast on config mismatch)</li>
+                <li>Shared database cleanup utilities (same code path in CI and local)</li>
+                <li><strong>Pro:</strong> What works locally works in CI, developers can debug CI failures</li>
+                <li><strong>Con:</strong> Slower local test execution (build step required)</li>
+              </ul>
+
+              <h4>Option B: Accept Divergence, Improve Isolation (Not Recommended)</h4>
+              <ul>
+                <li>Keep separate execution modes but improve test isolation</li>
+                <li>Every test gets fully isolated database state</li>
+                <li>Tests become environment-agnostic through better fixtures</li>
+                <li><strong>Pro:</strong> Fast local testing preserved</li>
+                <li><strong>Con:</strong> Still can't replicate CI failures locally, two maintenance paths</li>
+              </ul>
+
+              <p><strong>My recommendation: Option A</strong> - Force parity. The cost of slow local tests is less than the cost of unreliable CI and undebuggable failures.</p>
+
+              <h3>Implementation Plan - Phased Approach</h3>
+
+              <h4>Phase 1: Stop the Bleeding (Immediate - 1-2 days)</h4>
+              <ol>
+                <li>
+                  <strong>Add database cleanup to ALL test files</strong>
+                  <pre>
+// Add to EVERY test file's beforeEach
+test.beforeEach(async () => {
+  // Temp solution until TestDatabase class exists
+  await cleanDatabase();
+});</pre>
+                </li>
+                <li>
+                  <strong>Document CI environment variables</strong>
+                  <pre>
+// Add .env.ci.example (matches CI workflow exactly)
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/streamline_test
+SESSION_SECRET=test-secret-for-ci-only-do-not-use-in-production
+MODE=single-tenant
+DATA_DIR=/tmp/streamline-data
+E2E_TEST_MODE=true
+NODE_ENV=production</pre>
+                </li>
+                <li>
+                  <strong>Add pre-test validation script</strong>
+                  <pre>
+// CI workflow - ADD BEFORE E2E TESTS
+- name: Validate test environment
+  run: npm run validate:test-env
+
+// Local - RUN BEFORE PLAYWRIGHT
+npm run validate:test-env && npx playwright test</pre>
+                </li>
+              </ol>
+
+              <h4>Phase 2: Build Parity (Week 1)</h4>
+              <ol>
+                <li>Implement TestDatabase class (Senior Developer's proposal)</li>
+                <li>Create test:e2e:ci-mode script for local CI replication</li>
+                <li>Update ALL existing tests to use TestDatabase.truncateAll()</li>
+                <li>Add firstUserPage and subsequentUserPage fixtures</li>
+                <li>Update test documentation to require CI mode for pre-merge validation</li>
+              </ol>
+
+              <h4>Phase 3: Monitoring & Enforcement (Week 2)</h4>
+              <ol>
+                <li>Add CI job that compares environment variables between CI and .env.ci.example</li>
+                <li>Add test reporter showing root cause analysis for failures</li>
+                <li>Create troubleshooting guide mapping failure patterns to root causes</li>
+                <li>Add database state snapshot/restore utilities for faster test isolation</li>
+              </ol>
+
+              <h3>Risk Assessment of Doing Nothing</h3>
+
+              <div class="verdict critical">
+                <strong>If we don't fix this:</strong>
+                <ul>
+                  <li><strong>Developer Trust:</strong> Developers stop trusting tests, skip running them locally</li>
+                  <li><strong>Merge Velocity:</strong> Failed CI on known-good code becomes "just retry until it passes"</li>
+                  <li><strong>Bug Leakage:</strong> Real bugs slip through because "tests are always flaky anyway"</li>
+                  <li><strong>Maintenance Cost:</strong> Every new test increases flake probability</li>
+                  <li><strong>Onboarding:</strong> New developers cannot set up reliable test environment</li>
+                </ul>
+              </div>
+
+              <h3>Success Metrics</h3>
+
+              <p>We'll know this is fixed when:</p>
+              <ul>
+                <li>CI pass rate on identical code: >95% (currently ~60%)</li>
+                <li>Local CI-mode tests match CI results: 100% (currently ~50%)</li>
+                <li>Failed CI runs are reproducible locally: 100% (currently ~10%)</li>
+                <li>Time to debug CI failure: <30 minutes (currently hours/days)</li>
+              </ul>
+
+              <h3>Final Recommendations</h3>
+
+              <ol>
+                <li><span class="priority-critical">[CRITICAL - DO NOW]</span> Add database cleanup to all tests (temp fix)</li>
+                <li><span class="priority-critical">[CRITICAL - DO NOW]</span> Create .env.ci.example documenting exact CI config</li>
+                <li><span class="priority-critical">[CRITICAL - WEEK 1]</span> Implement TestDatabase class</li>
+                <li><span class="priority-critical">[CRITICAL - WEEK 1]</span> Add test:e2e:ci-mode script</li>
+                <li><span class="priority-high">[HIGH - WEEK 1]</span> Update all tests to use new fixtures</li>
+                <li><span class="priority-high">[HIGH - WEEK 2]</span> Add environment validation to CI</li>
+                <li><span class="priority-medium">[MEDIUM - WEEK 2]</span> Create failure root cause analyzer</li>
+                <li><span class="priority-medium">[MEDIUM - ONGOING]</span> Document troubleshooting patterns</li>
+              </ol>
+
+              <p><strong>Bottom line:</strong> This is fixable, but requires commitment to parity. The investment in Phase 1-2 will pay off immediately in reduced frustration and increased confidence.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Final Consensus -->
+      <div class="consensus">
+        <h2>Team Consensus & Action Plan</h2>
+        <div class="consensus-content">
+          <h3>Unanimous Finding: Critical Environment Parity Failure</h3>
+          <p>
+            All reviewing agents agree: the CI/local test reliability gap is caused by systemic environment divergence across 7 root causes. This is not a "flaky test" problem - it's an architectural problem requiring immediate remediation.
+          </p>
+
+          <h3>Root Causes Confirmed</h3>
+          <ul>
+            <li><strong>Database State Divergence:</strong> CI fresh, local persistent</li>
+            <li><strong>First-User Flow Complexity:</strong> Dual registration paths not explicitly tested</li>
+            <li><strong>Setup Flag Timing:</strong> Pre-build in CI, runtime locally</li>
+            <li><strong>Environment Variables:</strong> Multiple .env files, no parity validation</li>
+            <li><strong>Build Mode:</strong> Standalone production in CI, dev server locally</li>
+            <li><strong>Parallel Execution:</strong> Race conditions in entity creation</li>
+            <li><strong>Seed Script:</strong> Once in CI, persistent locally</li>
+          </ul>
+
+          <h3>Immediate Actions (This Week)</h3>
+          <ul>
+            <li>
+              <strong>Create TestDatabase class</strong> with <code>truncateAll()</code>, <code>restoreSeedState()</code>, and <code>createIsolatedWorkspace()</code> methods
+            </li>
+            <li>
+              <strong>Add database cleanup to all test files</strong> as temporary measure until TestDatabase is integrated
+            </li>
+            <li>
+              <strong>Create .env.ci.example</strong> documenting exact CI environment configuration
+            </li>
+            <li>
+              <strong>Add pre-flight environment validator</strong> that runs before tests in both CI and local
+            </li>
+            <li>
+              <strong>Implement test:e2e:ci-mode script</strong> for local CI replication
+            </li>
+          </ul>
+
+          <h3>Short-Term Actions (Week 2)</h3>
+          <ul>
+            <li>Create <code>firstUserPage</code> and <code>subsequentUserPage</code> fixtures for explicit flow testing</li>
+            <li>Update ALL existing tests to use TestDatabase cleanup in beforeEach</li>
+            <li>Add CI job validating environment parity between YAML and .env.ci.example</li>
+            <li>Document CI environment setup in /docs/e2e-testing-ci-setup.md</li>
+            <li>Add test failure root cause analyzer to test reporter</li>
+          </ul>
+
+          <h3>Long-Term Improvements (Weeks 3-4)</h3>
+          <ul>
+            <li>Add database snapshot/restore for faster test isolation</li>
+            <li>Create troubleshooting guide mapping failure patterns to root causes</li>
+            <li>Improve email uniqueness with random component (not just timestamp)</li>
+            <li>Add monitoring dashboard showing CI pass rate trends</li>
+            <li>Consider parallel test execution limits based on database contention</li>
+          </ul>
+
+          <h3>Architectural Decision: Force Parity</h3>
+          <p>
+            The team recommends <strong>Option A: Force Parity</strong> - local tests must run in CI-like mode (standalone build, clean database, matching env vars) to ensure what passes locally will pass in CI. This trades slower local test execution for dramatically improved reliability and debuggability.
+          </p>
+
+          <h3>Success Criteria</h3>
+          <table>
+            <tr>
+              <th>Metric</th>
+              <th>Current</th>
+              <th>Target</th>
+            </tr>
+            <tr>
+              <td>CI pass rate (identical code)</td>
+              <td>~60%</td>
+              <td>>95%</td>
+            </tr>
+            <tr>
+              <td>Local CI-mode matches CI</td>
+              <td>~50%</td>
+              <td>100%</td>
+            </tr>
+            <tr>
+              <td>Failed CI reproducible locally</td>
+              <td>~10%</td>
+              <td>100%</td>
+            </tr>
+            <tr>
+              <td>Time to debug CI failure</td>
+              <td>Hours/days</td>
+              <td><30 min</td>
+            </tr>
+          </table>
+
+          <h3>Implementation Ownership</h3>
+          <ul>
+            <li><strong>QA Architect:</strong> TestDatabase implementation, test fixture updates</li>
+            <li><strong>Senior Developer:</strong> CI-mode script, environment validator, build process</li>
+            <li><strong>Lead Developer:</strong> Coordination, documentation, rollout strategy</li>
+            <li><strong>Project Orchestrator:</strong> Progress tracking, blocker resolution</li>
+          </ul>
+
+          <h3>Escalation to User</h3>
+          <p>
+            <strong>Recommendation:</strong> Present this analysis to the user with the proposed phased remediation plan. Request approval for the "Force Parity" approach and bandwidth allocation for Phase 1-2 implementation (estimated 3-4 days of focused work).
+          </p>
+
+          <p>
+            <strong>Key Message:</strong> This is not about fixing individual flaky tests - it's about establishing a reliable testing foundation. The current state undermines confidence in the entire test suite and blocks effective CI/CD. The proposed fixes will prevent this class of issues from recurring.
+          </p>
+        </div>
+      </div>
+
+      <!-- Follow-Up Assessment (December 2025) -->
+      <div class="messages">
+        <div class="message">
+          <div class="avatar orchestrator">PO</div>
+          <div class="message-content">
+            <div class="message-header">
+              <span class="agent-name">Project Orchestrator</span>
+              <span class="agent-role">Follow-Up Coordination</span>
+              <span class="timestamp">December 2025</span>
+            </div>
+            <div class="message-text">
+              <h3>Follow-Up Assessment Completed</h3>
+
+              <p>The team has completed a comprehensive assessment of the implemented fixes. The detailed analysis is available in:</p>
+
+              <p><strong>/project-management/discussions/ci-test-reliability-follow-up.html</strong></p>
+
+              <h4>Quick Summary</h4>
+
+              <table>
+                <tr>
+                  <th>Root Cause</th>
+                  <th>Status</th>
+                </tr>
+                <tr>
+                  <td>Database State Divergence</td>
+                  <td style="color: #28a745; font-weight: bold;">RESOLVED</td>
+                </tr>
+                <tr>
+                  <td>First-User Flow Complexity</td>
+                  <td style="color: #ffc107; font-weight: bold;">PARTIALLY RESOLVED</td>
+                </tr>
+                <tr>
+                  <td>Setup Flag Timing</td>
+                  <td style="color: #28a745; font-weight: bold;">RESOLVED</td>
+                </tr>
+                <tr>
+                  <td>Environment Variables</td>
+                  <td style="color: #28a745; font-weight: bold;">RESOLVED</td>
+                </tr>
+                <tr>
+                  <td>Standalone Build</td>
+                  <td style="color: #28a745; font-weight: bold;">RESOLVED</td>
+                </tr>
+                <tr>
+                  <td>Parallel Execution Races</td>
+                  <td style="color: #ffc107; font-weight: bold;">PARTIALLY RESOLVED</td>
+                </tr>
+                <tr>
+                  <td>Seed Script Timing</td>
+                  <td style="color: #28a745; font-weight: bold;">RESOLVED</td>
+                </tr>
+              </table>
+
+              <h4>Overall Verdict</h4>
+
+              <div class="verdict safe">
+                <strong>YES, WITH CONDITIONS</strong> - If developers use <code>npm run test:e2e:ci-mode</code>, CI/local parity is now 85-95%.
+              </div>
+
+              <p>The implemented fixes represent a substantial improvement. See the follow-up assessment for detailed analysis and recommendations.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

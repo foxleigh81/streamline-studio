@@ -124,12 +124,23 @@ export async function registerAsUser(
   await page.getByLabel(/confirm password/i).fill(password);
 
   // Check which button is visible to determine the flow
+  // Wait for one of the submit buttons to be visible (flow determined by frontend)
   const createAccountButton = page.getByRole('button', {
-    name: /create account/i,
+    name: /^create account$/i,
   });
   const continueToChannelButton = page.getByRole('button', {
     name: /continue to channel setup/i,
   });
+
+  // Wait for the form to finish loading and show a submit button
+  // The page loads auth.me first to determine the flow
+  await page
+    .locator('button')
+    .filter({
+      hasText: /create account|continue to channel setup/i,
+    })
+    .first()
+    .waitFor({ state: 'visible', timeout: 30000 });
 
   // Submit step 1 - click whichever button is visible
   if (await continueToChannelButton.isVisible()) {

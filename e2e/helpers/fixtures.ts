@@ -38,7 +38,8 @@ export const test = base.extend<{
 
   authenticatedPage: async ({ page }, use) => {
     // Create a unique email for this test to avoid conflicts
-    const uniqueEmail = `e2e-${Date.now()}@example.com`;
+    // Using timestamp + random suffix to prevent collisions in parallel tests
+    const uniqueEmail = `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
 
     // Register and login (registerAsUser already waits for redirect)
     await registerAsUser(page, {
@@ -57,7 +58,8 @@ export const test = base.extend<{
 
   authenticatedRequest: async ({ page, request }, use) => {
     // Create a unique email for this test
-    const uniqueEmail = `e2e-api-${Date.now()}@example.com`;
+    // Using timestamp + random suffix to prevent collisions in parallel tests
+    const uniqueEmail = `e2e-api-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
 
     // Register user via UI to get cookies set
     await registerAsUser(page, {

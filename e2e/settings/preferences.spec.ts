@@ -559,8 +559,11 @@ authenticatedTest.describe('Settings Preferences Modal', () => {
 
         await openPreferencesModal(authenticatedPage);
 
-        // Verify loading state
-        const loadingStatus = authenticatedPage.getByRole('status');
+        // Verify loading state - scope to modal to avoid matching other status elements on page
+        const modal = authenticatedPage.getByRole('dialog', {
+          name: /preferences/i,
+        });
+        const loadingStatus = modal.getByRole('status');
         await expect(loadingStatus).toBeVisible();
         await expect(loadingStatus).toContainText(/loading preferences/i);
 
