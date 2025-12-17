@@ -76,6 +76,30 @@ export function useChannel(): ChannelContextValue {
 }
 
 /**
+ * Hook to optionally access channel context
+ *
+ * Returns null if used outside ChannelProvider instead of throwing.
+ * Useful for components that can work with or without channel context.
+ *
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const channelCtx = useChannelOptional();
+ *
+ *   if (!channelCtx) {
+ *     // Not in a channel context
+ *     return <div>No channel selected</div>;
+ *   }
+ *
+ *   return <div>Channel: {channelCtx.channel?.name}</div>;
+ * }
+ * ```
+ */
+export function useChannelOptional(): ChannelContextValue | null {
+  return useContext(ChannelContext);
+}
+
+/**
  * Hook to get channel ID for API calls
  * Returns null if no channel is selected
  *

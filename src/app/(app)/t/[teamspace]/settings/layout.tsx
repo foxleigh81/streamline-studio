@@ -1,17 +1,13 @@
 import { redirect } from 'next/navigation';
 import { validateRequest } from '@/lib/auth/workspace';
-import { SettingsNav } from './settings-nav';
-import styles from './layout.module.scss';
 
 /**
  * Settings Layout Component
  *
- * Provides a consistent layout for all settings pages with sidebar navigation.
- * Includes navigation between different settings sections:
- * - Account: User profile and authentication settings
- * - Preferences: Personal preferences and customizations
+ * Minimal layout for settings pages. Authentication is validated here.
+ * AppShell is provided by the parent teamspace layout for consistency.
  *
- * The sidebar is responsive and collapses on mobile devices.
+ * Route: /t/[teamspace]/settings/*
  */
 
 interface SettingsLayoutProps {
@@ -21,26 +17,13 @@ interface SettingsLayoutProps {
 
 export default async function SettingsLayout({
   children,
-  params,
 }: SettingsLayoutProps) {
-  // Await params (Next.js 15 requirement)
-  const { teamspace } = await params;
-
   // Validate authentication
   const { user } = await validateRequest();
   if (!user) {
     redirect('/login');
   }
 
-  return (
-    <div className={styles.container}>
-      <aside className={styles.sidebar} aria-label="Settings navigation">
-        <SettingsNav teamspace={teamspace} />
-      </aside>
-
-      <main className={styles.main} role="main">
-        {children}
-      </main>
-    </div>
-  );
+  // AppShell is provided by parent teamspace layout
+  return <>{children}</>;
 }

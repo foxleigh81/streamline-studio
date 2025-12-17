@@ -1,0 +1,23 @@
+/**
+ * Modal Base Styles
+ *
+ * Shared modal styling tokens for consistent modal appearance across the app.
+ * Includes blur effects, shadows, and glass-like appearance.
+ *
+ * Usage: Apply these classes or use the CSS variables in modal components
+ */
+
+:root {
+  /* Modal overlay (backdrop) */
+  --modal-overlay-bg: hsl(0 0% 0% / 0.6);
+  --modal-overlay-blur: 4px;
+
+  /* Modal content (dialog box) */
+  --modal-content-bg: hsl(0 0% 12% / 0.9);
+  --modal-content-blur: 16px;
+  --modal-content-saturate: 180%;
+  --modal-content-border: hsl(0 0% 100% / 0.08);
+  --modal-content-shadow:
+    0 0 0 1px hsl(0 0% 0% / 0.1), 0 24px 48px -12px hsl(0 0% 0% / 0.5),
+    0 12px 24px -8px hsl(0 0% 0% / 0.35), 0 4px 8px -2px hsl(0 0% 0% / 0.2);
+}

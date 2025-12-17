@@ -69,9 +69,7 @@ authenticatedTest.describe('Settings Preferences Page', () => {
 
         // Verify select has helper text
         await expect(
-          authenticatedPage.getByText(
-            /new content will be assigned to this channel/i
-          )
+          authenticatedPage.getByText(/go directly to this channel on login/i)
         ).toBeVisible();
       }
     );

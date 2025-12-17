@@ -1,7 +1,7 @@
 /**
- * VideoFormModal Component Styles
+ * Shared Modal Styles for Account Settings and Preferences
  *
- * Uses CSS custom properties from the theme system.
+ * Based on video-form-modal patterns
  */
 
 .overlay {
@@ -18,6 +18,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -28,7 +29,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  max-width: 550px;
+  max-width: 600px;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
@@ -55,6 +56,7 @@
     opacity: 0;
     transform: translate(-50%, -48%);
   }
+
   to {
     opacity: 1;
     transform: translate(-50%, -50%);
@@ -65,116 +67,111 @@
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   color: var(--color-foreground);
-  margin: 0 0 var(--spacing-6) 0;
+  margin: 0 0 var(--spacing-2) 0;
 }
 
-.srOnly {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
+.description {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted-foreground);
+  margin: 0 0 var(--spacing-6) 0;
 }
 
 .form {
   display: flex;
   flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
   gap: var(--spacing-4);
 }
 
-.field {
+.sectionHeading {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-foreground);
+  margin: 0;
+  padding-bottom: var(--spacing-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.formGroup {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-2);
 }
 
-.label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-foreground);
+/* Coming soon section */
+.comingSoon {
+  padding: var(--spacing-4);
+  background: var(--color-muted);
+  border-radius: var(--radius-md);
 }
 
-.textarea {
-  width: 100%;
-  padding: var(--spacing-3);
-  background: var(--color-input);
-  border: 1px solid var(--color-border);
+.comingSoonText {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted-foreground);
+  margin: 0 0 var(--spacing-3) 0;
+}
+
+.featureList {
+  list-style: disc;
+  padding-left: var(--spacing-5);
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted-foreground);
+
+  li {
+    margin-bottom: var(--spacing-1);
+  }
+}
+
+/* Loading state */
+.loading {
+  padding: var(--spacing-6);
+  text-align: center;
+  color: var(--color-muted-foreground);
+  font-size: var(--font-size-sm);
+}
+
+/* Success message */
+.success {
+  padding: var(--spacing-3) var(--spacing-4);
+  background: var(--color-success-bg, #dcfce7);
+  color: var(--color-success-foreground, #166534);
+  border: 1px solid var(--color-success-border, #86efac);
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
-  font-family: inherit;
-  color: var(--color-foreground);
-  resize: vertical;
-  transition:
-    border-color var(--duration-fast) var(--ease-in-out),
-    box-shadow var(--duration-fast) var(--ease-in-out);
-
-  &::placeholder {
-    color: var(--color-muted-foreground);
-  }
-
-  &:hover:not(:disabled) {
-    border-color: var(--color-primary);
-  }
-
-  &:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px var(--color-ring);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
 }
 
-.select {
-  width: 100%;
-  height: 2.5rem;
-  padding: 0 var(--spacing-3);
-  background: var(--color-input);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  font-family: inherit;
-  color: var(--color-foreground);
-  cursor: pointer;
-  transition:
-    border-color var(--duration-fast) var(--ease-in-out),
-    box-shadow var(--duration-fast) var(--ease-in-out);
-
-  &:hover:not(:disabled) {
-    border-color: var(--color-primary);
-  }
-
-  &:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px var(--color-ring);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-
+/* Error message */
 .error {
-  font-size: var(--font-size-xs);
-  color: var(--color-destructive);
+  padding: var(--spacing-3) var(--spacing-4);
+  background: var(--color-destructive-bg, #fee2e2);
+  color: var(--color-destructive-foreground, #991b1b);
+  border: 1px solid var(--color-destructive-border, #fca5a5);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
 }
 
+.errorDetail {
+  margin-top: var(--spacing-2);
+  font-size: var(--font-size-xs);
+  opacity: 0.9;
+}
+
+/* Form actions */
 .actions {
   display: flex;
   justify-content: flex-end;
   gap: var(--spacing-3);
-  margin-top: var(--spacing-2);
+  padding-top: var(--spacing-2);
+  border-top: 1px solid var(--color-border);
 }
 
+/* Close button */
 .closeButton {
   position: absolute;
   top: var(--spacing-4);

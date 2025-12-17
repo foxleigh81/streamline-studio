@@ -54,6 +54,7 @@
 /* Import theme partials in layer order */
 @import './_reset.css';
 @import './_tokens.css';
+@import './_modal.css';
 @import './_dark-mode.css';
 @import './_animations.css';
 @import './_accessibility.css';

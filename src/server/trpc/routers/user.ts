@@ -110,6 +110,34 @@ export const userRouter = router({
     }),
 
   /**
+   * Update user account
+   *
+   * Alias for updateProfile to match AccountSettingsModal expectations
+   * Allows users to update their display name
+   */
+  updateAccount: protectedProcedure
+    .input(updateProfileInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { name } = input;
+
+      // Update user in database
+      await ctx.db
+        .update(users)
+        .set({
+          name: name ?? null,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, ctx.user.id));
+
+      logger.info({ userId: ctx.user.id }, 'User account updated');
+
+      return {
+        success: true,
+        message: 'Account updated successfully.',
+      };
+    }),
+
+  /**
    * Change password
    *
    * Security measures:
