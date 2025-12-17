@@ -2,12 +2,14 @@
  * Playwright Global Setup
  *
  * Runs before all tests to validate environment and prepare test state.
+ * Seeds the database with a default teamspace to avoid first-user flow issues.
  *
  * @see /docs/adrs/005-testing-strategy.md
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
+import pg from 'pg';
 
 /**
  * Global setup function
@@ -85,6 +87,52 @@ async function globalSetup(): Promise<void> {
       '💡 To fix: run `npm run validate:ci-env` for detailed guidance\n'
     );
     throw new Error('Environment validation failed. See errors above.');
+  }
+
+  // ==========================================================================
+  // Database Seeding
+  // ==========================================================================
+  // Seed a default teamspace to avoid first-user flow issues.
+  // Each parallel test will still create unique users, but they'll join
+  // this existing teamspace instead of trying to create one.
+
+  const dbUrl = process.env.DATABASE_URL;
+  if (dbUrl) {
+    try {
+      const client = new pg.Client({ connectionString: dbUrl });
+      await client.connect();
+
+      // Check if teamspace already exists
+      const existing = await client.query(
+        "SELECT id FROM teamspaces WHERE slug = 'workspace'"
+      );
+
+      if (existing.rows.length === 0) {
+        console.log('🌱 Seeding default teamspace for E2E tests...');
+
+        // Create default teamspace
+        await client.query(`
+          INSERT INTO teamspaces (id, name, slug, mode, created_at, updated_at)
+          VALUES (
+            gen_random_uuid(),
+            'Test Workspace',
+            'workspace',
+            'single-tenant',
+            NOW(),
+            NOW()
+          )
+        `);
+        console.log('   ✓ Created default teamspace "workspace"');
+      } else {
+        console.log('✓ Default teamspace already exists');
+      }
+
+      await client.end();
+    } catch (error) {
+      warnings.push(
+        `Failed to seed database: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
   }
 
   // ==========================================================================
