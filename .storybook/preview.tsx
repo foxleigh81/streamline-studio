@@ -1,5 +1,6 @@
 import type { Preview } from '@storybook/react';
 import * as React from 'react';
+import { MockTRPCProvider } from './mocks/trpc-provider';
 
 // Import theme CSS
 import '../src/themes/default/index.css';
@@ -66,13 +67,15 @@ const preview: Preview = {
   // Global decorators
   decorators: [
     (Story) => (
-      <div
-        style={{
-          fontFamily: 'var(--font-sans)',
-        }}
-      >
-        <Story />
-      </div>
+      <MockTRPCProvider>
+        <div
+          style={{
+            fontFamily: 'var(--font-sans)',
+          }}
+        >
+          <Story />
+        </div>
+      </MockTRPCProvider>
     ),
   ],
 

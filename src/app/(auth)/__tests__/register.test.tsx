@@ -50,20 +50,24 @@ describe('Register Form', () => {
     mockFetch.mockReset();
 
     // Setup default fetch mock (successful response)
-    mockFetch.mockResolvedValue(
-      new Response(
-        JSON.stringify([
-          {
-            result: {
-              type: 'data',
-              data: { success: true },
+    // Use mockImplementation to create a new Response for each call
+    // (Response bodies can only be read once)
+    mockFetch.mockImplementation(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify([
+            {
+              result: {
+                type: 'data',
+                data: { success: true },
+              },
             },
-          },
-        ]),
-        {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }
+          ]),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        )
       )
     );
 

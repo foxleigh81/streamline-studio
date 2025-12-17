@@ -305,10 +305,17 @@ export const KeyboardFocusable: Story = {
  * Test selection interaction
  */
 export const SelectInteraction: Story = {
-  args: {
-    legend: 'Click to Select',
-    name: 'select-interaction',
-    options: timeFormatOptions,
+  render: function SelectInteractionStory() {
+    const [value, setValue] = useState<string>('');
+    return (
+      <RadioGroup
+        legend="Click to Select"
+        name="select-interaction"
+        options={timeFormatOptions}
+        value={value}
+        onChange={setValue}
+      />
+    );
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -326,11 +333,17 @@ export const SelectInteraction: Story = {
  * Test changing selection
  */
 export const ChangeSelection: Story = {
-  args: {
-    legend: 'Change Selection',
-    name: 'change-selection',
-    options: priorityOptions,
-    value: 'low',
+  render: function ChangeSelectionStory() {
+    const [value, setValue] = useState<string>('low');
+    return (
+      <RadioGroup
+        legend="Change Selection"
+        name="change-selection"
+        options={priorityOptions}
+        value={value}
+        onChange={setValue}
+      />
+    );
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -427,10 +440,17 @@ export const DisabledInteraction: Story = {
  * Test label-radio association
  */
 export const LabelAssociation: Story = {
-  args: {
-    legend: 'Click Labels',
-    name: 'label-association',
-    options: timeFormatOptions,
+  render: function LabelAssociationStory() {
+    const [value, setValue] = useState<string>('');
+    return (
+      <RadioGroup
+        legend="Click Labels"
+        name="label-association"
+        options={timeFormatOptions}
+        value={value}
+        onChange={setValue}
+      />
+    );
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -449,10 +469,17 @@ export const LabelAssociation: Story = {
  * Test keyboard navigation with arrow keys
  */
 export const KeyboardNavigation: Story = {
-  args: {
-    legend: 'Navigate with Arrows',
-    name: 'keyboard-nav',
-    options: priorityOptions,
+  render: function KeyboardNavigationStory() {
+    const [value, setValue] = useState<string>('');
+    return (
+      <RadioGroup
+        legend="Navigate with Arrows"
+        name="keyboard-nav"
+        options={priorityOptions}
+        value={value}
+        onChange={setValue}
+      />
+    );
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
