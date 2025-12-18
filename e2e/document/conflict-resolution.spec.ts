@@ -11,26 +11,26 @@ import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import { testData } from '../helpers/fixtures';
 
 /**
- * Complete registration form submission (handles both first-user and subsequent-user flows)
+ * Generate a unique channel name for E2E tests
+ */
+function generateUniqueChannelName(): string {
+  return `Test Channel ${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
+/**
+ * Complete registration form submission (unified 2-step flow)
  */
 async function submitRegistration(page: Page) {
-  const createAccountBtn = page.getByRole('button', {
-    name: /create account/i,
-  });
+  // Step 1: Click continue to channel setup
   const continueBtn = page.getByRole('button', {
     name: /continue to channel setup/i,
   });
+  await continueBtn.click();
 
-  if (await continueBtn.isVisible().catch(() => false)) {
-    // First-user flow
-    await continueBtn.click();
-    await page.getByLabel(/channel name/i).waitFor({ state: 'visible' });
-    await page.getByLabel(/channel name/i).fill('E2E Test Channel');
-    await page.getByRole('button', { name: /create my channel/i }).click();
-  } else {
-    // Subsequent-user flow
-    await createAccountBtn.click();
-  }
+  // Step 2: Fill channel name and submit
+  await page.getByLabel(/channel name/i).waitFor({ state: 'visible' });
+  await page.getByLabel(/channel name/i).fill(generateUniqueChannelName());
+  await page.getByRole('button', { name: /create my channel/i }).click();
 }
 
 /**

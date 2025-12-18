@@ -18,43 +18,35 @@ import { test, expect } from '@playwright/test';
 import { testData } from '../helpers/fixtures';
 
 /**
- * Complete registration form submission (handles both first-user and subsequent-user flows)
+ * Generate a unique channel name for E2E tests
  */
-async function submitRegistration(page: Page) {
-  const createAccountBtn = page.getByRole('button', {
-    name: /create account/i,
-  });
-  const continueBtn = page.getByRole('button', {
-    name: /continue to channel setup/i,
-  });
-
-  if (await continueBtn.isVisible().catch(() => false)) {
-    // First-user flow
-    await continueBtn.click();
-    await page.getByLabel(/channel name/i).waitFor({ state: 'visible' });
-    await page.getByLabel(/channel name/i).fill('E2E Test Channel');
-    await page.getByRole('button', { name: /create my channel/i }).click();
-  } else {
-    // Subsequent-user flow
-    await createAccountBtn.click();
-  }
+function generateUniqueChannelName(): string {
+  return `Test Channel ${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
 /**
- * Get the registration submit button (handles both flow variants)
+ * Complete registration form submission (unified 2-step flow)
  */
-async function getRegistrationButton(page: Page) {
-  const createAccountBtn = page.getByRole('button', {
-    name: /create account/i,
-  });
+async function submitRegistration(page: Page) {
+  // Step 1: Click continue to channel setup
   const continueBtn = page.getByRole('button', {
     name: /continue to channel setup/i,
   });
+  await continueBtn.click();
 
-  if (await continueBtn.isVisible().catch(() => false)) {
-    return continueBtn;
-  }
-  return createAccountBtn;
+  // Step 2: Fill channel name and submit
+  await page.getByLabel(/channel name/i).waitFor({ state: 'visible' });
+  await page.getByLabel(/channel name/i).fill(generateUniqueChannelName());
+  await page.getByRole('button', { name: /create my channel/i }).click();
+}
+
+/**
+ * Get the registration submit button (unified flow)
+ */
+function getRegistrationButton(page: Page) {
+  return page.getByRole('button', {
+    name: /continue to channel setup/i,
+  });
 }
 
 // Skip all rate limiting tests when E2E_TEST_MODE is enabled
@@ -127,7 +119,7 @@ test.describe('Rate Limiting', () => {
       await page.getByLabel(/^password$/i).fill(validPassword);
       await page.getByLabel(/confirm password/i).fill(validPassword);
 
-      // Submit registration (handles both first-user and subsequent-user flows)
+      // Submit registration (unified 2-step flow)
       await submitRegistration(page);
 
       // Wait for registration to complete (redirects to teamspace)
@@ -292,7 +284,7 @@ test.describe('Rate Limiting', () => {
       await page.getByLabel(/^password$/i).fill(password);
       await page.getByLabel(/confirm password/i).fill(password);
 
-      // Submit registration (handles both first-user and subsequent-user flows)
+      // Submit registration (unified 2-step flow)
       await submitRegistration(page);
       await expect(page).toHaveURL(/\/t\/workspace/, { timeout: 10000 });
 

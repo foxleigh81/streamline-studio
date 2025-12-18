@@ -93,11 +93,17 @@ export async function loginAsUser(
 }
 
 /**
+ * Generate a unique channel name for E2E tests
+ */
+function generateUniqueChannelName(): string {
+  return `Test Channel ${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
+/**
  * Register a new user via the UI
  *
- * Handles both first-user and subsequent-user flows:
- * - First user: 2-step flow (Account → Channel Setup)
- * - Subsequent users: 1-step flow (Account only)
+ * Unified registration flow: Always shows 2-step flow (Account → Channel Setup)
+ * Each registration creates a new workspace with a unique channel.
  */
 export async function registerAsUser(
   page: Page,
@@ -111,11 +117,12 @@ export async function registerAsUser(
   const email = options.email ?? TEST_USER.email;
   const password = options.password ?? TEST_USER.password;
   const name = options.name ?? TEST_USER.name;
-  const channelName = options.channelName ?? 'E2E Test Channel';
+  // Use unique channel name by default to avoid collisions in parallel tests
+  const channelName = options.channelName ?? generateUniqueChannelName();
 
   await page.goto('/register');
 
-  // Fill in registration form (step 1)
+  // Step 1: Fill in account information
   if (name) {
     await page.getByLabel(/name/i).fill(name);
   }
@@ -123,43 +130,19 @@ export async function registerAsUser(
   await page.getByLabel(/^password$/i).fill(password);
   await page.getByLabel(/confirm password/i).fill(password);
 
-  // Check which button is visible to determine the flow
-  // Wait for one of the submit buttons to be visible (flow determined by frontend)
-  const createAccountButton = page.getByRole('button', {
-    name: /^create account$/i,
-  });
-  const continueToChannelButton = page.getByRole('button', {
-    name: /continue to channel setup/i,
-  });
-
-  // Wait for the form to finish loading and show a submit button
-  // The page loads auth.me first to determine the flow
+  // Submit step 1
   await page
-    .locator('button')
-    .filter({
-      hasText: /create account|continue to channel setup/i,
-    })
-    .first()
-    .waitFor({ state: 'visible', timeout: 30000 });
+    .getByRole('button', { name: /continue to channel setup/i })
+    .click();
 
-  // Submit step 1 - click whichever button is visible
-  if (await continueToChannelButton.isVisible()) {
-    // First-user flow: proceed to channel setup
-    await continueToChannelButton.click();
+  // Step 2: Fill in channel name
+  await page.getByLabel(/channel name/i).fill(channelName);
 
-    // Step 2: Fill in channel name
-    await page.getByLabel(/channel name/i).fill(channelName);
+  // Submit step 2
+  await page.getByRole('button', { name: /create my channel/i }).click();
 
-    // Submit step 2
-    await page.getByRole('button', { name: /create my channel/i }).click();
-  } else {
-    // Subsequent-user flow: direct registration
-    await createAccountButton.click();
-  }
-
-  // Wait for redirect to teamspace dashboard with extended timeout
-  // (parallel tests may cause slower responses)
-  await page.waitForURL(/\/t\/workspace/, { timeout: 90000 });
+  // Wait for redirect to teamspace dashboard
+  await page.waitForURL(/\/t\/workspace/, { timeout: 30000 });
 }
 
 /**

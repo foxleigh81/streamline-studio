@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Discussion: Account Portability - Single to Multi-Tenant Migration</title>
+    <style>
+        :root {
+            --color-bg: #1a1a1a;
+            --color-surface: #2d2d2d;
+            --color-border: #404040;
+            --color-text: #e0e0e0;
+            --color-text-dim: #a0a0a0;
+            --color-accent-blue: #4a9eff;
+            --color-accent-purple: #b794f4;
+            --color-accent-green: #48bb78;
+            --color-accent-orange: #f6ad55;
+            --color-accent-red: #fc8181;
+            --color-accent-cyan: #76e4f7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--color-accent-blue);
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .meta {
+            color: var(--color-text-dim);
+            font-size: 0.9em;
+        }
+
+        .context {
+            background: var(--color-surface);
+            border-left: 4px solid var(--color-accent-purple);
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 4px;
+        }
+
+        .context h2 {
+            color: var(--color-accent-purple);
+            font-size: 1.3em;
+            margin-bottom: 15px;
+        }
+
+        .context-section {
+            margin-bottom: 20px;
+        }
+
+        .context-section h3 {
+            color: var(--color-accent-blue);
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .context-section ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .context-section li {
+            margin-bottom: 5px;
+        }
+
+        .code-block {
+            background: #1a1a1a;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+
+        .message {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 12px;
+            font-size: 1.2em;
+        }
+
+        .agent-developer { background: var(--color-accent-blue); }
+        .agent-security { background: var(--color-accent-red); }
+        .agent-ux { background: var(--color-accent-green); }
+        .agent-qa { background: var(--color-accent-orange); }
+        .agent-orchestrator { background: var(--color-accent-purple); }
+        .agent-architect { background: var(--color-accent-cyan); }
+
+        .message-info {
+            flex: 1;
+        }
+
+        .agent-name {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .timestamp {
+            color: var(--color-text-dim);
+            font-size: 0.85em;
+        }
+
+        .message-content {
+            color: var(--color-text);
+        }
+
+        .message-content h4 {
+            color: var(--color-accent-blue);
+            margin-top: 15px;
+            margin-bottom: 8px;
+        }
+
+        .message-content ul, .message-content ol {
+            margin-left: 20px;
+            margin-top: 8px;
+        }
+
+        .message-content li {
+            margin-bottom: 6px;
+        }
+
+        .message-content strong {
+            color: var(--color-accent-blue);
+        }
+
+        .option-box {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .option-box h4 {
+            margin-top: 0 !important;
+        }
+
+        .option-box.recommended {
+            border-color: var(--color-accent-green);
+            border-width: 2px;
+        }
+
+        .option-box.rejected {
+            border-color: var(--color-accent-red);
+            opacity: 0.8;
+        }
+
+        .option-box.viable {
+            border-color: var(--color-accent-orange);
+        }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+            font-size: 0.9em;
+        }
+
+        .score-item {
+            text-align: center;
+            padding: 8px;
+            background: var(--color-bg);
+            border-radius: 4px;
+        }
+
+        .score-item .label {
+            color: var(--color-text-dim);
+            font-size: 0.8em;
+        }
+
+        .score-item .value {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .score-item .value.good { color: var(--color-accent-green); }
+        .score-item .value.medium { color: var(--color-accent-orange); }
+        .score-item .value.bad { color: var(--color-accent-red); }
+
+        .recommendation {
+            background: linear-gradient(135deg, rgba(74, 158, 255, 0.1), rgba(183, 148, 244, 0.1));
+            border: 2px solid var(--color-accent-purple);
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .recommendation h2 {
+            color: var(--color-accent-purple);
+            font-size: 1.5em;
+            margin-bottom: 15px;
+        }
+
+        .decision-box {
+            background: var(--color-surface);
+            border-left: 4px solid var(--color-accent-green);
+            padding: 20px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+
+        .warning-box {
+            background: var(--color-surface);
+            border-left: 4px solid var(--color-accent-orange);
+            padding: 20px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+
+        .tree-branch {
+            border-left: 2px solid var(--color-border);
+            margin-left: 20px;
+            padding-left: 20px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .score-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Account Portability: Single to Multi-Tenant Migration</h1>
+        <div class="meta">
+            Discussion Date: December 18, 2025<br>
+            Topic: How tightly coupled should accounts be to teamspaces? What happens during migration?<br>
+            Continues: unified-registration-proposal.html<br>
+            Participants: Project Orchestrator, Senior Next.js Developer, Security Architect, Data Architect
+        </div>
+    </header>
+
+    <div class="context">
+        <h2>Problem Statement</h2>
+
+        <div class="context-section">
+            <h3>The Migration Scenario</h3>
+            <p>A user starts with a self-hosted single-tenant instance:</p>
+            <ol>
+                <li>Creates account, sets up teamspace and channels</li>
+                <li>Invites teammates who create local accounts</li>
+                <li>Team works together, building up content and audit history</li>
+                <li>Later decides to migrate to cloud-hosted multi-tenant service</li>
+            </ol>
+        </div>
+
+        <div class="context-section">
+            <h3>The Problem</h3>
+            <ul>
+                <li><strong>User accounts are local</strong> - they exist only on the self-hosted server</li>
+                <li><strong>Cloud has no knowledge of these users</strong> - no account portability</li>
+                <li><strong>Migration requires:</strong>
+                    <ul>
+                        <li>All team members to create new cloud accounts</li>
+                        <li>Re-establish team membership</li>
+                        <li>Audit trail references orphaned user IDs</li>
+                        <li>Poor user experience</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="context-section">
+            <h3>Initial Options Suggested</h3>
+            <ul>
+                <li><strong>Option A:</strong> Disable teammates in single-tenant (owner-only)</li>
+                <li><strong>Option B:</strong> Central cloud database for all user accounts</li>
+            </ul>
+            <p>User noted Option B feels like premature microservices. Let's explore all viable options.</p>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-orchestrator">&#127919;</div>
+            <div class="message-info">
+                <div class="agent-name">Project Orchestrator</div>
+                <div class="timestamp">11:00 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <p>This is a fundamental architectural question about identity and data ownership. Before we jump to solutions, let's properly frame the problem and explore the full decision tree.</p>
+
+            <h4>Key Questions:</h4>
+            <ol>
+                <li>How common is single-tenant → multi-tenant migration?</li>
+                <li>What level of account portability do users actually need?</li>
+                <li>Is audit trail continuity a hard requirement or nice-to-have?</li>
+                <li>What's the cost/benefit of various approaches?</li>
+            </ol>
+
+            <p>Let's use <strong>tree-of-thought reasoning</strong> to systematically explore all options before converging on a recommendation.</p>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-architect">&#128736;</div>
+            <div class="message-info">
+                <div class="agent-name">Data Architect</div>
+                <div class="timestamp">11:15 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Tree of Thought: Complete Option Analysis</h4>
+
+            <p>I've mapped out all viable approaches across two dimensions:</p>
+            <ul>
+                <li><strong>Identity Location:</strong> Where do user accounts live?</li>
+                <li><strong>Migration Strategy:</strong> How do we handle transitions?</li>
+            </ul>
+
+            <h4>Branch 1: Centralized Identity (Cloud-First)</h4>
+            <div class="tree-branch">
+                <div class="option-box rejected">
+                    <h4>Option 1A: All Users in Cloud Database</h4>
+                    <p>Even single-tenant instances authenticate against cloud service.</p>
+                    <div class="score-grid">
+                        <div class="score-item"><div class="label">Complexity</div><div class="value bad">High</div></div>
+                        <div class="score-item"><div class="label">Offline Use</div><div class="value bad">No</div></div>
+                        <div class="score-item"><div class="label">Privacy</div><div class="value bad">Poor</div></div>
+                        <div class="score-item"><div class="label">Migration</div><div class="value good">Easy</div></div>
+                        <div class="score-item"><div class="label">Maturity</div><div class="value bad">Too Early</div></div>
+                    </div>
+                    <p><strong>Verdict: REJECTED</strong> - Defeats purpose of self-hosting. Requires internet. Privacy concerns. Premature microservices.</p>
+                </div>
+
+                <div class="option-box rejected">
+                    <h4>Option 1B: Federated Identity (OAuth/OIDC)</h4>
+                    <p>Cloud provides OAuth server, self-hosted instances are OAuth clients.</p>
+                    <div class="score-grid">
+                        <div class="score-item"><div class="label">Complexity</div><div class="value bad">Very High</div></div>
+                        <div class="score-item"><div class="label">Offline Use</div><div class="value bad">No</div></div>
+                        <div class="score-item"><div class="label">Privacy</div><div class="value medium">Medium</div></div>
+                        <div class="score-item"><div class="label">Migration</div><div class="value good">Easy</div></div>
+                        <div class="score-item"><div class="label">Maturity</div><div class="value bad">Too Early</div></div>
+                    </div>
+                    <p><strong>Verdict: REJECTED</strong> - Massive implementation effort. Still requires connectivity. Overkill for current stage.</p>
+                </div>
+            </div>
+
+            <h4>Branch 2: Decentralized Identity (Local-First)</h4>
+            <div class="tree-branch">
+                <div class="option-box viable">
+                    <h4>Option 2A: Single-Tenant = Single User Only</h4>
+                    <p>Disable team features entirely in single-tenant mode. One user, one workspace.</p>
+                    <div class="score-grid">
+                        <div class="score-item"><div class="label">Complexity</div><div class="value good">Low</div></div>
+                        <div class="score-item"><div class="label">Offline Use</div><div class="value good">Yes</div></div>
+                        <div class="score-item"><div class="label">Privacy</div><div class="value good">Full</div></div>
+                        <div class="score-item"><div class="label">Migration</div><div class="value good">Easy</div></div>
+                        <div class="score-item"><div class="label">Feature Loss</div><div class="value bad">High</div></div>
+                    </div>
+                    <p><strong>Pros:</strong> Simple, clean, no migration issues</p>
+                    <p><strong>Cons:</strong> Significantly limits self-hosted value proposition. Teams can't use self-hosted version.</p>
+                </div>
+
+                <div class="option-box viable">
+                    <h4>Option 2B: Local Accounts + Migration Tool</h4>
+                    <p>Accounts are fully local. Provide explicit migration/export tool that handles account linking.</p>
+                    <div class="score-grid">
+                        <div class="score-item"><div class="label">Complexity</div><div class="value medium">Medium</div></div>
+                        <div class="score-item"><div class="label">Offline Use</div><div class="value good">Yes</div></div>
+                        <div class="score-item"><div class="label">Privacy</div><div class="value good">Full</div></div>
+                        <div class="score-item"><div class="label">Migration</div><div class="value medium">Manual</div></div>
+                        <div class="score-item"><div class="label">Feature Loss</div><div class="value good">None</div></div>
+                    </div>
+                    <p><strong>Pros:</strong> Full features, privacy preserved, future migration tool solves problem</p>
+                    <p><strong>Cons:</strong> Migration requires coordination, each user must claim their data</p>
+                </div>
+
+                <div class="option-box recommended">
+                    <h4>Option 2C: Email-Based Identity Linking</h4>
+                    <p>Accounts are local but use email as universal identifier. Migration links accounts by email.</p>
+                    <div class="score-grid">
+                        <div class="score-item"><div class="label">Complexity</div><div class="value good">Low</div></div>
+                        <div class="score-item"><div class="label">Offline Use</div><div class="value good">Yes</div></div>
+                        <div class="score-item"><div class="label">Privacy</div><div class="value good">Full</div></div>
+                        <div class="score-item"><div class="label">Migration</div><div class="value good">Automatic</div></div>
+                        <div class="score-item"><div class="label">Feature Loss</div><div class="value good">None</div></div>
+                    </div>
+                    <p><strong>Key Insight:</strong> Email is already a unique identifier. During migration, if cloud user with same email exists, link them. If not, invite them.</p>
+                </div>
+
+                <div class="option-box viable">
+                    <h4>Option 2D: Export-Only (No Account Migration)</h4>
+                    <p>Content exports, but accounts don't migrate. Audit trail shows "Imported from: user@email"</p>
+                    <div class="score-grid">
+                        <div class="score-item"><div class="label">Complexity</div><div class="value good">Lowest</div></div>
+                        <div class="score-item"><div class="label">Offline Use</div><div class="value good">Yes</div></div>
+                        <div class="score-item"><div class="label">Privacy</div><div class="value good">Full</div></div>
+                        <div class="score-item"><div class="label">Migration</div><div class="value medium">Partial</div></div>
+                        <div class="score-item"><div class="label">Feature Loss</div><div class="value good">None</div></div>
+                    </div>
+                    <p><strong>Pros:</strong> Simplest implementation, content preserved</p>
+                    <p><strong>Cons:</strong> Audit trail references are historical only, not linked to live accounts</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-developer">&#128187;</div>
+            <div class="message-info">
+                <div class="agent-name">Senior Next.js Developer</div>
+                <div class="timestamp">11:40 AM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Deep Dive: Option 2C - Email-Based Identity Linking</h4>
+
+            <p>I want to expand on this option because I think it's the sweet spot. Here's how it would work:</p>
+
+            <h4>Current State (No Changes Needed Now):</h4>
+            <ul>
+                <li>Users register with email + password</li>
+                <li>Email is already unique per instance</li>
+                <li>Audit logs reference user ID + email</li>
+            </ul>
+
+            <h4>Migration Flow (Future Implementation):</h4>
+            <div class="code-block">
+1. Owner initiates "Export Teamspace to Cloud"
+2. System generates export package:
+   - All content (channels, videos, documents)
+   - All audit logs
+   - User manifest: [{ localId, email, name, role }]
+
+3. Owner uploads to cloud account (or we handle transfer)
+
+4. Cloud processes import:
+   For each user in manifest:
+     IF cloud account with same email exists:
+       → Link imported content to existing account
+       → Merge audit history
+     ELSE:
+       → Create placeholder: "Pending: user@email.com"
+       → Send invite email: "Your team moved to cloud!"
+       → When they register, content links automatically
+
+5. Audit trail preserved:
+   - "Created by Alex (alex@company.com)" still shows correctly
+   - Even if Alex hasn't claimed account yet, email visible
+            </div>
+
+            <h4>Why This Works:</h4>
+            <ul>
+                <li><strong>No central auth needed now</strong> - email is natural identifier</li>
+                <li><strong>Privacy preserved</strong> - no phone-home from self-hosted</li>
+                <li><strong>Graceful degradation</strong> - even unclaimed accounts show meaningful info</li>
+                <li><strong>No blocking dependencies</strong> - implement migration tool when needed</li>
+            </ul>
+
+            <h4>Schema Consideration:</h4>
+            <div class="code-block">
+// Ensure audit_log stores email, not just user_id
+audit_log: {
+  id: uuid,
+  action: string,
+  userId: uuid,          // Local reference
+  userEmail: string,     // Portable identifier ← KEY
+  userName: string,      // Snapshot at time of action
+  timestamp: datetime,
+  // ...
+}
+            </div>
+            <p>We may already have this. If not, it's a minor schema addition.</p>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-security">&#128274;</div>
+            <div class="message-info">
+                <div class="agent-name">Security Architect</div>
+                <div class="timestamp">12:00 PM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Security Analysis of Email-Based Linking</h4>
+
+            <h4>Potential Concern: Email Spoofing</h4>
+            <p>Could a malicious user claim someone else's audit history by registering with their email?</p>
+
+            <h4>Mitigations (Already In Place):</h4>
+            <ul>
+                <li><strong>Email verification on cloud:</strong> Users must verify email ownership</li>
+                <li><strong>Import is owner-initiated:</strong> Only teamspace owner can trigger migration</li>
+                <li><strong>Audit trail is historical:</strong> Can't modify past entries, only link to them</li>
+            </ul>
+
+            <h4>Additional Safeguard (Recommended):</h4>
+            <div class="code-block">
+// During import, if email already has cloud account:
+IF existing_cloud_user.email === imported_user.email:
+  // Require the existing user to confirm the link
+  send_confirmation_email(existing_cloud_user, {
+    subject: "Confirm import from self-hosted instance",
+    body: "A teamspace is being imported that includes activity
+           under your email. Click to confirm this was you."
+  })
+
+  // Until confirmed, show as "Pending verification"
+            </div>
+
+            <h4>Privacy Consideration:</h4>
+            <p>Storing email in audit_log is fine - it's already PII we collect. Just ensure:</p>
+            <ul>
+                <li>GDPR data export includes audit entries</li>
+                <li>Account deletion anonymizes audit entries (replace email with "deleted-user-xxx")</li>
+            </ul>
+
+            <p><strong>Verdict:</strong> Email-based linking is secure with proper verification. No architectural red flags.</p>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-orchestrator">&#127919;</div>
+            <div class="message-info">
+                <div class="agent-name">Project Orchestrator</div>
+                <div class="timestamp">12:20 PM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Comparing Finalist Options</h4>
+
+            <p>Let's narrow down to the three most viable options and compare them directly:</p>
+
+            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                <tr style="border-bottom: 2px solid var(--color-border);">
+                    <th style="text-align: left; padding: 12px;">Criteria</th>
+                    <th style="text-align: center; padding: 12px;">2A: Single User</th>
+                    <th style="text-align: center; padding: 12px;">2C: Email Linking</th>
+                    <th style="text-align: center; padding: 12px;">2D: Export Only</th>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                    <td style="padding: 12px;">Implementation Now</td>
+                    <td style="text-align: center; padding: 12px; color: var(--color-accent-green);">Trivial</td>
+                    <td style="text-align: center; padding: 12px; color: var(--color-accent-green);">None needed</td>
+                    <td style="text-align: center; padding: 12px; color: var(--color-accent-green);">None needed</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                    <td style="padding: 12px;">Team Features</td>
+                    <td style="text-align: center; padding: 12px; color: var(--color-accent-red);">Disabled</td>
+                    <td style="text-align: center; padding: 12px; color: var(--color-accent-green);">Full</td>
+                    <td style="text-align: center; padding: 12px; color: var(--color-accent-green);">Full</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                    <td style="padding: 12px;">Migration Complexity</td>
+                    <td style="text-align: center; padding: 12px; color: var(--color-accent-green);">N/A (single user)</td>
+                    <td style="text-align: center; padding: 12px; color: var(--color-accent-orange);">Medium</td>
+                    <td style="text-align: center; padding: 12px; color: var(--color-accent-green);">Low</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                    <td style="padding: 12px;">Audit Continuity</td>
+                    <td style="text-align: center; padding: 12px; color: var(--color-accent-green);">Perfect</td>
+                    <td style="text-align: center; padding: 12px; color: var(--color-accent-green);">Perfect</td>
+                    <td style="text-align: center; padding: 12px; color: var(--color-accent-orange);">Historical</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                    <td style="padding: 12px;">User Experience</td>
+                    <td style="text-align: center; padding: 12px; color: var(--color-accent-red);">Limited</td>
+                    <td style="text-align: center; padding: 12px; color: var(--color-accent-green);">Seamless</td>
+                    <td style="text-align: center; padding: 12px; color: var(--color-accent-orange);">Requires re-invite</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                    <td style="padding: 12px;">Self-Hosted Value</td>
+                    <td style="text-align: center; padding: 12px; color: var(--color-accent-red);">Reduced</td>
+                    <td style="text-align: center; padding: 12px; color: var(--color-accent-green);">Full</td>
+                    <td style="text-align: center; padding: 12px; color: var(--color-accent-green);">Full</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; font-weight: bold;">Overall</td>
+                    <td style="text-align: center; padding: 12px;">&#9733;&#9733;&#9734;&#9734;&#9734;</td>
+                    <td style="text-align: center; padding: 12px; color: var(--color-accent-green);">&#9733;&#9733;&#9733;&#9733;&#9733;</td>
+                    <td style="text-align: center; padding: 12px;">&#9733;&#9733;&#9733;&#9734;&#9734;</td>
+                </tr>
+            </table>
+
+            <h4>Key Insight:</h4>
+            <p>Option 2C (Email-Based Linking) requires <strong>no changes now</strong> but leaves the door open for seamless migration later. We're essentially making a commitment to use email as the portable identifier, which we already do.</p>
+
+            <h4>The Only Change Needed Now:</h4>
+            <p>Ensure audit_log includes user email (not just ID). Let me check if we already have this...</p>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-developer">&#128187;</div>
+            <div class="message-info">
+                <div class="agent-name">Senior Next.js Developer</div>
+                <div class="timestamp">12:35 PM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Schema Check: Current audit_log Structure</h4>
+
+            <div class="code-block">
+// From src/server/db/schema.ts
+export const auditLog = pgTable('audit_log', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id),
+  action: text('action').notNull(),
+  entityType: text('entity_type').notNull(),
+  entityId: uuid('entity_id'),
+  details: jsonb('details'),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+            </div>
+
+            <h4>Assessment:</h4>
+            <p>We have <code>userId</code> (foreign key) but <strong>not</strong> <code>userEmail</code>. This is actually fine for two reasons:</p>
+
+            <ol>
+                <li><strong>We can JOIN to get email:</strong> When exporting, join audit_log with users table</li>
+                <li><strong>Export denormalizes:</strong> Migration tool would snapshot email at export time</li>
+            </ol>
+
+            <h4>Optional Enhancement (Not Blocking):</h4>
+            <p>We <em>could</em> add <code>userEmail</code> to audit_log for faster exports, but it's not required. The migration tool can handle the JOIN.</p>
+
+            <div class="code-block">
+// Export query (future migration tool)
+SELECT
+  a.*,
+  u.email as user_email,
+  u.name as user_name
+FROM audit_log a
+LEFT JOIN users u ON a.user_id = u.id
+            </div>
+
+            <h4>Conclusion:</h4>
+            <p><strong>No schema changes required now.</strong> Our current design supports email-based identity linking when we build the migration tool.</p>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-orchestrator">&#127919;</div>
+            <div class="message-info">
+                <div class="agent-name">Project Orchestrator</div>
+                <div class="timestamp">12:50 PM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Addressing the Original Question</h4>
+
+            <p>Let me directly answer the user's concerns:</p>
+
+            <h4>Q: How tightly coupled are teamspaces and accounts?</h4>
+            <p><strong>A:</strong> Currently, accounts are local to each instance. Teamspaces belong to accounts. This is correct and doesn't need to change.</p>
+
+            <h4>Q: What about migration and audit trail?</h4>
+            <p><strong>A:</strong> By using email as the universal identifier (which we already do), migration can link accounts automatically. No changes needed now.</p>
+
+            <h4>Q: Should we disable teammates in single-tenant?</h4>
+            <p><strong>A:</strong> No. This would significantly reduce the value of self-hosting. Teams should be able to use self-hosted instances.</p>
+
+            <h4>Q: Should we have a central cloud database?</h4>
+            <p><strong>A:</strong> No. This is premature and defeats the purpose of self-hosting. Email-based linking achieves the same goal without architectural complexity.</p>
+
+            <h4>What We're Committing To:</h4>
+            <ol>
+                <li><strong>Email is the portable identity</strong> - users are identified by email across instances</li>
+                <li><strong>Migration tool (future)</strong> - will use email to link/merge accounts</li>
+                <li><strong>Audit trail includes user info</strong> - either directly or via JOIN</li>
+                <li><strong>Clear messaging</strong> - single-tenant users know accounts are local</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="recommendation">
+        <h2>Final Recommendation: Email-Based Identity (Option 2C)</h2>
+
+        <p><strong>Decision:</strong> Proceed with local accounts in single-tenant mode, with email as the universal identifier for future migration linking. No immediate changes required.</p>
+
+        <div class="decision-box">
+            <h3 style="color: var(--color-accent-green); margin-bottom: 15px;">What This Means</h3>
+
+            <h4>Now (No Changes):</h4>
+            <ul>
+                <li>Single-tenant instances have full team features</li>
+                <li>Users create local accounts with email + password</li>
+                <li>Audit logs reference user IDs (emails available via JOIN)</li>
+                <li>Clear messaging that accounts are local</li>
+            </ul>
+
+            <h4>Future (Migration Tool - When Needed):</h4>
+            <ul>
+                <li>Export teamspace with user manifest (email, name, role)</li>
+                <li>Import to cloud with automatic email linking</li>
+                <li>Existing cloud users: content linked automatically</li>
+                <li>New users: invite sent, content linked on registration</li>
+                <li>Audit trail preserved with email as identifier</li>
+            </ul>
+        </div>
+
+        <div class="warning-box">
+            <h3 style="color: var(--color-accent-orange); margin-bottom: 15px;">Key Principle</h3>
+            <p><strong>Email is the universal identifier.</strong></p>
+            <p>This is already true in our system. We're simply documenting that this is intentional and will be leveraged for migration. No architectural changes, no central database, no microservices.</p>
+        </div>
+
+        <h3 style="color: var(--color-accent-blue); margin-top: 20px; margin-bottom: 10px;">Why Not Disable Teams in Single-Tenant?</h3>
+        <ul>
+            <li><strong>Reduces product value:</strong> Many self-hosters are small teams</li>
+            <li><strong>Unnecessary restriction:</strong> Email linking solves the migration problem</li>
+            <li><strong>Bad precedent:</strong> Feature gating based on deployment mode feels punitive</li>
+        </ul>
+
+        <h3 style="color: var(--color-accent-blue); margin-top: 20px; margin-bottom: 10px;">Why Not Central Auth?</h3>
+        <ul>
+            <li><strong>Premature complexity:</strong> Microservices before product-market fit</li>
+            <li><strong>Defeats self-hosting:</strong> Requires internet, phone-home concerns</li>
+            <li><strong>Not needed:</strong> Email linking achieves same goal, simpler</li>
+        </ul>
+
+        <h3 style="color: var(--color-accent-purple); margin-top: 20px; margin-bottom: 10px;">Updated Phase 2 Requirements</h3>
+        <p>Adding to the invite flow requirements from the previous discussion:</p>
+        <ul>
+            <li>Invite links support register OR login (existing users)</li>
+            <li>Single-tenant messaging about local accounts</li>
+            <li><strong>NEW:</strong> Design migration tool API with email-based linking in mind</li>
+            <li><strong>NEW:</strong> Ensure export format includes user email manifest</li>
+        </ul>
+    </div>
+
+    <div class="message" style="border: 2px solid var(--color-accent-red); margin-top: 40px;">
+        <div class="message-header">
+            <div class="avatar agent-orchestrator">&#127919;</div>
+            <div class="message-info">
+                <div class="agent-name">Project Orchestrator</div>
+                <div class="timestamp">2:00 PM - SECURITY ESCALATION</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4 style="color: var(--color-accent-red);">&#9888; Critical Security Concern Raised</h4>
+
+            <p>The user has identified a potential attack vector that requires immediate analysis:</p>
+
+            <div class="warning-box" style="border-color: var(--color-accent-red);">
+                <h4 style="color: var(--color-accent-red);">Attack Scenario</h4>
+                <ol>
+                    <li>Attacker runs self-hosted instance</li>
+                    <li>Attacker modifies their local database: changes their email to <code>mrbeast@example.com</code></li>
+                    <li>Attacker creates content, builds audit history under that email</li>
+                    <li>Attacker exports and imports to cloud</li>
+                    <li><strong>Result:</strong> Attacker now "owns" content attributed to MrBeast's email</li>
+                </ol>
+                <p><strong>Worst case:</strong> If cloud links by email automatically, attacker could gain access to MrBeast's actual cloud teamspace.</p>
+            </div>
+
+            <p>Security Architect, we need a thorough review. The fundamental question: <strong>Can we trust data from self-hosted instances?</strong></p>
+        </div>
+    </div>
+
+    <div class="message" style="border: 2px solid var(--color-accent-red);">
+        <div class="message-header">
+            <div class="avatar agent-security">&#128274;</div>
+            <div class="message-info">
+                <div class="agent-name">Security Architect</div>
+                <div class="timestamp">2:15 PM - CRITICAL REVIEW</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4 style="color: var(--color-accent-red);">Threat Model Analysis</h4>
+
+            <p>This is an excellent catch. Let me break down the threat model completely.</p>
+
+            <h4>Fundamental Truth:</h4>
+            <p style="font-size: 1.2em; color: var(--color-accent-red);"><strong>Self-hosted instances are untrusted environments.</strong></p>
+            <p>The operator has full database access. They can insert, modify, or delete any data. We CANNOT trust any data in an import as authentic.</p>
+
+            <h4>Attack Vectors:</h4>
+
+            <div class="option-box rejected" style="border-color: var(--color-accent-red);">
+                <h4 style="color: var(--color-accent-red);">Attack 1: Identity Spoofing</h4>
+                <p><strong>Method:</strong> Modify local DB to use victim's email address</p>
+                <p><strong>Goal:</strong> Claim ownership of imported content under victim's identity</p>
+                <p><strong>Risk Level:</strong> HIGH</p>
+            </div>
+
+            <div class="option-box rejected" style="border-color: var(--color-accent-red);">
+                <h4 style="color: var(--color-accent-red);">Attack 2: Account Takeover</h4>
+                <p><strong>Method:</strong> Import with victim's email, cloud auto-links to existing account</p>
+                <p><strong>Goal:</strong> Gain access to victim's cloud teamspace</p>
+                <p><strong>Risk Level:</strong> CRITICAL</p>
+            </div>
+
+            <div class="option-box rejected" style="border-color: var(--color-accent-red);">
+                <h4 style="color: var(--color-accent-red);">Attack 3: Audit Trail Pollution</h4>
+                <p><strong>Method:</strong> Create fake audit entries under victim's email</p>
+                <p><strong>Goal:</strong> Frame victim for actions they didn't take</p>
+                <p><strong>Risk Level:</strong> HIGH</p>
+            </div>
+
+            <h4>Critical Realization:</h4>
+            <p>My earlier recommendation was <strong>incomplete</strong>. I said "send confirmation email" but that's not sufficient. Let me reconsider the entire approach.</p>
+        </div>
+    </div>
+
+    <div class="message" style="border: 2px solid var(--color-accent-red);">
+        <div class="message-header">
+            <div class="avatar agent-security">&#128274;</div>
+            <div class="message-info">
+                <div class="agent-name">Security Architect</div>
+                <div class="timestamp">2:35 PM - REVISED ANALYSIS</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Secure Migration Options - Revised</h4>
+
+            <p>Given that self-hosted data is untrusted, here are the secure approaches:</p>
+
+            <div class="option-box recommended" style="border-color: var(--color-accent-green);">
+                <h4 style="color: var(--color-accent-green);">Option A: Content-Only Import (No Identity Linking)</h4>
+                <p><strong>Concept:</strong> Import content, but treat ALL user references as historical/orphaned.</p>
+
+                <h4>How It Works:</h4>
+                <ul>
+                    <li>Export contains content + user manifest (emails, names)</li>
+                    <li>Import creates content under the <strong>importing user's</strong> ownership</li>
+                    <li>Audit trail shows: <code>"Originally created by: mrbeast@example.com (unverified, from import)"</code></li>
+                    <li><strong>No linking to existing cloud accounts</strong></li>
+                    <li>Imported emails are display-only, not identity</li>
+                </ul>
+
+                <div class="score-grid">
+                    <div class="score-item"><div class="label">Security</div><div class="value good">Excellent</div></div>
+                    <div class="score-item"><div class="label">Complexity</div><div class="value good">Low</div></div>
+                    <div class="score-item"><div class="label">UX</div><div class="value medium">Medium</div></div>
+                    <div class="score-item"><div class="label">Audit Value</div><div class="value medium">Historical</div></div>
+                    <div class="score-item"><div class="label">Account Link</div><div class="value bad">None</div></div>
+                </div>
+
+                <p><strong>Pros:</strong> Zero trust required. Attacker can spoof emails but gains nothing.</p>
+                <p><strong>Cons:</strong> Team members must be re-invited. No automatic account linking.</p>
+            </div>
+
+            <div class="option-box viable" style="border-color: var(--color-accent-orange);">
+                <h4 style="color: var(--color-accent-orange);">Option B: Verified Re-Claim Process</h4>
+                <p><strong>Concept:</strong> Import as orphaned, then allow users to claim their own history.</p>
+
+                <h4>How It Works:</h4>
+                <ol>
+                    <li>Content imports under importer's ownership</li>
+                    <li>Audit trail tagged with original emails (unverified)</li>
+                    <li>Any cloud user can initiate "Claim my history":
+                        <ul>
+                            <li>User requests to claim entries for their verified email</li>
+                            <li>System shows: "Found 47 entries from imported data"</li>
+                            <li>User confirms, entries link to their account</li>
+                        </ul>
+                    </li>
+                    <li>Claimed entries marked as "verified"</li>
+                </ol>
+
+                <div class="score-grid">
+                    <div class="score-item"><div class="label">Security</div><div class="value good">Excellent</div></div>
+                    <div class="score-item"><div class="label">Complexity</div><div class="value medium">Medium</div></div>
+                    <div class="score-item"><div class="label">UX</div><div class="value good">Good</div></div>
+                    <div class="score-item"><div class="label">Audit Value</div><div class="value good">Full</div></div>
+                    <div class="score-item"><div class="label">Account Link</div><div class="value good">Opt-in</div></div>
+                </div>
+
+                <p><strong>Pros:</strong> Users can reclaim their history. Secure because it's opt-in.</p>
+                <p><strong>Cons:</strong> Requires each user to take action. More complex UI.</p>
+            </div>
+
+            <div class="option-box rejected" style="border-color: var(--color-accent-red);">
+                <h4 style="color: var(--color-accent-red);">Option C: Cryptographic Proof (Complex)</h4>
+                <p><strong>Concept:</strong> Self-hosted instances cryptographically sign user actions.</p>
+
+                <h4>How It Would Work:</h4>
+                <ul>
+                    <li>Each user has a keypair generated at registration</li>
+                    <li>Actions are signed with user's private key</li>
+                    <li>Export includes signatures</li>
+                    <li>Cloud verifies signatures during import</li>
+                </ul>
+
+                <div class="score-grid">
+                    <div class="score-item"><div class="label">Security</div><div class="value good">Excellent</div></div>
+                    <div class="score-item"><div class="label">Complexity</div><div class="value bad">Very High</div></div>
+                    <div class="score-item"><div class="label">UX</div><div class="value bad">Complex</div></div>
+                    <div class="score-item"><div class="label">Audit Value</div><div class="value good">Full</div></div>
+                    <div class="score-item"><div class="label">Account Link</div><div class="value good">Verified</div></div>
+                </div>
+
+                <p><strong>Verdict: REJECTED</strong> - Massive implementation complexity. Key management nightmare. Overkill for current stage.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-developer">&#128187;</div>
+            <div class="message-info">
+                <div class="agent-name">Senior Next.js Developer</div>
+                <div class="timestamp">2:55 PM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Practical Implementation: Option A vs B</h4>
+
+            <p>Let me map out what each option looks like in practice:</p>
+
+            <h4>Option A: Content-Only Import</h4>
+            <div class="code-block">
+// Import flow
+1. Owner uploads export file to cloud
+
+2. Cloud creates:
+   - New teamspace (or adds to existing)
+   - All channels, videos, documents
+   - All owned by importing user
+
+3. Audit entries show:
+   "Created Dec 15, 2025 by alex@company.com (imported, unverified)"
+
+4. Team members:
+   - Owner must re-invite everyone
+   - They join as new members
+   - Their old history is display-only, not linked
+
+// Database representation
+audit_log: {
+  ...
+  importedFromEmail: "alex@company.com",  // Display only
+  importedAt: timestamp,
+  verified: false,  // Always false for imports
+  userId: null,     // Not linked to any cloud account
+}
+            </div>
+
+            <h4>Option B: Verified Re-Claim</h4>
+            <div class="code-block">
+// Import flow (same as A)
+
+// Additional: Claim flow
+1. User logs into cloud account (email: alex@company.com)
+
+2. System detects: "You have 47 unclaimed audit entries"
+
+3. User reviews and confirms: "Yes, these are mine"
+
+4. System updates:
+   audit_log.userId = current_user.id
+   audit_log.verified = true
+   audit_log.claimedAt = now()
+
+// UI shows:
+   "Created Dec 15, 2025 by Alex (verified)"
+            </div>
+
+            <h4>My Recommendation:</h4>
+            <p>Start with <strong>Option A</strong> for simplicity, design the schema to support <strong>Option B</strong> later.</p>
+
+            <div class="code-block">
+// Future-proof schema for audit_log imports
+{
+  // Existing fields...
+
+  // Import metadata
+  importedFromEmail: string | null,    // Email from import (unverified)
+  importedFromName: string | null,     // Name from import
+  importedAt: timestamp | null,        // When imported
+  importSourceId: uuid | null,         // Reference to import batch
+
+  // Claim status (for future Option B)
+  verified: boolean,                   // True if user verified ownership
+  claimedAt: timestamp | null,         // When claimed
+  claimedByUserId: uuid | null,        // Who claimed it (should match email)
+}
+            </div>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-security">&#128274;</div>
+            <div class="message-info">
+                <div class="agent-name">Security Architect</div>
+                <div class="timestamp">3:15 PM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Attack Surface Analysis - Revised Approach</h4>
+
+            <p>Let me verify that Options A and B are secure against the identified attacks:</p>
+
+            <h4>Attack 1: Identity Spoofing</h4>
+            <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                    <th style="text-align: left; padding: 8px;">Scenario</th>
+                    <th style="text-align: center; padding: 8px;">Option A</th>
+                    <th style="text-align: center; padding: 8px;">Option B</th>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                    <td style="padding: 8px;">Attacker claims to be MrBeast</td>
+                    <td style="text-align: center; padding: 8px; color: var(--color-accent-green);">&#10003; Shows "(unverified)"</td>
+                    <td style="text-align: center; padding: 8px; color: var(--color-accent-green);">&#10003; Shows "(unverified)"</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                    <td style="padding: 8px;">MrBeast sees fake history</td>
+                    <td style="text-align: center; padding: 8px; color: var(--color-accent-green);">&#10003; Can't claim (different teamspace)</td>
+                    <td style="text-align: center; padding: 8px; color: var(--color-accent-green);">&#10003; Would see and could report</td>
+                </tr>
+            </table>
+
+            <h4>Attack 2: Account Takeover</h4>
+            <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                    <th style="text-align: left; padding: 8px;">Scenario</th>
+                    <th style="text-align: center; padding: 8px;">Option A</th>
+                    <th style="text-align: center; padding: 8px;">Option B</th>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                    <td style="padding: 8px;">Import tries to link to MrBeast's account</td>
+                    <td style="text-align: center; padding: 8px; color: var(--color-accent-green);">&#10003; No linking at all</td>
+                    <td style="text-align: center; padding: 8px; color: var(--color-accent-green);">&#10003; Only MrBeast can claim</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                    <td style="padding: 8px;">Attacker gains access to MrBeast's teamspace</td>
+                    <td style="text-align: center; padding: 8px; color: var(--color-accent-green);">&#10003; Impossible</td>
+                    <td style="text-align: center; padding: 8px; color: var(--color-accent-green);">&#10003; Impossible</td>
+                </tr>
+            </table>
+
+            <h4>Attack 3: Audit Trail Pollution</h4>
+            <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                    <th style="text-align: left; padding: 8px;">Scenario</th>
+                    <th style="text-align: center; padding: 8px;">Option A</th>
+                    <th style="text-align: center; padding: 8px;">Option B</th>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                    <td style="padding: 8px;">Fake entries under victim's email</td>
+                    <td style="text-align: center; padding: 8px; color: var(--color-accent-green);">&#10003; Clearly marked "(unverified)"</td>
+                    <td style="text-align: center; padding: 8px; color: var(--color-accent-green);">&#10003; Clearly marked "(unverified)"</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--color-border);">
+                    <td style="padding: 8px;">Entries appear in victim's account</td>
+                    <td style="text-align: center; padding: 8px; color: var(--color-accent-green);">&#10003; Never linked</td>
+                    <td style="text-align: center; padding: 8px; color: var(--color-accent-green);">&#10003; Only if victim claims</td>
+                </tr>
+            </table>
+
+            <h4 style="color: var(--color-accent-green);">Security Verdict: BOTH OPTIONS ARE SECURE</h4>
+
+            <p>The key security principle is: <strong>imported data is never automatically trusted</strong>.</p>
+
+            <ul>
+                <li><strong>Option A:</strong> Zero trust, zero linking. Simplest and most secure.</li>
+                <li><strong>Option B:</strong> Zero trust initially, opt-in verification. Slightly more complex but better UX.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-orchestrator">&#127919;</div>
+            <div class="message-info">
+                <div class="agent-name">Project Orchestrator</div>
+                <div class="timestamp">3:30 PM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Revised Recommendation</h4>
+
+            <p>The security review has fundamentally changed our approach. Here's the updated recommendation:</p>
+
+            <div class="decision-box">
+                <h4 style="color: var(--color-accent-green);">Approved Approach: Untrusted Import with Optional Verification</h4>
+
+                <h4>Core Principle:</h4>
+                <p><strong>Self-hosted data is untrusted.</strong> Imports never automatically link to cloud accounts.</p>
+
+                <h4>Phase 1: Content-Only Import (Option A)</h4>
+                <ul>
+                    <li>Import creates content owned by importer</li>
+                    <li>Original emails shown as "(imported, unverified)"</li>
+                    <li>No account linking</li>
+                    <li>Team members re-invited</li>
+                </ul>
+
+                <h4>Phase 2 (Future): Opt-In Claim (Option B)</h4>
+                <ul>
+                    <li>Logged-in users can claim their imported history</li>
+                    <li>Verification requires matching verified email</li>
+                    <li>Claimed entries marked as "verified"</li>
+                </ul>
+            </div>
+
+            <h4>What This Means for the User's Concern:</h4>
+
+            <p><strong>Scenario:</strong> Attacker changes email to <code>mrbeast@example.com</code> and imports.</p>
+
+            <p><strong>Result:</strong></p>
+            <ul>
+                <li>Content imports into attacker's cloud teamspace</li>
+                <li>Audit shows: "Created by mrbeast@example.com <em>(imported, unverified)</em>"</li>
+                <li>MrBeast's actual cloud account: <strong>completely unaffected</strong></li>
+                <li>MrBeast never sees this content unless invited</li>
+                <li>If MrBeast somehow sees it, the "(unverified)" label is clear warning</li>
+            </ul>
+
+            <p><strong>The attack gains nothing.</strong> The attacker has content in their own teamspace with a label claiming MrBeast made it, but no one would believe an unverified claim.</p>
+        </div>
+    </div>
+
+    <div class="message">
+        <div class="message-header">
+            <div class="avatar agent-security">&#128274;</div>
+            <div class="message-info">
+                <div class="agent-name">Security Architect</div>
+                <div class="timestamp">3:45 PM</div>
+            </div>
+        </div>
+        <div class="message-content">
+            <h4>Additional Security Considerations</h4>
+
+            <h4>1. UI/UX for Unverified Labels</h4>
+            <p>The "(unverified)" label must be <strong>prominent and unfakeable</strong>:</p>
+            <div class="code-block">
+// Good: Clear visual distinction
+&#128100; Alex (verified) ✓
+&#128100; alex@external.com (imported, unverified) &#9888;
+
+// UI should use:
+- Different colors (verified = green, unverified = orange/gray)
+- Icons (checkmark vs warning)
+- Tooltip explaining what "unverified" means
+            </div>
+
+            <h4>2. Prevent Claim Abuse</h4>
+            <p>When implementing Option B (claim flow), prevent abuse:</p>
+            <ul>
+                <li><strong>Rate limit:</strong> Max 3 claim attempts per hour</li>
+                <li><strong>Email must be verified:</strong> Can only claim for your verified email</li>
+                <li><strong>Scope limit:</strong> Can only claim within teamspaces you're a member of</li>
+                <li><strong>Audit claims:</strong> Log all claim attempts</li>
+            </ul>
+
+            <h4>3. Import Size Limits</h4>
+            <p>Prevent DoS via massive imports:</p>
+            <ul>
+                <li>Max audit entries per import: 100,000</li>
+                <li>Max content items: 10,000</li>
+                <li>Rate limit: 1 import per hour per user</li>
+            </ul>
+
+            <h4>4. Clear Documentation</h4>
+            <p>Help center should explain:</p>
+            <ul>
+                <li>What "imported, unverified" means</li>
+                <li>Why we can't automatically trust self-hosted data</li>
+                <li>How to claim your history (when Option B is available)</li>
+                <li>How to report suspicious imports</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="recommendation" style="border-color: var(--color-accent-green); margin-top: 40px;">
+        <h2 style="color: var(--color-accent-green);">&#128274; Revised Final Recommendation</h2>
+
+        <p><strong>Decision:</strong> Proceed with email-based identity, but <strong>never auto-link</strong> imported accounts. All imported data is untrusted and marked as such.</p>
+
+        <div class="decision-box">
+            <h3 style="color: var(--color-accent-green); margin-bottom: 15px;">Security-First Migration Design</h3>
+
+            <h4>Principle: Zero Trust for Imports</h4>
+            <p>Self-hosted instances have full database access. Any data from them could be fabricated. We treat imports as untrusted third-party data.</p>
+
+            <h4>Implementation:</h4>
+            <ol>
+                <li><strong>Content imports under importer's ownership</strong></li>
+                <li><strong>Original emails are display-only metadata</strong></li>
+                <li><strong>Clear "(imported, unverified)" labels</strong></li>
+                <li><strong>No automatic account linking - ever</strong></li>
+                <li><strong>Future: Opt-in claim with verification</strong></li>
+            </ol>
+
+            <h4>Attack Resistance:</h4>
+            <ul>
+                <li>&#10003; Identity spoofing: Unverified label makes it obvious</li>
+                <li>&#10003; Account takeover: No linking = no takeover vector</li>
+                <li>&#10003; Audit pollution: Unverified entries clearly distinguished</li>
+            </ul>
+        </div>
+
+        <div class="warning-box">
+            <h3 style="color: var(--color-accent-orange); margin-bottom: 15px;">Trade-Off Acknowledged</h3>
+            <p>This approach means:</p>
+            <ul>
+                <li>Team members must be re-invited after migration</li>
+                <li>Audit history shows emails but isn't linked to accounts initially</li>
+                <li>Users must opt-in to claim their history (future feature)</li>
+            </ul>
+            <p><strong>This is the correct trade-off.</strong> Security > convenience for identity operations.</p>
+        </div>
+
+        <h3 style="color: var(--color-accent-blue); margin-top: 20px; margin-bottom: 10px;">Impact on Current Work</h3>
+        <p><strong>No changes needed now.</strong> This is all future migration tool design. The current registration simplification work can proceed as planned.</p>
+
+        <h3 style="color: var(--color-accent-purple); margin-top: 20px; margin-bottom: 10px;">Summary</h3>
+        <ul>
+            <li>Email remains the identifier for display purposes</li>
+            <li>Imports are <strong>never trusted</strong> to establish identity</li>
+            <li>Account linking is <strong>opt-in</strong> by the verified account holder</li>
+            <li>Attack vector identified by user is <strong>fully mitigated</strong></li>
+        </ul>
+    </div>
+
+    <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--color-border); text-align: center; color: var(--color-text-dim);">
+        <p>Generated by Project Orchestrator | Streamline Studio | December 18, 2025</p>
+        <p>Continues: unified-registration-proposal.html</p>
+        <p style="color: var(--color-accent-green);">&#128274; Security Review: PASSED</p>
+    </footer>
+</body>
+</html>
