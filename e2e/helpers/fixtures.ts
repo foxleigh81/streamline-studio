@@ -87,6 +87,12 @@ export const testData = {
     `e2e-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`,
 
   /**
+   * Generate a unique channel name
+   */
+  uniqueChannelName: () =>
+    `Test Channel ${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+
+  /**
    * Generate a random video title
    */
   videoTitle: () => `Test Video ${Date.now()}`,

@@ -114,7 +114,7 @@ describe('Register Form', () => {
       expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/confirm password/i)).toBeInTheDocument();
       expect(
-        screen.getByRole('button', { name: /create account/i })
+        screen.getByRole('button', { name: /continue to channel setup/i })
       ).toBeInTheDocument();
     });
 
@@ -174,7 +174,7 @@ describe('Register Form', () => {
       renderRegisterPage();
 
       const submitButton = screen.getByRole('button', {
-        name: /create account/i,
+        name: /continue to channel setup/i,
       });
 
       await user.click(submitButton);
@@ -190,7 +190,7 @@ describe('Register Form', () => {
 
       const emailInput = screen.getByLabelText(/^email/i);
       const submitButton = screen.getByRole('button', {
-        name: /create account/i,
+        name: /continue to channel setup/i,
       });
 
       await user.type(emailInput, 'invalid-email');
@@ -207,7 +207,7 @@ describe('Register Form', () => {
 
       const emailInput = screen.getByLabelText(/^email/i);
       const submitButton = screen.getByRole('button', {
-        name: /create account/i,
+        name: /continue to channel setup/i,
       });
 
       await user.type(emailInput, 'test@example.com');
@@ -226,7 +226,7 @@ describe('Register Form', () => {
       const passwordInput = screen.getByLabelText(/^password$/i);
       const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
       const submitButton = screen.getByRole('button', {
-        name: /create account/i,
+        name: /continue to channel setup/i,
       });
 
       await user.type(emailInput, 'test@example.com');
@@ -249,7 +249,7 @@ describe('Register Form', () => {
       const passwordInput = screen.getByLabelText(/^password$/i);
       const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
       const submitButton = screen.getByRole('button', {
-        name: /create account/i,
+        name: /continue to channel setup/i,
       });
 
       await user.type(emailInput, 'test@example.com');
@@ -267,7 +267,7 @@ describe('Register Form', () => {
       renderRegisterPage();
 
       const submitButton = screen.getByRole('button', {
-        name: /create account/i,
+        name: /continue to channel setup/i,
       });
 
       await user.click(submitButton);
@@ -284,19 +284,33 @@ describe('Register Form', () => {
       const user = userEvent.setup();
       renderRegisterPage();
 
+      // Step 1: Fill account info
       const nameInput = screen.getByLabelText(/^name/i);
       const emailInput = screen.getByLabelText(/^email/i);
       const passwordInput = screen.getByLabelText(/^password$/i);
       const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
-      const submitButton = screen.getByRole('button', {
-        name: /create account/i,
+      const continueButton = screen.getByRole('button', {
+        name: /continue to channel setup/i,
       });
 
       await user.type(nameInput, 'Test User');
       await user.type(emailInput, 'test@example.com');
       await user.type(passwordInput, 'password123');
       await user.type(confirmPasswordInput, 'password123');
-      await user.click(submitButton);
+      await user.click(continueButton);
+
+      // Step 2: Fill channel name and submit
+      await waitFor(() => {
+        expect(screen.getByLabelText(/channel name/i)).toBeInTheDocument();
+      });
+
+      const channelNameInput = screen.getByLabelText(/channel name/i);
+      await user.type(channelNameInput, 'My Test Channel');
+
+      const createButton = screen.getByRole('button', {
+        name: /create my channel/i,
+      });
+      await user.click(createButton);
 
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalled();
@@ -308,7 +322,7 @@ describe('Register Form', () => {
       renderRegisterPage();
 
       const submitButton = screen.getByRole('button', {
-        name: /create account/i,
+        name: /continue to channel setup/i,
       });
 
       await user.click(submitButton);
@@ -347,17 +361,31 @@ describe('Register Form', () => {
       const user = userEvent.setup();
       renderRegisterPage();
 
+      // Step 1: Fill account info
       const emailInput = screen.getByLabelText(/^email/i);
       const passwordInput = screen.getByLabelText(/^password$/i);
       const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
-      const submitButton = screen.getByRole('button', {
-        name: /create account/i,
+      const continueButton = screen.getByRole('button', {
+        name: /continue to channel setup/i,
       });
 
       await user.type(emailInput, 'existing@example.com');
       await user.type(passwordInput, 'password123');
       await user.type(confirmPasswordInput, 'password123');
-      await user.click(submitButton);
+      await user.click(continueButton);
+
+      // Step 2: Fill channel name and submit
+      await waitFor(() => {
+        expect(screen.getByLabelText(/channel name/i)).toBeInTheDocument();
+      });
+
+      const channelNameInput = screen.getByLabelText(/channel name/i);
+      await user.type(channelNameInput, 'My Test Channel');
+
+      const createButton = screen.getByRole('button', {
+        name: /create my channel/i,
+      });
+      await user.click(createButton);
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -370,17 +398,31 @@ describe('Register Form', () => {
       const user = userEvent.setup();
       renderRegisterPage();
 
+      // Step 1: Fill account info
       const emailInput = screen.getByLabelText(/^email/i);
       const passwordInput = screen.getByLabelText(/^password$/i);
       const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
-      const submitButton = screen.getByRole('button', {
-        name: /create account/i,
+      const continueButton = screen.getByRole('button', {
+        name: /continue to channel setup/i,
       });
 
       await user.type(emailInput, 'newuser@example.com');
       await user.type(passwordInput, 'password123');
       await user.type(confirmPasswordInput, 'password123');
-      await user.click(submitButton);
+      await user.click(continueButton);
+
+      // Step 2: Fill channel name and submit
+      await waitFor(() => {
+        expect(screen.getByLabelText(/channel name/i)).toBeInTheDocument();
+      });
+
+      const channelNameInput = screen.getByLabelText(/channel name/i);
+      await user.type(channelNameInput, 'My Test Channel');
+
+      const createButton = screen.getByRole('button', {
+        name: /create my channel/i,
+      });
+      await user.click(createButton);
 
       await waitFor(() => {
         expect(mockPush).toHaveBeenCalledWith('/');
@@ -391,17 +433,31 @@ describe('Register Form', () => {
       const user = userEvent.setup();
       renderRegisterPage();
 
+      // Step 1: Fill account info
       const emailInput = screen.getByLabelText(/^email/i);
       const passwordInput = screen.getByLabelText(/^password$/i);
       const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
-      const submitButton = screen.getByRole('button', {
-        name: /create account/i,
+      const continueButton = screen.getByRole('button', {
+        name: /continue to channel setup/i,
       });
 
       await user.type(emailInput, 'newuser@example.com');
       await user.type(passwordInput, 'password123');
       await user.type(confirmPasswordInput, 'password123');
-      await user.click(submitButton);
+      await user.click(continueButton);
+
+      // Step 2: Fill channel name and submit
+      await waitFor(() => {
+        expect(screen.getByLabelText(/channel name/i)).toBeInTheDocument();
+      });
+
+      const channelNameInput = screen.getByLabelText(/channel name/i);
+      await user.type(channelNameInput, 'My Test Channel');
+
+      const createButton = screen.getByRole('button', {
+        name: /create my channel/i,
+      });
+      await user.click(createButton);
 
       await waitFor(() => {
         expect(mockRefresh).toHaveBeenCalled();
@@ -423,7 +479,7 @@ describe('Register Form', () => {
       renderRegisterPage();
 
       const form = screen
-        .getByRole('button', { name: /create account/i })
+        .getByRole('button', { name: /continue to channel setup/i })
         .closest('form');
       expect(form).toBeInTheDocument();
     });
@@ -458,7 +514,7 @@ describe('Register Form', () => {
       const passwordInput = screen.getByLabelText(/^password$/i);
       const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
       const submitButton = screen.getByRole('button', {
-        name: /create account/i,
+        name: /continue to channel setup/i,
       });
 
       // Start from name, tab through fields
@@ -482,6 +538,7 @@ describe('Register Form', () => {
       const user = userEvent.setup();
       renderRegisterPage();
 
+      // Step 1: Fill account info and submit with Enter
       const emailInput = screen.getByLabelText(/^email/i);
       const passwordInput = screen.getByLabelText(/^password$/i);
       const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
@@ -489,6 +546,16 @@ describe('Register Form', () => {
       await user.type(emailInput, 'test@example.com');
       await user.type(passwordInput, 'password123');
       await user.type(confirmPasswordInput, 'password123');
+      await user.keyboard('{Enter}');
+
+      // Should move to step 2
+      await waitFor(() => {
+        expect(screen.getByLabelText(/channel name/i)).toBeInTheDocument();
+      });
+
+      // Step 2: Fill channel name and submit with Enter
+      const channelNameInput = screen.getByLabelText(/channel name/i);
+      await user.type(channelNameInput, 'My Test Channel');
       await user.keyboard('{Enter}');
 
       // Form should attempt to submit
@@ -502,7 +569,7 @@ describe('Register Form', () => {
       renderRegisterPage();
 
       const submitButton = screen.getByRole('button', {
-        name: /create account/i,
+        name: /continue to channel setup/i,
       });
       await user.click(submitButton);
 
@@ -542,17 +609,31 @@ describe('Register Form', () => {
       const user = userEvent.setup();
       renderRegisterPage();
 
+      // Step 1: Fill account info
       const emailInput = screen.getByLabelText(/^email/i);
       const passwordInput = screen.getByLabelText(/^password$/i);
       const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
-      const submitButton = screen.getByRole('button', {
-        name: /create account/i,
+      const continueButton = screen.getByRole('button', {
+        name: /continue to channel setup/i,
       });
 
       await user.type(emailInput, 'test@example.com');
       await user.type(passwordInput, 'password123');
       await user.type(confirmPasswordInput, 'password123');
-      await user.click(submitButton);
+      await user.click(continueButton);
+
+      // Step 2: Fill channel name and submit
+      await waitFor(() => {
+        expect(screen.getByLabelText(/channel name/i)).toBeInTheDocument();
+      });
+
+      const channelNameInput = screen.getByLabelText(/channel name/i);
+      await user.type(channelNameInput, 'My Test Channel');
+
+      const createButton = screen.getByRole('button', {
+        name: /create my channel/i,
+      });
+      await user.click(createButton);
 
       // Button should be disabled or show loading during submission
       // The exact implementation depends on the form component

@@ -107,16 +107,10 @@ test.describe('WCAG 2.1 AA Accessibility Compliance', () => {
       await page.goto('/register');
       await page.waitForLoadState('networkidle');
 
-      // Trigger validation errors - button can be either variant
-      const createAccountBtn = page.getByRole('button', {
-        name: /create account/i,
-      });
-      const continueBtn = page.getByRole('button', {
+      // Trigger validation errors (unified flow)
+      const submitButton = page.getByRole('button', {
         name: /continue to channel setup/i,
       });
-      const submitButton = (await continueBtn.isVisible().catch(() => false))
-        ? continueBtn
-        : createAccountBtn;
       await submitButton.waitFor({ state: 'visible' });
       await submitButton.click();
 
@@ -202,16 +196,10 @@ test.describe('WCAG 2.1 AA Accessibility Compliance', () => {
       await page.keyboard.press('Tab'); // Confirm password
       await page.keyboard.press('Tab'); // Submit button
 
-      // Submit button can be either variant depending on first-user state
-      const createAccountBtn = page.getByRole('button', {
-        name: /create account/i,
-      });
-      const continueBtn = page.getByRole('button', {
+      // Submit button (unified flow)
+      const submit = page.getByRole('button', {
         name: /continue to channel setup/i,
       });
-      const submit = (await continueBtn.isVisible().catch(() => false))
-        ? continueBtn
-        : createAccountBtn;
       await expect(submit).toBeFocused();
     });
 

@@ -50,7 +50,7 @@ export const appRouter = router({
   /**
    * Authentication router
    * Handles register, login, logout
-   * Includes unified registration flow (first-user and subsequent users)
+   * Registration always creates a new workspace (teamspace + channel)
    * @see /docs/adrs/007-api-and-auth.md
    */
   auth: authRouter,

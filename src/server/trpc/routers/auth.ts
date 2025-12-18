@@ -73,7 +73,7 @@ const registerInputSchema = z.object({
     .string()
     .min(1, 'Channel name is required')
     .max(100, 'Channel name too long')
-    .optional(), // Required for first user or in multi-tenant mode
+    .optional(), // Always required - registration creates a new workspace
 });
 
 /**
@@ -100,15 +100,14 @@ export const authRouter = router({
   /**
    * Register a new user
    *
-   * Unified registration endpoint that handles both first-user and subsequent-user scenarios.
-   * First user: Creates teamspace, channel, and user (becomes owner)
-   * Subsequent users: Creates user and joins existing channel (becomes editor)
+   * Creates a new user account with their own workspace (teamspace + channel).
+   * Team members are added via invitation (future feature).
    *
    * Security measures:
    * - Rate limited by IP
    * - Password policy validation
    * - Generic response (prevents account enumeration)
-   * - First-user detection in transaction (prevents race conditions)
+   * - Atomic transaction for user + workspace creation
    */
   register: publicProcedure
     .input(registerInputSchema)
@@ -131,17 +130,17 @@ export const authRouter = router({
         });
       }
 
+      // Channel name is always required
+      if (!channelName) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Channel name is required',
+        });
+      }
+
       // Determine mode
       const isSingleTenant = serverEnv.MODE === 'single-tenant';
       const isMultiTenant = serverEnv.MODE === 'multi-tenant';
-
-      // In multi-tenant mode, channel name is required
-      if (isMultiTenant && !channelName) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Channel name is required in multi-tenant mode',
-        });
-      }
 
       // Check if email already exists
       const existingUser = await ctx.db
@@ -163,24 +162,13 @@ export const authRouter = router({
       // Hash password
       const passwordHash = await hashPassword(password);
 
-      // Determine channel creation strategy
-      let needsDefaultChannel = false;
-      let createNewChannel = isMultiTenant; // Always create in multi-tenant
+      // Generate slug from channel name
+      const slug = channelName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
 
-      if (isSingleTenant) {
-        // In single-tenant mode, check if a teamspace exists
-        // (We check for the default teamspace to determine if this is first user)
-        const existingTeamspaces = await ctx.db
-          .select({ id: teamspaces.id })
-          .from(teamspaces)
-          .where(eq(teamspaces.slug, DEFAULT_SINGLE_TENANT_TEAMSPACE_SLUG))
-          .limit(1);
-
-        needsDefaultChannel = existingTeamspaces.length === 0;
-        createNewChannel = needsDefaultChannel;
-      }
-
-      // Use transaction to create user and optionally channel atomically
+      // Use transaction to create user, teamspace, and channel atomically
       const { newUser } = await ctx.db.transaction(async (tx) => {
         // Create user
         const userResult = await tx
@@ -200,117 +188,78 @@ export const authRouter = router({
           });
         }
 
-        let channel = null;
+        // Create teamspace (or use default in single-tenant mode)
         let teamspaceRecord = null;
-
-        // In single-tenant mode, create the default teamspace if needed
-        if (isSingleTenant && needsDefaultChannel) {
-          const teamspaceResult = await tx
-            .insert(teamspaces)
-            .values({
-              name: 'Workspace',
-              slug: DEFAULT_SINGLE_TENANT_TEAMSPACE_SLUG,
-              mode: 'single-tenant',
-            })
-            .returning();
-
-          teamspaceRecord = teamspaceResult[0];
-          if (!teamspaceRecord) {
-            throw new TRPCError({
-              code: 'INTERNAL_SERVER_ERROR',
-              message: 'Failed to create default teamspace',
-            });
-          }
-        } else if (isSingleTenant) {
-          // Get existing default teamspace
+        if (isSingleTenant) {
+          // In single-tenant mode, create or get the default teamspace
           const existing = await tx
             .select()
             .from(teamspaces)
             .where(eq(teamspaces.slug, DEFAULT_SINGLE_TENANT_TEAMSPACE_SLUG))
             .limit(1);
-          teamspaceRecord = existing[0] ?? null;
-        }
 
-        // Create channel if needed
-        if (createNewChannel) {
-          // Generate slug from channel name
-          const channelNameToUse = channelName ?? 'My Channel';
-          const slug = channelNameToUse
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-|-$/g, '');
-
-          // In multi-tenant, ensure slug is unique
-          if (isMultiTenant) {
-            const existingChannel = await tx
-              .select({ id: channels.id })
-              .from(channels)
-              .where(eq(channels.slug, slug))
-              .limit(1);
-
-            if (existingChannel.length > 0) {
-              throw new TRPCError({
-                code: 'BAD_REQUEST',
-                message: `Channel name "${channelName}" is already taken. Please choose a different name.`,
-              });
-            }
+          if (existing[0]) {
+            teamspaceRecord = existing[0];
+          } else {
+            const teamspaceResult = await tx
+              .insert(teamspaces)
+              .values({
+                name: 'Workspace',
+                slug: DEFAULT_SINGLE_TENANT_TEAMSPACE_SLUG,
+                mode: 'single-tenant',
+              })
+              .returning();
+            teamspaceRecord = teamspaceResult[0] ?? null;
           }
+        } else if (isMultiTenant) {
+          // In multi-tenant mode, ensure slug is unique
+          const existingChannel = await tx
+            .select({ id: channels.id })
+            .from(channels)
+            .where(eq(channels.slug, slug))
+            .limit(1);
 
-          const channelResult = await tx
-            .insert(channels)
-            .values({
-              name: channelNameToUse,
-              slug,
-              mode: isMultiTenant ? 'multi-tenant' : 'single-tenant',
-              teamspaceId: teamspaceRecord?.id ?? null,
-            })
-            .returning();
-
-          channel = channelResult[0];
-          if (!channel) {
+          if (existingChannel.length > 0) {
             throw new TRPCError({
-              code: 'INTERNAL_SERVER_ERROR',
-              message: 'Failed to create channel',
+              code: 'BAD_REQUEST',
+              message: `Channel name "${channelName}" is already taken. Please choose a different name.`,
             });
           }
+        }
 
-          // Link user to channel as owner
-          await tx.insert(channelUsers).values({
-            channelId: channel.id,
+        // Create channel
+        const channelResult = await tx
+          .insert(channels)
+          .values({
+            name: channelName,
+            slug,
+            mode: isMultiTenant ? 'multi-tenant' : 'single-tenant',
+            teamspaceId: teamspaceRecord?.id ?? null,
+          })
+          .returning();
+
+        const channel = channelResult[0];
+        if (!channel) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to create channel',
+          });
+        }
+
+        // Link user to channel as owner
+        await tx.insert(channelUsers).values({
+          channelId: channel.id,
+          userId: user.id,
+          role: 'owner',
+        });
+
+        // Link user to teamspace as owner (if teamspace exists)
+        if (teamspaceRecord) {
+          await tx.insert(teamspaceUsers).values({
+            teamspaceId: teamspaceRecord.id,
             userId: user.id,
             role: 'owner',
           });
-
-          // Link user to teamspace as owner (first user)
-          if (teamspaceRecord) {
-            await tx.insert(teamspaceUsers).values({
-              teamspaceId: teamspaceRecord.id,
-              userId: user.id,
-              role: 'owner',
-            });
-          }
-        } else if (isSingleTenant) {
-          // In single-tenant mode but channel exists, add user to existing channel
-          // This handles subsequent users in single-tenant mode
-          const existingChannel = await tx.select().from(channels).limit(1);
-
-          if (existingChannel[0]) {
-            channel = existingChannel[0];
-            await tx.insert(channelUsers).values({
-              channelId: channel.id,
-              userId: user.id,
-              role: 'editor', // Subsequent users get editor role
-            });
-          }
-
-          // Also add user to the default teamspace so they can access /t routes
-          if (teamspaceRecord) {
-            await tx.insert(teamspaceUsers).values({
-              teamspaceId: teamspaceRecord.id,
-              userId: user.id,
-              role: 'editor', // Subsequent users get editor role in teamspace too
-            });
-          }
         }
 
         return { newUser: user, newChannel: channel };
@@ -333,9 +282,7 @@ export const authRouter = router({
 
       return {
         success: true,
-        message: needsDefaultChannel
-          ? 'Account and channel created successfully.'
-          : 'Account created successfully.',
+        message: 'Account and workspace created successfully.',
       };
     }),
 

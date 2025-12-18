@@ -4,6 +4,57 @@ This directory contains in-depth multi-agent discussions and analyses for comple
 
 ## Active Discussions
 
+### Unified Registration Flow Proposal
+
+**Files:**
+- `unified-registration-proposal.html` - Original proposal (December 17, 2025)
+- `unified-registration-account-portability.html` - Follow-up on account portability (December 18, 2025)
+
+**Status:** APPROVED - PENDING IMPLEMENTATION
+
+**Summary:**
+The team discussed simplifying the registration architecture by removing the "subsequent user" flow entirely. Key recommendations:
+
+- **Registration always creates a new workspace** (teamspace + channel)
+- **Team members join via invitation only** (magic link - future feature)
+- This aligns with industry standards (Slack, Notion, Linear)
+- Dramatically simplifies testing and eliminates CI flakiness
+- Improves security by preventing unauthorized auto-join
+
+**Implementation Phases:**
+1. **Phase 1 (Immediate):** Remove subsequent-user flow, always create workspace on registration
+2. **Phase 2 (Future):** Implement magic link invitation system
+   - Dual-path: invite link allows register OR login (existing users get teamspace added)
+   - Single-tenant messaging: clear notice that accounts are local-only, not connected to cloud
+
+**Account Portability (Follow-up Discussion):**
+Addressed concern about single-tenant → multi-tenant migration. Options analyzed:
+- ~~Option 1A: Central cloud database~~ - Rejected (premature microservices, defeats self-hosting)
+- ~~Option 1B: Federated OAuth~~ - Rejected (too complex, requires connectivity)
+- ~~Option 2A: Single user only~~ - Rejected (limits self-hosted value)
+- **Option 2C: Email-based identity** - APPROVED (with security revision below)
+
+**Security Review (Critical):**
+User identified attack vector: attacker modifies local DB email to impersonate victim, then imports.
+
+**Revised Approach - Zero Trust for Imports:**
+- Imports **never** auto-link to cloud accounts
+- All imported user references marked "(imported, unverified)"
+- Content owned by importer, not claimed users
+- Future: Opt-in claim process where verified users can claim their history
+- Attack vector: **FULLY MITIGATED**
+
+**Key Principle:** Self-hosted data is untrusted. Security > convenience for identity operations.
+
+**Benefits:**
+- Industry-standard pattern
+- ~30-40% less registration code
+- Near-zero E2E test flakiness
+- Clear UX mental model (create vs join)
+- Improved security (explicit authorization)
+
+---
+
 ### CI Test Reliability Investigation
 
 **Files:**

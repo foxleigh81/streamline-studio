@@ -131,24 +131,17 @@ test.describe('User Login Flow', () => {
         .fill('testpassword123');
       await page.getByLabel(/confirm password/i).fill('testpassword123');
 
-      // Handle both first-user and subsequent-user registration flows
-      const createAccountBtn = page.getByRole('button', {
-        name: /create account/i,
-      });
+      // Unified registration flow: 2-step (Account → Channel Setup)
       const continueBtn = page.getByRole('button', {
         name: /continue to channel setup/i,
       });
+      await continueBtn.click();
 
-      if (await continueBtn.isVisible().catch(() => false)) {
-        // First-user flow: proceed to channel setup
-        await continueBtn.click();
-        await page.getByLabel(/channel name/i).waitFor({ state: 'visible' });
-        await page.getByLabel(/channel name/i).fill('E2E Test Channel');
-        await page.getByRole('button', { name: /create my channel/i }).click();
-      } else {
-        // Subsequent-user flow
-        await createAccountBtn.click();
-      }
+      // Step 2: Fill channel name with unique value
+      await page.getByLabel(/channel name/i).waitFor({ state: 'visible' });
+      const uniqueChannelName = `Test Channel ${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      await page.getByLabel(/channel name/i).fill(uniqueChannelName);
+      await page.getByRole('button', { name: /create my channel/i }).click();
 
       // Wait for registration to complete - redirects to teamspace dashboard
       await expect(page).toHaveURL(/\/t\/workspace/, {
